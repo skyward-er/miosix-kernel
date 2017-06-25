@@ -96,7 +96,7 @@ void __attribute__((naked)) USART2_IRQHandler()
     restoreContext();
 }
 
-#ifndef STM32F411xE
+#if !defined(STM32F411xE) && !defined(STM32F401xC)
 /**
  * \internal interrupt routine for usart3 actual implementation
  */
@@ -493,7 +493,7 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             NVIC_EnableIRQ(USART2_IRQn);
             if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>ppre1) & 0x3)+1);
             break;
-        #ifndef STM32F411xE
+        #if !defined(STM32F411xE) && !defined(STM32F401xC)
         case 3:
             port=USART3;
             RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
@@ -545,7 +545,7 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             NVIC_EnableIRQ(USART3_IRQn);
             if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>ppre1) & 0x3)+1);
             break;
-        #endif //STM32F411xE
+        #endif //!defined(STM32F411xE) && !defined(STM32F401xC)
     }
     const unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
     port->BRR=quot/2 + (quot & 1);           //Round to nearest
@@ -812,7 +812,7 @@ STM32Serial::~STM32Serial()
                 NVIC_ClearPendingIRQ(USART2_IRQn);
                 RCC->APB1ENR &= ~RCC_APB1ENR_USART2EN;
                 break;
-            #ifndef STM32F411xE
+            #if !defined(STM32F411xE) && !defined(STM32F401xC)
             case 3:
                 #ifdef SERIAL_3_DMA
                 IRQdmaReadStop();
@@ -832,7 +832,7 @@ STM32Serial::~STM32Serial()
                 NVIC_ClearPendingIRQ(USART3_IRQn);
                 RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN;
                 break;
-            #endif //STM32F411xE
+            #endif //!defined(STM32F411xE) && !defined(STM32F401xC)
         }
     }
 }
@@ -857,6 +857,19 @@ void STM32Serial::waitDmaTxCompletion()
 
 void STM32Serial::writeDma(const char *buffer, size_t size)
 {
+    //Quirk: DMA messes up the TC bit, and causes waitSerialTxFifoEmpty() to
+    //return prematurely, causing characters to be missed when rebooting
+    //immediatley a write. You can just clear the bit manually, but doing that
+    //is dangerous, as if you clear the bit but for any reason the serial
+    //write doesn't start (think an invalid buffer, or another thread crashing),
+    //then TC will never be set and waitSerialTxFifoEmpty() deadlocks!
+    //The only way to clear it safely is to first read SR and then write to
+    //DR (thus the bit is cleared at the same time a transmission is started,
+    //and the race condition is eliminated). This is the purpose of this
+    //instruction, it reads SR. When we start the DMA, the DMA controller
+    //writes to DR and completes the TC clear sequence.
+    while((port->SR & USART_SR_TXE)==0) ;
+    
     dmaTxInProgress=true;
     #ifdef _ARCH_CORTEXM3_STM32
     dmaTx->CPAR=reinterpret_cast<unsigned int>(&port->DR);

@@ -145,7 +145,8 @@ void restartKernel()
     //are disabled with an InterruptDisableLock
     if(interruptDisableNesting==0)
     {
-        if(old==0 && tick_skew) //If we missed some tick yield immediately
+        //If we missed some tick yield immediately
+        if(old==1 && tick_skew)
         { 
             tick_skew=false;
             Thread::yield();
@@ -180,12 +181,13 @@ void startKernel()
     }
     
     // Add them to the scheduler
-    Scheduler::IRQsetIdleThread(idle);
     if(Scheduler::PKaddThread(main,MAIN_PRIORITY)==false)
     {
         errorHandler(UNEXPECTED);
         return;
     }
+    // Idle thread needs to be set after main (see control_scheduler.cpp)
+    Scheduler::IRQsetIdleThread(idle);
     
     //Now kernel is started
     kernel_started=true;
@@ -342,11 +344,14 @@ bool Thread::testTerminate()
 void Thread::sleep(unsigned int ms)
 {
     if(ms==0) return;
+    //The SleepData variable has to be in scope till Thread::yield() returns
+    //as IRQaddToSleepingList() makes it part of a linked list till the
+    //thread wakes up (i.e: after Thread::yield() returns)
+    SleepData d;
     //pauseKernel() here is not enough since even if the kernel is stopped
     //the tick isr will wake threads, modifying the sleeping_list
     {
         FastInterruptDisableLock lock;
-        SleepData d;
         d.p=const_cast<Thread*>(cur);
         if(((ms*TICK_FREQ)/1000)>0) d.wakeup_time=getTick()+(ms*TICK_FREQ)/1000;
         //If tick resolution is too low, wait one tick
@@ -358,12 +363,15 @@ void Thread::sleep(unsigned int ms)
 
 void Thread::sleepUntil(long long absoluteTime)
 {
+    //The SleepData variable has to be in scope till Thread::yield() returns
+    //as IRQaddToSleepingList() makes it part of a linked list till the
+    //thread wakes up (i.e: after Thread::yield() returns)
+    SleepData d;
     //pauseKernel() here is not enough since even if the kernel is stopped
     //the tick isr will wake threads, modifying the sleeping_list
     {
         FastInterruptDisableLock lock;
         if(absoluteTime<=getTick()) return; //Wakeup time in the past, return
-        SleepData d;
         d.p=const_cast<Thread*>(cur);
         d.wakeup_time=absoluteTime;
         IRQaddToSleepingList(&d);//Also sets SLEEP_FLAG
