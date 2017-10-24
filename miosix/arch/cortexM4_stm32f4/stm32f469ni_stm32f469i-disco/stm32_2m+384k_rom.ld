@@ -1,5 +1,5 @@
 /*
- * C++ enabled linker script for stm32 (2M FLASH, 256K RAM)
+ * C++ enabled linker script for stm32 (2M FLASH, 384K RAM)
  * Developed by TFT: Terraneo Federico Technologies
  * Optimized for use with the Miosix kernel
  */
@@ -14,7 +14,7 @@
  * Given the constraints above, this linker script puts:
  * - read only data and code (.text, .rodata, .eh_*) in FLASH
  * - the 512Byte main (IRQ) stack, .data and .bss in the "small" 64KB RAM
- * - stacks and heap in the "large" 192KB RAM.
+ * - stacks and heap in the "large" 320KB RAM.
  * 
  * Unfortunately thread stacks can't be put in the small RAM as Miosix
  * allocates them inside the heap.
@@ -49,9 +49,9 @@ _main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
 _main_stack_top  = 0x10000000 + _main_stack_size;
 ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
-/* Mapping the heap into the large 192KB RAM */
+/* Mapping the heap into the large 320KB RAM */
 _end =      0x20000000;
-_heap_end = 0x20030000;                            /* end of available ram  */
+_heap_end = 0x20050000;                            /* end of available ram  */
 
 /* identify the Entry Point  */
 ENTRY(_Z13Reset_Handlerv)
@@ -65,14 +65,14 @@ MEMORY
      * size of the main stack, so it is 0x10000200.
      */
     smallram(wx) : ORIGIN = 0x10000200, LENGTH =  64K-0x200 
-    largeram(wx) : ORIGIN = 0x20000000, LENGTH = 192K
-    backupram(rw)    : ORIGIN = 0x40024000, LENGTH =  4K
+    largeram(wx) : ORIGIN = 0x20000000, LENGTH = 320K
 }
 
 /* now define the output sections  */
 SECTIONS
 {
     . = 0;
+    
     /* .text section: code goes to flash */
     .text :
     {
@@ -179,14 +179,4 @@ SECTIONS
 
     /*_end = .;*/
     /*PROVIDE(end = .);*/
-    
-    .preserve(NOLOAD) : ALIGN(4)
-    {
-        _preserve_start = .;
-        . = ALIGN(4);
-        *(.preserve);
-        *(.preserve*);
-        . = ALIGN(4);
-        _preserve_end = .;
-    } > backupram
 }
