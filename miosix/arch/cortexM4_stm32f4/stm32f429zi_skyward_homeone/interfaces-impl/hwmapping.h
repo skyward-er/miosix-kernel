@@ -68,7 +68,7 @@ namespace adis16405 {
 using cs    = Gpio<GPIOA_BASE, 8>;
 using dio1  = Gpio<GPIOB_BASE, 4>;
 using nrst  = Gpio<GPIOD_BASE, 5>;
-using ckIn  = Gpio<GPIOD_BASE, 14>;
+using ckIn  = Gpio<GPIOA_BASE, 15>;
 } //namespace adis16405
 
 namespace ad7994 {
@@ -97,7 +97,7 @@ using csens = Gpio<GPIOF_BASE, 8>;
 } //namespace hbridgel
 
 namespace hbridger {
-using ena   = Gpio<GPIOD_BASE, 9>;
+using ena   = Gpio<GPIOG_BASE, 2>;
 using in    = Gpio<GPIOD_BASE, 12>;
 using csens = Gpio<GPIOF_BASE, 6>;
 } //namespace hbridger

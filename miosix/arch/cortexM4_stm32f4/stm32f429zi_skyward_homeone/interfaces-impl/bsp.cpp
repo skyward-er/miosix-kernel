@@ -229,7 +229,7 @@ void IRQbspInit()
     adis16405::nrst::high();
     adis16405::ckIn::mode(Mode::ALTERNATE);
     adis16405::ckIn::alternateFunction(2);
-    adis16405::dio1::mode(Mode::INPUT);    
+    adis16405::dio1::mode(Mode::INPUT); 
     
     ad7994::ab::mode(Mode::INPUT);
     ad7994::nconvst::mode(Mode::OUTPUT);
@@ -241,7 +241,7 @@ void IRQbspInit()
     mpu9250::cs::high();
     
     ms5803::cs::mode(Mode::OUTPUT);
-    ms5803::cs::high();
+    ms5803::cs::high(); 
     
     using namespace actuators;
     hbridgel::ena::mode(Mode::OUTPUT);
@@ -249,12 +249,11 @@ void IRQbspInit()
     hbridgel::in::mode(Mode::ALTERNATE);
     hbridgel::in::alternateFunction(2);
     hbridgel::csens::mode(Mode::INPUT_ANALOG);
-    
-    hbridger::ena::mode(Mode::OUTPUT);
-    hbridger::ena::low();
     hbridger::in::mode(Mode::ALTERNATE);
     hbridger::in::alternateFunction(2);
     hbridger::csens::mode(Mode::INPUT_ANALOG);
+    
+    
     
     InAir9B::cs::mode(Mode::OUTPUT);
     InAir9B::cs::high();    
@@ -266,12 +265,12 @@ void IRQbspInit()
     InAir9B::dio1::mode(Mode::INPUT);
     InAir9B::dio2::mode(Mode::INPUT);
     InAir9B::dio3::mode(Mode::INPUT);
-    
+
     _led::mode(Mode::OUTPUT);    
 // Removed led blink to speed up boot
-//     ledOn();
-//     delayMs(100);
-//     ledOff();
+     ledOn();
+     delayMs(100);
+     ledOff();
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
         defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
@@ -282,7 +281,7 @@ void bspInit2()
     #ifdef WITH_FILESYSTEM
     intrusive_ref_ptr<DevFs> devFs = basicFilesystemSetup(SDIODriver::instance());
     devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));
-    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,115200)));
+    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,57600)));
     #endif //WITH_FILESYSTEM
 }
 
