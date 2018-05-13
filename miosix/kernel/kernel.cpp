@@ -571,7 +571,7 @@ const unsigned int *Thread::getStackBottom()
     return cur->watermark+(WATERMARK_LEN/sizeof(unsigned int));
 }
 
-const int Thread::getStackSize()
+int Thread::getStackSize()
 {
     return cur->stacksize;
 }
@@ -802,4 +802,4 @@ void Thread::ThreadFlags::IRQsetDeleted()
     Scheduler::IRQwaitStatusHook();
 }
 
-}; //namespace miosix
+} //namespace miosix
