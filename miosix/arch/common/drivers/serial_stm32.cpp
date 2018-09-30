@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010, 2011, 2012, 2013, 2014 by Terraneo Federico       *
+ *   Copyright (C) 2010-2018 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -32,8 +32,8 @@
 #include "kernel/sync.h"
 #include "kernel/scheduler/scheduler.h"
 #include "interfaces/portability.h"
-#include "interfaces/gpio.h"
 #include "filesystem/ioctl.h"
+#include "core/cache_cortexMx.h"
 
 using namespace std;
 using namespace miosix;
@@ -49,25 +49,15 @@ typedef Gpio<GPIOA_BASE,10> u1rx;
 typedef Gpio<GPIOA_BASE,11> u1cts;
 typedef Gpio<GPIOA_BASE,12> u1rts;
 
-#if !defined(STM32_NO_SERIAL_2_3)
 typedef Gpio<GPIOA_BASE,2>  u2tx;
 typedef Gpio<GPIOA_BASE,3>  u2rx;
 typedef Gpio<GPIOA_BASE,0>  u2cts;
 typedef Gpio<GPIOA_BASE,1>  u2rts;
-#ifndef _BOARD_STM3220G_EVAL
+
 typedef Gpio<GPIOB_BASE,10> u3tx;
 typedef Gpio<GPIOB_BASE,11> u3rx;
-#else //_BOARD_STM3220G_EVAL
-//The STM3220G_EVAL board maps usart3 to different pins.
-//TODO: modify the class constructor so that it takes the gpiopins as
-//parameter, so as to allow each board to custom-remap usart pins,
-//otherwise this common driver will end up having even more ifdefs
-typedef Gpio<GPIOC_BASE,10> u3tx;
-typedef Gpio<GPIOC_BASE,11> u3rx;
-#endif //_BOARD_STM3220G_EVAL
 typedef Gpio<GPIOB_BASE,13> u3cts;
 typedef Gpio<GPIOB_BASE,14> u3rts;
-#endif //!defined(STM32_NO_SERIAL_2_3)
 
 /// Pointer to serial port classes to let interrupts access the classes
 static STM32Serial *ports[numPorts]={0};
@@ -376,8 +366,77 @@ static inline bool isInCCMarea(const void *x) { return false; }
 // 20ms of full data rate. In the 8N1 format one char is made of 10 bits.
 // So (baudrate/10)*0.02=baudrate/500
 STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
-        : Device(Device::TTY), rxQueue(rxQueueMin+baudrate/500), rxWaiting(0),
-        idle(true), flowControl(flowControl==RTSCTS), portId(id)
+        : Device(Device::TTY), rxQueue(rxQueueMin+baudrate/500),
+          flowControl(flowControl==RTSCTS), portId(id)
+{
+    #ifndef _ARCH_CORTEXM3_STM32
+    //stm32f2, f4, l1, f7, h7 require alternate function mapping
+    switch(id)
+    {
+        case 1:
+            u1tx::alternateFunction(7);
+            u1rx::alternateFunction(7);
+            if(flowControl)
+            {
+                u1rts::alternateFunction(7);
+                u1cts::alternateFunction(7);
+            }
+            break;
+        case 2:
+            u2tx::alternateFunction(7);
+            u2rx::alternateFunction(7);
+            if(flowControl)
+            {
+                u2rts::alternateFunction(7);
+                u2cts::alternateFunction(7);
+            }
+            break;
+        case 3:
+            u3tx::alternateFunction(7);
+            u3rx::alternateFunction(7);
+            if(flowControl)
+            {
+                u3rts::alternateFunction(7);
+                u3cts::alternateFunction(7);
+            }
+            break;
+    }
+    #endif //_ARCH_CORTEXM3_STM32
+    
+    switch(id)
+    {
+        case 1:
+            commonInit(id,baudrate,u1tx::getPin(),u1rx::getPin(),
+                       u1rts::getPin(),u1cts::getPin());
+            break;
+        case 2:
+            commonInit(id,baudrate,u2tx::getPin(),u2rx::getPin(),
+                       u2rts::getPin(),u2cts::getPin());
+            break;
+        case 3:
+            commonInit(id,baudrate,u3tx::getPin(),u3rx::getPin(),
+                       u3rts::getPin(),u3cts::getPin());
+            break;
+    }
+}
+
+STM32Serial::STM32Serial(int id, int baudrate, GpioPin tx, GpioPin rx)
+    : Device(Device::TTY), rxQueue(rxQueueMin+baudrate/500),
+      flowControl(false), portId(id)
+{
+    commonInit(id,baudrate,tx,rx,tx,rx); //The last two args will be ignored
+}
+
+STM32Serial::STM32Serial(int id, int baudrate, GpioPin tx, GpioPin rx,
+    miosix::GpioPin rts, miosix::GpioPin cts)
+    : Device(Device::TTY), rxQueue(rxQueueMin+baudrate/500),
+      flowControl(true), portId(id)
+{
+    commonInit(id,baudrate,tx,rx,rts,cts);
+}
+
+void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
+                             GpioPin rts, GpioPin cts)
 {
     #ifdef SERIAL_DMA
     dmaTx=0;
@@ -389,18 +448,11 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
     if(id<1|| id>numPorts || ports[id-1]!=0) errorHandler(UNEXPECTED);
     ports[id-1]=this;
     unsigned int freq=SystemCoreClock;
-    //Quirk: stm32f1 rx pin has to be in input mode, while stm32f2 and up want
-    //it in ALTERNATE mode. Go figure...
-    #ifdef _ARCH_CORTEXM3_STM32
-    Mode::Mode_ rxPinMode=Mode::INPUT;
-    #else //_ARCH_CORTEXM3_STM32
-    Mode::Mode_ rxPinMode=Mode::ALTERNATE;
-    #endif //_ARCH_CORTEXM3_STM32
     //Quirk the position of the PPRE1 and PPRE2 bitfields in RCC->CFGR changes
     #if defined(_ARCH_CORTEXM3_STM32) || defined(_ARCH_CORTEXM3_STM32L1)
     const unsigned int ppre1=8;
     const unsigned int ppre2=11;
-    #else
+    #elif !defined(_ARCH_CORTEXM7_STM32H7)
     const unsigned int ppre1=10;
     const unsigned int ppre2=13;
     #endif
@@ -436,32 +488,30 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             #endif
             port->CR3=USART_CR3_DMAT | USART_CR3_DMAR;
             #endif //SERIAL_1_DMA
-            #ifndef _ARCH_CORTEXM3_STM32
-            //Only stm32f2, f4 and l1 have the new alternate function mapping
-            u1tx::alternateFunction(7);
-            u1rx::alternateFunction(7);
-            if(flowControl)
-            {
-                u1rts::alternateFunction(7);
-                u1cts::alternateFunction(7);
-            }
-            #endif //_ARCH_CORTEXM3_STM32
-            u1tx::mode(Mode::ALTERNATE);
-            u1rx::mode(rxPinMode);
-            if(flowControl)
-            {
-                u1rts::mode(Mode::ALTERNATE);
-                u1cts::mode(rxPinMode);
-            }
             NVIC_SetPriority(USART1_IRQn,15);//Lowest priority for serial
             NVIC_EnableIRQ(USART1_IRQn);
+            #ifndef _ARCH_CORTEXM7_STM32H7
             if(RCC->CFGR & RCC_CFGR_PPRE2_2) freq/=1<<(((RCC->CFGR>>ppre2) & 0x3)+1);
+            #else //_ARCH_CORTEXM7_STM32H7
+            //rcc_hclk3 = SystemCoreClock / HPRE
+            //rcc_pclk2 = rcc_hclk1 / D2PPRE2
+            //NOTE: are rcc_hclk3 and rcc_hclk1 the same signal?
+            //usart1 clock is rcc_pclk2
+            if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+            if(RCC->D2CFGR & RCC_D2CFGR_D2PPRE2_2)
+                freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE2_Pos) & 0x3)+1);
+            #endif //_ARCH_CORTEXM7_STM32H7
             break;
         
         #if !defined(STM32_NO_SERIAL_2_3)
         case 2:
             port=USART2;
+            #ifndef _ARCH_CORTEXM7_STM32H7
             RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+            #else //_ARCH_CORTEXM7_STM32H7
+            RCC->APB1LENR |= RCC_APB1LENR_USART2EN;
+            #endif //_ARCH_CORTEXM7_STM32H7
             RCC_SYNC();
             #ifdef SERIAL_2_DMA
             #ifdef _ARCH_CORTEXM3_STM32
@@ -489,31 +539,29 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             #endif
             port->CR3=USART_CR3_DMAT | USART_CR3_DMAR;
             #endif //SERIAL_2_DMA
-            #ifndef _ARCH_CORTEXM3_STM32
-            //Only stm32f2, f4 and l1 have the new alternate function mapping
-            u2tx::alternateFunction(7);
-            u2rx::alternateFunction(7);
-            if(flowControl)
-            {
-                u2rts::alternateFunction(7);
-                u2cts::alternateFunction(7);
-            }
-            #endif //_ARCH_CORTEXM3_STM32
-            u2tx::mode(Mode::ALTERNATE);
-            u2rx::mode(rxPinMode);
-            if(flowControl)
-            {
-                u2rts::mode(Mode::ALTERNATE);
-                u2cts::mode(rxPinMode);
-            }
             NVIC_SetPriority(USART2_IRQn,15);//Lowest priority for serial
             NVIC_EnableIRQ(USART2_IRQn);
+            #ifndef _ARCH_CORTEXM7_STM32H7
             if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>ppre1) & 0x3)+1);
+            #else //_ARCH_CORTEXM7_STM32H7
+            //rcc_hclk3 = SystemCoreClock / HPRE
+            //rcc_pclk1 = rcc_hclk1 / D2PPRE1
+            //NOTE: are rcc_hclk3 and rcc_hclk1 the same signal?
+            //usart2 clock is rcc_pclk1
+            if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+            if(RCC->D2CFGR & RCC_D2CFGR_D2PPRE1_2)
+                freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
+            #endif //_ARCH_CORTEXM7_STM32H7
             break;
         #if !defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
         case 3:
             port=USART3;
+            #ifndef _ARCH_CORTEXM7_STM32H7
             RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+            #else //_ARCH_CORTEXM7_STM32H7
+            RCC->APB1LENR |= RCC_APB1LENR_USART3EN;
+            #endif //_ARCH_CORTEXM7_STM32H7
             RCC_SYNC();
             #ifdef SERIAL_3_DMA
             #ifdef _ARCH_CORTEXM3_STM32
@@ -541,29 +589,37 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             #endif
             port->CR3=USART_CR3_DMAT | USART_CR3_DMAR;
             #endif //SERIAL_3_DMA
-            #ifndef _ARCH_CORTEXM3_STM32
-            //Only stm32f2, f4 and l1 have the new alternate function mapping
-            u3tx::alternateFunction(7);
-            u3rx::alternateFunction(7);
-            if(flowControl)
-            {
-                u3rts::alternateFunction(7);
-                u3cts::alternateFunction(7);
-            }
-            #endif //_ARCH_CORTEXM3_STM32
-            u3tx::mode(Mode::ALTERNATE);
-            u3rx::mode(rxPinMode);
-            if(flowControl)
-            {
-                u3rts::mode(Mode::ALTERNATE);
-                u3cts::mode(rxPinMode);
-            }
             NVIC_SetPriority(USART3_IRQn,15);//Lowest priority for serial
             NVIC_EnableIRQ(USART3_IRQn);
+            #ifndef _ARCH_CORTEXM7_STM32H7
             if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>ppre1) & 0x3)+1);
+            #else //_ARCH_CORTEXM7_STM32H7
+            //rcc_hclk3 = SystemCoreClock / HPRE
+            //rcc_pclk1 = rcc_hclk1 / D2PPRE1
+            //NOTE: are rcc_hclk3 and rcc_hclk1 the same signal?
+            //usart2 clock is rcc_pclk1
+            if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+            if(RCC->D2CFGR & RCC_D2CFGR_D2PPRE1_2)
+                freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
+            #endif //_ARCH_CORTEXM7_STM32H7
             break;
         #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
         #endif //!defined(STM32_NO_SERIAL_2_3)
+    }
+    //Quirk: stm32f1 rx pin has to be in input mode, while stm32f2 and up want
+    //it in ALTERNATE mode. Go figure...
+    #ifdef _ARCH_CORTEXM3_STM32
+    Mode::Mode_ rxPinMode=Mode::INPUT;
+    #else //_ARCH_CORTEXM3_STM32
+    Mode::Mode_ rxPinMode=Mode::ALTERNATE;
+    #endif //_ARCH_CORTEXM3_STM32
+    tx.mode(Mode::ALTERNATE);
+    rx.mode(rxPinMode);
+    if(flowControl)
+    {
+        rts.mode(Mode::ALTERNATE);
+        cts.mode(rxPinMode);
     }
     const unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
     port->BRR=quot/2 + (quot & 1);           //Round to nearest
@@ -655,8 +711,13 @@ ssize_t STM32Serial::writeBlock(const void *buffer, size_t size, off_t where)
     #endif //SERIAL_DMA
     for(size_t i=0;i<size;i++)
     {
+        #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
         while((port->SR & USART_SR_TXE)==0) ;
         port->DR=*buf++;
+        #else //_ARCH_CORTEXM7_STM32F7/H7
+        while((port->ISR & USART_ISR_TXE)==0) ;
+        port->TDR=*buf++;
+        #endif //_ARCH_CORTEXM7_STM32F7/H7
     }
     return size;
 }
@@ -688,8 +749,13 @@ void STM32Serial::IRQwrite(const char *str)
     #endif //SERIAL_DMA
     while(*str)
     {
+        #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
         while((port->SR & USART_SR_TXE)==0) ;
         port->DR=*str++;
+        #else //_ARCH_CORTEXM7_STM32F7/H7
+        while((port->ISR & USART_ISR_TXE)==0) ;
+        port->TDR=*str++;
+        #endif //_ARCH_CORTEXM7_STM32F7/H7
     }
     waitSerialTxFifoEmpty();
     if(interrupts) fastEnableInterrupts();
@@ -722,7 +788,14 @@ int STM32Serial::ioctl(int cmd, void* arg)
 
 void STM32Serial::IRQhandleInterrupt()
 {
+    #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
     unsigned int status=port->SR;
+    #else //_ARCH_CORTEXM7_STM32F7/H7
+    unsigned int status=port->ISR;
+    constexpr unsigned int USART_SR_RXNE=USART_ISR_RXNE;
+    constexpr unsigned int USART_SR_IDLE=USART_ISR_IDLE;
+    constexpr unsigned int USART_SR_FE  =USART_ISR_FE;
+    #endif //_ARCH_CORTEXM7_STM32F7/H7
     char c;
     #ifdef SERIAL_DMA
     if(dmaRx==0 && (status & USART_SR_RXNE))
@@ -731,7 +804,11 @@ void STM32Serial::IRQhandleInterrupt()
     #endif //SERIAL_DMA
     {
         //Always read data, since this clears interrupt flags
+        #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
         c=port->DR;
+        #else //_ARCH_CORTEXM7_STM32F7/H7
+        c=port->RDR;
+        #endif //_ARCH_CORTEXM7_STM32F7/H7
         //If no error put data in buffer
         if((status & USART_SR_FE)==0)
             if(rxQueue.tryPut(c)==false) /*fifo overflow*/;
@@ -739,7 +816,11 @@ void STM32Serial::IRQhandleInterrupt()
     }
     if(status & USART_SR_IDLE)
     {
+        #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
         c=port->DR; //clears interrupt flags
+        #else //_ARCH_CORTEXM7_STM32F7/H7
+        port->ICR=USART_ICR_IDLECF; //clears interrupt flags
+        #endif //_ARCH_CORTEXM7_STM32F7/H7
         #ifdef SERIAL_DMA
         if(dmaRx) IRQreadDma();
         #endif //SERIAL_DMA
@@ -830,7 +911,11 @@ STM32Serial::~STM32Serial()
                 #endif //SERIAL_2_DMA
                 NVIC_DisableIRQ(USART2_IRQn);
                 NVIC_ClearPendingIRQ(USART2_IRQn);
+                #ifndef _ARCH_CORTEXM7_STM32H7
                 RCC->APB1ENR &= ~RCC_APB1ENR_USART2EN;
+                #else //_ARCH_CORTEXM7_STM32H7
+                RCC->APB1LENR &= ~RCC_APB1LENR_USART2EN;
+                #endif //_ARCH_CORTEXM7_STM32H7
                 break;
             #if !defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
             case 3:
@@ -850,7 +935,11 @@ STM32Serial::~STM32Serial()
                 #endif //SERIAL_3_DMA
                 NVIC_DisableIRQ(USART3_IRQn);
                 NVIC_ClearPendingIRQ(USART3_IRQn);
+                #ifndef _ARCH_CORTEXM7_STM32H7
                 RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN;
+                #else //_ARCH_CORTEXM7_STM32H7
+                RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
+                #endif //_ARCH_CORTEXM7_STM32H7
                 break;
             #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
             #endif //!defined(STM32_NO_SERIAL_2_3)
@@ -878,6 +967,7 @@ void STM32Serial::waitDmaTxCompletion()
 
 void STM32Serial::writeDma(const char *buffer, size_t size)
 {
+    markBufferBeforeDmaWrite(buffer,size);
     //Quirk: DMA messes up the TC bit, and causes waitSerialTxFifoEmpty() to
     //return prematurely, causing characters to be missed when rebooting
     //immediatley a write. You can just clear the bit manually, but doing that
@@ -889,7 +979,11 @@ void STM32Serial::writeDma(const char *buffer, size_t size)
     //and the race condition is eliminated). This is the purpose of this
     //instruction, it reads SR. When we start the DMA, the DMA controller
     //writes to DR and completes the TC clear sequence.
+    #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
     while((port->SR & USART_SR_TXE)==0) ;
+    #else //_ARCH_CORTEXM7_STM32F7/H7
+    while((port->ISR & USART_ISR_TXE)==0) ;
+    #endif //_ARCH_CORTEXM7_STM32F7/H7
     
     dmaTxInProgress=true;
     #ifdef _ARCH_CORTEXM3_STM32
@@ -902,7 +996,11 @@ void STM32Serial::writeDma(const char *buffer, size_t size)
              | DMA_CCR4_TCIE  //Interrupt on transfer complete
              | DMA_CCR4_EN;   //Start DMA
     #else //_ARCH_CORTEXM3_STM32
+    #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
     dmaTx->PAR=reinterpret_cast<unsigned int>(&port->DR);
+    #else //_ARCH_CORTEXM7_STM32F7/H7
+    dmaTx->PAR=reinterpret_cast<unsigned int>(&port->TDR);
+    #endif //_ARCH_CORTEXM7_STM32F7/H7
     dmaTx->M0AR=reinterpret_cast<unsigned int>(buffer);
     dmaTx->NDTR=size;
     //Quirk: not enabling DMA_SxFCR_FEIE because the USART seems to
@@ -923,6 +1021,7 @@ void STM32Serial::writeDma(const char *buffer, size_t size)
 void STM32Serial::IRQreadDma()
 {
     int elem=IRQdmaReadStop();
+    markBufferAfterDmaRead(rxBuffer,rxQueueMin);
     for(int i=0;i<elem;i++)
         if(rxQueue.tryPut(rxBuffer[i])==false) /*fifo overflow*/;
     IRQdmaReadStart();
@@ -940,7 +1039,11 @@ void STM32Serial::IRQdmaReadStart()
              | DMA_CCR4_TCIE  //Interrupt on transfer complete
              | DMA_CCR4_EN;   //Start DMA
     #else //_ARCH_CORTEXM3_STM32
+    #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7)
     dmaRx->PAR=reinterpret_cast<unsigned int>(&port->DR);
+    #else //_ARCH_CORTEXM7_STM32F7/H7
+    dmaRx->PAR=reinterpret_cast<unsigned int>(&port->RDR);
+    #endif //_ARCH_CORTEXM7_STM32F7/H7
     dmaRx->M0AR=reinterpret_cast<unsigned int>(rxBuffer);
     dmaRx->NDTR=rxQueueMin;
     dmaRx->CR=DMA_SxCR_CHSEL_2 //Select channel 4 (USART_RX)
