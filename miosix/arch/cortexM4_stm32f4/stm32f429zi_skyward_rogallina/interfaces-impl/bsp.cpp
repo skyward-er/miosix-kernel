@@ -214,8 +214,6 @@ void IRQbspInit()
 void bspInit2()
 {
     #ifdef WITH_FILESYSTEM
-    basicFilesystemSetup(SDIODriver::instance());
-
     auto tx = Gpio<GPIOC_BASE, 10>::getPin();
     tx.alternateFunction(7);
     auto rx = Gpio<GPIOC_BASE, 11>::getPin();
