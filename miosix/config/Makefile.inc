@@ -39,6 +39,7 @@
 #OPT_BOARD := stm32f469ni_stm32f469i-disco
 #OPT_BOARD := stm32f429zi_skyward_homeone
 #OPT_BOARD := stm32f429zi_skyward_rogallina
+#OPT_BOARD := stm32f103c8_skyward_alderaan
 #OPT_BOARD := stm32f401re_nucleo
 #OPT_BOARD := stm32f746zg_nucleo
 #OPT_BOARD := stm32h753xi_eval
@@ -397,6 +398,25 @@ ifeq ($(OPT_BOARD),stm32f103c8_breakout)
 endif
 
 ##---------------------------------------------------------------------------
+## stm32f103c8_skyward_alderaan
+##
+ifeq ($(OPT_BOARD),stm32f103c8_skyward_alderaan)
+
+    ## Linker script type, there are two options
+    ## 1) Code in FLASH, stack + heap in RAM
+    ## 2) Code in FLASH, stack + heap in RAM flashing with bootloader
+    
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_64k+20k_bootloader.ld    
+    
+    ## Select clock frequency
+    CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_36MHz=36000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_48MHz=48000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_56MHz=56000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
+
+endif
+##---------------------------------------------------------------------------
 ## stm32f100c8_microboard
 ##
 
@@ -602,6 +622,8 @@ else ifeq ($(OPT_BOARD),stm32f205rc_skyward_stormtrooper)
 else ifeq ($(OPT_BOARD),stm32f401vc_stm32f4discovery)
     ARCH := cortexM4_stm32f4
 else ifeq ($(OPT_BOARD),stm32f103c8_breakout)
+    ARCH := cortexM3_stm32
+else ifeq ($(OPT_BOARD),stm32f103c8_skyward_alderaan)
     ARCH := cortexM3_stm32
 else ifeq ($(OPT_BOARD),stm32f100c8_microboard)
     ARCH := cortexM3_stm32
@@ -1034,6 +1056,38 @@ else ifeq ($(ARCH),cortexM3_stm32)
         ## board.
         #PROGRAM_CMDLINE := sudo vsprog -cstm32_vl -ms -I main.hex -oe -owf -ovf
         PROGRAM_CMDLINE := stm32flash -w main.hex -v /dev/ttyUSB1
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f103c8_skyward_alderaan
+    ##
+    else ifeq ($(OPT_BOARD),stm32f103c8_skyward_alderaan)
+
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM3_stm32/stm32f103c8_skyward_alderaan
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o        
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_64k+20k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp         \
+        $(BOARD_INC)/interfaces-impl/hw_mapping.h         \
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32F103C8_SKYWARD_ALDERAAN -DSTM32F10X_MD
+        CXXFLAGS_BASE += -D_BOARD_STM32F103C8_SKYWARD_ALDERAAN -DSTM32F10X_MD
+       
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        #PROGRAM_CMDLINE := sudo vsprog -cstm32_vl -ms -I main.hex -oe -owf -ovf
+        PROGRAM_CMDLINE := stm32flash -w test-alderaan.hex -v /dev/ttyUSB1
         
     ##-------------------------------------------------------------------------
     ## BOARD: stm32f100c8_microboard
