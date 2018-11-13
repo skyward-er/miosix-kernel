@@ -217,10 +217,10 @@ void IRQbspInit()
     uart4::tx::mode(Mode::ALTERNATE);
     uart4::tx::alternateFunction(8);
     
-    can::rx::mode(Mode::ALTERNATE);
-    can::rx::alternateFunction(9);
-    can::tx::mode(Mode::ALTERNATE);
-    can::tx::alternateFunction(9);
+    // can::rx::mode(Mode::ALTERNATE);
+    // can::rx::alternateFunction(9);
+    // can::tx::mode(Mode::ALTERNATE);
+    // can::tx::alternateFunction(9);
     
     using namespace sensors;
     adis16405::cs::mode(Mode::OUTPUT);
@@ -273,15 +273,15 @@ void IRQbspInit()
      ledOff();
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL))); // PA9,PA10
 }
 
 void bspInit2()
 {
     #ifdef WITH_FILESYSTEM
     intrusive_ref_ptr<DevFs> devFs = basicFilesystemSetup(SDIODriver::instance());
-    devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));
-    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,57600)));
+    devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));  // PA2,PA3
+    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,57600))); // PB10,PB11
     #endif //WITH_FILESYSTEM
 }
 

@@ -56,10 +56,10 @@ using tx    = Gpio<GPIOA_BASE, 0>;
 using rx    = Gpio<GPIOA_BASE, 1>;
 } //namespace uart4
 
-namespace can {
-using rx    = Gpio<GPIOA_BASE, 11>;
-using tx    = Gpio<GPIOA_BASE, 12>;
-} // namespace can
+// namespace can {
+// using rx    = Gpio<GPIOA_BASE, 11>;
+// using tx    = Gpio<GPIOA_BASE, 12>;
+// } // namespace can
 } //namespace interfaces
 
 namespace sensors {
