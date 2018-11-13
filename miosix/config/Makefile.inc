@@ -485,7 +485,6 @@ ifeq ($(OPT_BOARD),stm32f429zi_skyward_homeone)
 endif
 
 ##---------------------------------------------------------------------------
--
 ## stm32f429zi_skyward_rogallina
 ##
 ifeq ($(OPT_BOARD),stm32f429zi_skyward_rogallina)
@@ -519,7 +518,6 @@ ifeq ($(OPT_BOARD),stm32f429zi_skyward_rogallina)
 endif
 
 ##---------------------------------------------------------------------------
--
 ## stm32f401re_nucleo
 ##
 
@@ -566,7 +564,7 @@ endif
 ## a new board or porting Miosix to a new architecture                    ##
 ############################################################################
 
-ifneq ($(MAKEFILE_VERSION),1.07)
+ifneq ($(MAKEFILE_VERSION),1.07S)
     $(info You are using an incompatible makefile. Make sure it matches \
       the one distributed with the current version of the kernel)
     $(error Error)
