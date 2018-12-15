@@ -401,12 +401,12 @@ endif
 ## stm32f103c8_skyward_alderaan
 ##
 ifeq ($(OPT_BOARD),stm32f103c8_skyward_alderaan)
+    #LINKER_SCRIPT_PATH := arch/cortexM3_stm32/stm32f103c8_skyward_aldeeran/
 
     ## Linker script type, there are two options
     ## 1) Code in FLASH, stack + heap in RAM
     ## 2) Code in FLASH, stack + heap in RAM flashing with bootloader
-    
-    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_64k+20k_bootloader.ld    
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_64k+20k_rom.ld    
     
     ## Select clock frequency
     CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000
@@ -1072,7 +1072,6 @@ else ifeq ($(ARCH),cortexM3_stm32)
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
         $(BOARD_INC)/interfaces-impl/bsp.cpp         \
-        $(BOARD_INC)/interfaces-impl/hw_mapping.h         \
 
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F103C8_SKYWARD_ALDERAAN -DSTM32F10X_MD

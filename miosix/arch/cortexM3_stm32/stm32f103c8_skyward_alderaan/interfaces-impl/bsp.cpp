@@ -72,19 +72,22 @@ void IRQbspInit()
     uart1::tx::mode(Mode::OUTPUT);
     uart1::rx::mode(Mode::INPUT);
 
-    can::rx::mode(Mode::INPUT);
-    can::tx::mode(Mode::OUTPUT);
-
     using namespace actuators;
-    abort1::mode(Mode::OUTPUT);
-    ignition1::mode(Mode::OUTPUT);
-    spare::mode(Mode::OUTPUT); //non sicuro se input o output
+    abortPin::mode(Mode::OUTPUT);
+    ignitionPin::mode(Mode::OUTPUT);
+    umbilicalPin::mode(Mode::OUTPUT);
 
-#warning RICORDARSI DI TOGLIERE IL LED IN BOOT!! 
-  _led::mode(Mode::OUTPUT_2MHz);
+    abortPin::high();
+    umbilicalPin::high();
+    ignitionPin::low();
+
+    #ifdef DEBUG
+    _led::mode(Mode::OUTPUT_2MHz);
     ledOn();
     delayMs(100);
     ledOff();
+    #endif
+
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
     #ifndef STDOUT_REDIRECTED_TO_DCC
         new STM32Serial(defaultSerial,defaultSerialSpeed,

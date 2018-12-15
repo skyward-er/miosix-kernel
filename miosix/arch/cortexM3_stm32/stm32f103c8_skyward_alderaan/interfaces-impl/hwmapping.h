@@ -26,7 +26,7 @@
  ***************************************************************************/
 
 #ifndef HWMAPPING_H
-#define	HWMAPPING_H
+#define HWMAPPING_H
 
 #include "interfaces/gpio.h"
 
@@ -35,41 +35,26 @@ namespace miosix {
 namespace interfaces 
 {
 
-	namespace spi1 {
-	using sck   = Gpio<GPIOA_BASE, 5>;
-	using miso  = Gpio<GPIOA_BASE, 6>;
-	using mosi  = Gpio<GPIOA_BASE, 7>;
-	} //namespace spi1
+    namespace spi1 {
+    using sck   = Gpio<GPIOA_BASE, 5>;
+    using miso  = Gpio<GPIOA_BASE, 6>;
+    using mosi  = Gpio<GPIOA_BASE, 7>;
+    } //namespace spi1
 
-	namespace spi2 {
-	using sck   = Gpio<GPIOB_BASE, 13>;
-	using miso  = Gpio<GPIOB_BASE, 14>;
-	using mosi  = Gpio<GPIOB_BASE, 15>;
-	} //namespace spi2 [non usato]
+    namespace uart1 {
+    using tx    = Gpio<GPIOA_BASE, 9>;
+    using rx    = Gpio<GPIOA_BASE, 10>;
+    } //namespace uart1
 
-	namespace i2c {
-	using scl   = Gpio<GPIOB_BASE, 8>;
-	using sda   = Gpio<GPIOB_BASE, 9>;
-	} //namespace i2c [non usato]
-
-	namespace uart1 {
-	using tx    = Gpio<GPIOA_BASE, 9>;
-	using rx    = Gpio<GPIOA_BASE, 10>;
-	} //namespace uart1
-
-	namespace can {
-	using rx    = Gpio<GPIOB_BASE, 8>;
-	using tx    = Gpio<GPIOB_BASE, 9>;
-	} // namespace can
 } //namespace interfaces
 
 
 namespace actuators 
 {
 
-	using abort1   	= Gpio<GPIOA_BASE, 1>;
-	using ignition1 = Gpio<GPIOA_BASE, 2>;
-	using spare 	= Gpio<GPIOA_BASE, 3>;
+    using abortPin      = Gpio<GPIOA_BASE, 1>;
+    using ignitionPin   = Gpio<GPIOA_BASE, 2>;
+    using umbilicalPin  = Gpio<GPIOA_BASE, 3>;
 
 } //namespace actuators
 
