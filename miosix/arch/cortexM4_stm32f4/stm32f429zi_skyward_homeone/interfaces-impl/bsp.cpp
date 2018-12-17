@@ -249,6 +249,9 @@ void IRQbspInit()
     hbridgel::in::mode(Mode::ALTERNATE);
     hbridgel::in::alternateFunction(2);
     hbridgel::csens::mode(Mode::INPUT_ANALOG);
+
+    hbridger::ena::mode(Mode::OUTPUT);
+    hbridger::ena::low();
     hbridger::in::mode(Mode::ALTERNATE);
     hbridger::in::alternateFunction(2);
     hbridger::csens::mode(Mode::INPUT_ANALOG);
