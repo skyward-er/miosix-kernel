@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2012, 2013, 2014 by Terraneo Federico                   *
+ *   Copyright (C) 2013, 2014, 2015 by Terraneo Federico                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,65 +25,72 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef BOARD_SETTINGS_H
-#define	BOARD_SETTINGS_H
-
-#include "util/version.h"
+#ifndef ATOMIC_OPS_IMPL_M0_H
+#define	ATOMIC_OPS_IMPL_M0_H
 
 /**
- * \internal
- * Versioning for board_settings.h for out of git tree projects
+ * Cortex M0/M0+ architectures does not support __LDREXW, __STREXW and __CLREX
+ * instructions, so we have to redefine the atomic operations using functions
+ * that disable the interrupts.
+ * 
+ * TODO: actually this implementation is not very efficient
+ * 
  */
-#define BOARD_SETTINGS_VERSION 100
+
+#include "interfaces/arch_registers.h"
+#include <kernel/kernel.h>
 
 namespace miosix {
 
-/**
- * \addtogroup Settings
- * \{
- */
 
-/// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB)
-/// Application requires more than the usual 4KB stack, increasing to 5KB.
-const unsigned int MAIN_STACK_SIZE=5*1024;
+inline int atomicSwap(volatile int *p, int v)
+{
+    InterruptDisableLock dLock;
+    
+    int result = *p;
+    *p = v;
+    return result;
+}
 
-/// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
-/// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
-/// tick and the minimun Thread::sleep value is 1ms
-/// For the priority scheduler this is also the context switch frequency
-const unsigned int TICK_FREQ=1000;
+inline void atomicAdd(volatile int *p, int incr)
+{
+    InterruptDisableLock dLock;
+    
+    *p += incr;
+}
 
-///\internal Aux timer run @ 100KHz
-///Note that since the timer is only 16 bits this imposes a limit on the
-///burst measurement of 655ms. If due to a pause_kernel() or
-///disable_interrupts() section a thread runs for more than that time, a wrong
-///burst value will be measured
-const unsigned int AUX_TIMER_CLOCK=100000;
-const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
+inline int atomicAddExchange(volatile int *p, int incr)
+{
+    InterruptDisableLock dLock;
+    
+    int result = *p;
+    *p += incr;
+    return result;
+}
 
-const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=115200;
-const bool defaultSerialFlowctrl=false;
-// Uncomment AUX_SERIAL to enable. The device will appear as /dev/auxtty.
-#define AUX_SERIAL "auxtty"
-const unsigned int auxSerial=3;
-const unsigned int auxSerialSpeed=230400;
-const bool auxSerialFlowctrl=false;
-#define SERIAL_1_DMA
-//#define SERIAL_2_DMA
-#define SERIAL_3_DMA
+inline int atomicCompareAndSwap(volatile int *p, int prev, int next)
+{
+    InterruptDisableLock dLock;
+    
+    int result = *p;
+    if(*p == prev) *p = next;
+    return result;
+}
 
-//#define I2C_WITH_DMA
-
-//SD card driver
-static const unsigned char sdVoltage=33; //Board powered @ 3.3V
-// #define SD_ONE_BIT_DATABUS //Commented to use 4 bit databus
-
-/**
- * \}
- */
+inline void *atomicFetchAndIncrement(void * const volatile * p, int offset,
+        int incr)
+{
+    InterruptDisableLock dLock;
+    
+    volatile uint32_t *pt;
+    
+    void *result = *p;
+    if(result == 0) return 0;
+    pt = reinterpret_cast<uint32_t*>(result) + offset;
+    *pt += incr;
+    return result;
+}
 
 } //namespace miosix
 
-#endif	/* BOARD_SETTINGS_H */
+#endif //ATOMIC_OPS_IMPL_M0_H

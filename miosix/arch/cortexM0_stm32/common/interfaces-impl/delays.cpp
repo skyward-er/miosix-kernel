@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2012, 2013, 2014 by Terraneo Federico                   *
+ *   Copyright (C) 2010 by Terraneo Federico                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,65 +25,58 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef BOARD_SETTINGS_H
-#define	BOARD_SETTINGS_H
-
-#include "util/version.h"
-
-/**
- * \internal
- * Versioning for board_settings.h for out of git tree projects
- */
-#define BOARD_SETTINGS_VERSION 100
+#include "interfaces/delays.h"
 
 namespace miosix {
 
-/**
- * \addtogroup Settings
- * \{
- */
+void delayMs(unsigned int mseconds)
+{    
+    #ifdef SYSCLK_FREQ_48MHz
+    register const unsigned int count=9600;
+    #elif SYSCLK_FREQ_36MHz
+    register const unsigned int count=7200;
+    #elif SYSCLK_FREQ_24MHz
+    register const unsigned int count=6000;
+    #else
+    register const unsigned int count=2016;
+    #endif
+    
+    for(unsigned int i=0;i<mseconds;i++)
+    {
+        // This delay has been calibrated to take 1 millisecond
+        // It is written in assembler to be independent on compiler optimizations
+        asm volatile("              mov   r1, #0       \n"
+                     "___loop_m:    cmp   r1, %0       \n"
+                     "              bge   __loop_m_exit\n"
+                     "              add   r1, r1, #1   \n"
+                     "              b     ___loop_m    \n"
+                     "__loop_m_exit:                   \n"::"r"(count):"r1");
+    }
+}
 
-/// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB)
-/// Application requires more than the usual 4KB stack, increasing to 5KB.
-const unsigned int MAIN_STACK_SIZE=5*1024;
+void delayUs(unsigned int useconds)
+{
+    // This delay has been calibrated to take x microseconds
+    // It is written in assembler to be independent on compiler optimizations    
+    #ifdef SYSCLK_FREQ_48MHz
+    #error "delayUs not implemented"
 
-/// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
-/// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
-/// tick and the minimun Thread::sleep value is 1ms
-/// For the priority scheduler this is also the context switch frequency
-const unsigned int TICK_FREQ=1000;
+    #elif SYSCLK_FREQ_36MHz
+    #error "delayUs not implemented"
 
-///\internal Aux timer run @ 100KHz
-///Note that since the timer is only 16 bits this imposes a limit on the
-///burst measurement of 655ms. If due to a pause_kernel() or
-///disable_interrupts() section a thread runs for more than that time, a wrong
-///burst value will be measured
-const unsigned int AUX_TIMER_CLOCK=100000;
-const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
-
-const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=115200;
-const bool defaultSerialFlowctrl=false;
-// Uncomment AUX_SERIAL to enable. The device will appear as /dev/auxtty.
-#define AUX_SERIAL "auxtty"
-const unsigned int auxSerial=3;
-const unsigned int auxSerialSpeed=230400;
-const bool auxSerialFlowctrl=false;
-#define SERIAL_1_DMA
-//#define SERIAL_2_DMA
-#define SERIAL_3_DMA
-
-//#define I2C_WITH_DMA
-
-//SD card driver
-static const unsigned char sdVoltage=33; //Board powered @ 3.3V
-// #define SD_ONE_BIT_DATABUS //Commented to use 4 bit databus
-
-/**
- * \}
- */
+    #elif SYSCLK_FREQ_24MHz
+    #error "delayUs not implemented"
+    #else
+    asm volatile("              mov   r1, #2       \n"
+                 "              mul   r1, %0, r1   \n"
+                 "              mov   r2, #0       \n"
+                 "___loop_u:    cmp   r2, r1       \n"
+                 "              bge   __loop_u_exit\n"
+                 "              add   r2, r2, #1   \n"
+                 "              b     ___loop_u    \n"
+                 "__loop_u_exit:                   \n"::"r"(useconds):"r1","r2");
+    #endif    
+}
 
 } //namespace miosix
 
-#endif	/* BOARD_SETTINGS_H */
