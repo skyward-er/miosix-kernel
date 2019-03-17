@@ -63,23 +63,50 @@ void IRQbspInit()
     RCC_SYNC();
 
     
-    //PORT INITIALIZATION
-    using namespace interfaces;
-    spi1::sck::mode(Mode::OUTPUT);
-    spi1::miso::mode(Mode::INPUT);
-    spi1::mosi::mode(Mode::OUTPUT);
+    // Actuator Pins Initialization
+    // Abort pin logic : 0 -> ABORT (burn fuse)
+    //                   1 -> NOT ABORT
+    // Ignition pin logic : 0 -> NO IGNITION
+    //                      1 -> IGNITION 
+    using namespace actuators;
+    abortPin::mode(Mode::OUTPUT);
+    abortPin::high();
 
+    ignitionPin::mode(Mode::OUTPUT);
+    ignitionPin::low();
+
+    using namespace interfaces;
+    // Spare Pin initialization
+    // Spare pin logic : 0 -> AVR BUSY
+    //                   1 -> AVR READY
+    sparePin::mode(Mode::INPUT);
+    sparePin::high();
+
+    // SPI1 intialization
+    spi1::cs::mode(Mode::OUTPUT); 
+    spi1::cs::high();
+    spi1::sck::mode(Mode::ALTERNATE);
+    spi1::miso::mode(Mode::ALTERNATE);
+    spi1::mosi::mode(Mode::ALTERNATE);
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+    SPI1->CR1=SPI_CR1_SSM  //No HW cs
+            | SPI_CR1_SSI
+            | SPI_CR1_SPE  //SPI enabled
+            | SPI_CR1_BR_2 //SPI clock 24MHz / 32 = 750kHz
+            | SPI_CR1_MSTR;//Master mode
+
+    // UART1 initialization
     uart1::tx::mode(Mode::OUTPUT);
     uart1::rx::mode(Mode::INPUT);
 
-    using namespace actuators;
-    abortPin::mode(Mode::OUTPUT);
-    ignitionPin::mode(Mode::OUTPUT);
-    umbilicalPin::mode(Mode::OUTPUT);
+    // CAN1 initialization
+    can1::rx::mode(Mode::ALTERNATE);
+    can1::tx::mode(Mode::ALTERNATE);
+    RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+    RCC_SYNC();
 
-    abortPin::high();
-    umbilicalPin::high();
-    ignitionPin::low();
+    NVIC_SetPriority(CAN1_RX1_IRQn, 15);
+    NVIC_EnableIRQ(CAN1_RX1_IRQn);
 
     #ifdef DEBUG
     _led::mode(Mode::OUTPUT_2MHz);

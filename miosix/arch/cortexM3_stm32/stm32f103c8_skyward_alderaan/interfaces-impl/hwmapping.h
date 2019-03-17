@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2018 by Terraneo Federico                               *
+ *   Copyright (C) 2018 by Terraneo Federico, Alvise de' Faveri Tron       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -36,6 +36,7 @@ namespace interfaces
 {
 
     namespace spi1 {
+    using cs    = Gpio<GPIOA_BASE, 4>;
     using sck   = Gpio<GPIOA_BASE, 5>;
     using miso  = Gpio<GPIOA_BASE, 6>;
     using mosi  = Gpio<GPIOA_BASE, 7>;
@@ -46,15 +47,21 @@ namespace interfaces
     using rx    = Gpio<GPIOA_BASE, 10>;
     } //namespace uart1
 
+    namespace can1 {
+    using rx = Gpio<GPIOB_BASE, 8>;
+    using tx = Gpio<GPIOB_BASE, 9>;
+    }
+
+    using sparePin  = Gpio<GPIOA_BASE, 3>;
+
+
 } //namespace interfaces
 
 
 namespace actuators 
 {
-
     using abortPin      = Gpio<GPIOA_BASE, 1>;
     using ignitionPin   = Gpio<GPIOA_BASE, 2>;
-    using umbilicalPin  = Gpio<GPIOA_BASE, 3>;
 
 } //namespace actuators
 
