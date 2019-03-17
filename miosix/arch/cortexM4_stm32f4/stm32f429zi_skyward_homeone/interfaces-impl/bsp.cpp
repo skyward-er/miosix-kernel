@@ -257,7 +257,6 @@ void IRQbspInit()
     hbridger::csens::mode(Mode::INPUT_ANALOG);
     
     
-    
     InAir9B::cs::mode(Mode::OUTPUT);
     InAir9B::cs::high();    
     //NOTE: in the InAir9B datasheet is specified that the nRSR line should be
@@ -270,21 +269,25 @@ void IRQbspInit()
     InAir9B::dio3::mode(Mode::INPUT);
 
     _led::mode(Mode::OUTPUT);    
-// Removed led blink to speed up boot
+    //NOTE: Remove led blink to speed up boot
      ledOn();
      delayMs(100);
      ledOff();
+
+    // Default console PA9,PA10
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL))); // PA9,PA10
+        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
 }
 
 void bspInit2()
 {
     #ifdef WITH_FILESYSTEM
     intrusive_ref_ptr<DevFs> devFs = basicFilesystemSetup(SDIODriver::instance());
-    devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));  // PA2,PA3
-    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,57600))); // PB10,PB11
+    // PA2,PA3
+    devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200))); 
+    // PB10,PB11
+    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,57600)));
     #endif //WITH_FILESYSTEM
 }
 
@@ -293,7 +296,7 @@ void bspInit2()
 //
 
 /**
- * For safety reasons, we never want the anakin to shutdown.
+ * For safety reasons, we never want the boadr to shutdown.
  * When requested to shutdown, we reboot instead.
  */
 void shutdown()
