@@ -412,11 +412,11 @@ ifeq ($(OPT_BOARD),stm32f103c8_skyward_alderaan)
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_64k+20k_rom.ld    
     
     ## Select clock frequency
-    CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000
     #CLOCK_FREQ := -DSYSCLK_FREQ_36MHz=36000000
     #CLOCK_FREQ := -DSYSCLK_FREQ_48MHz=48000000
     #CLOCK_FREQ := -DSYSCLK_FREQ_56MHz=56000000
-    #CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
+    CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
 
 endif
 ##---------------------------------------------------------------------------
@@ -1131,7 +1131,7 @@ else ifeq ($(ARCH),cortexM3_stm32)
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
         BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o        
-        LINKER_SCRIPT := $(BOARD_INC)/stm32_64k+20k_rom.ld
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_128k+20k_rom.ld
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
