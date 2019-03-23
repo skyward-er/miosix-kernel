@@ -50,18 +50,80 @@
 
 namespace miosix {
 
+/**
+ * Initilize SPI
+ */
+void initSPI1()
+{
+    using namespace interfaces;
+    // SPI1 intialization
+    spi1::cs::mode(Mode::OUTPUT); 
+    spi1::cs::high();
+    spi1::sck::mode(Mode::ALTERNATE);
+    spi1::miso::mode(Mode::ALTERNATE);
+    spi1::mosi::mode(Mode::ALTERNATE);
+
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+    RCC_SYNC();
+
+    SPI1->CR1=SPI_CR1_SSM  //No HW cs
+        | SPI_CR1_SSI
+        | SPI_CR1_SPE  //SPI enabled
+        | SPI_CR1_BR_2 //SPI clock 24MHz / 32 = 750kHz
+        | SPI_CR1_MSTR;//Master mode
+}
+
+/**
+ * Initialize Canbus
+ */
+void initCAN1()
+{
+    using namespace interfaces;
+    // CAN1 initialization
+    can1::rx::mode(Mode::ALTERNATE);
+    can1::tx::mode(Mode::ALTERNATE);
+
+    RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+
+    NVIC_SetPriority(CAN1_RX1_IRQn, 1);
+    NVIC_EnableIRQ(CAN1_RX1_IRQn);
+}
+
+/**
+ * Initialize hardware timer
+ */
+void initTIM2()
+{
+    using namespace interfaces;
+    // TIM2 initialization
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+    /* Clear the update event flag */
+    TIM2->SR   = 0;
+    /* Clear the counter value */
+    TIM2->CNT  = 0;
+    /* Prescaler and Reload set to maximum = overflow every 59.6523235555 sec*/
+    TIM2->PSC  = 0xFFFF;
+    TIM2->ARR  = 0xFFFF;  
+    /* Enable Counter */
+    TIM2->CR1  |= TIM_CR1_CEN;  
+
+    /* Configure Interupt */
+    TIM2->DIER |= TIM_DIER_UIE; 
+    NVIC_SetPriority(TIM2_IRQn, 0);
+    NVIC_EnableIRQ(TIM2_IRQn);
+}
+
+
 //
 // Initialization
 //
-
 void IRQbspInit()
 {
     //Enable all gpios
     RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN |
                     RCC_APB2ENR_IOPCEN | RCC_APB2ENR_IOPDEN |
                     RCC_APB2ENR_AFIOEN;
-    RCC_SYNC();
-
     
     // Actuator Pins Initialization
     // Abort pin logic : 0 -> ABORT (burn fuse)
@@ -82,46 +144,28 @@ void IRQbspInit()
     sparePin::mode(Mode::INPUT);
     sparePin::high();
 
-    // SPI1 intialization
-    spi1::cs::mode(Mode::OUTPUT); 
-    spi1::cs::high();
-    spi1::sck::mode(Mode::ALTERNATE);
-    spi1::miso::mode(Mode::ALTERNATE);
-    spi1::mosi::mode(Mode::ALTERNATE);
-    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-    SPI1->CR1=SPI_CR1_SSM  //No HW cs
-            | SPI_CR1_SSI
-            | SPI_CR1_SPE  //SPI enabled
-            | SPI_CR1_BR_2 //SPI clock 24MHz / 32 = 750kHz
-            | SPI_CR1_MSTR;//Master mode
+    initSPI1();
+    initCAN1();
+    initTIM2();
 
-    // UART1 initialization
-    uart1::tx::mode(Mode::OUTPUT);
-    uart1::rx::mode(Mode::INPUT);
+    //#ifdef DEBUG
+        // UART1 initialization
+        uart1::tx::mode(Mode::OUTPUT);
+        uart1::rx::mode(Mode::INPUT);
 
-    // CAN1 initialization
-    can1::rx::mode(Mode::ALTERNATE);
-    can1::tx::mode(Mode::ALTERNATE);
-    RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
-    RCC_SYNC();
+        _led::mode(Mode::OUTPUT_2MHz);
+        ledOn();
+        delayMs(100);
+        ledOff();
 
-    NVIC_SetPriority(CAN1_RX1_IRQn, 15);
-    NVIC_EnableIRQ(CAN1_RX1_IRQn);
-
-    #ifdef DEBUG
-    _led::mode(Mode::OUTPUT_2MHz);
-    ledOn();
-    delayMs(100);
-    ledOff();
-    #endif
-
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-    #ifndef STDOUT_REDIRECTED_TO_DCC
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
-    #else //STDOUT_REDIRECTED_TO_DCC
-        new ARMDCC();
-    #endif //STDOUT_REDIRECTED_TO_DCC
+        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+        #ifndef STDOUT_REDIRECTED_TO_DCC
+            new STM32Serial(defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+        #else //STDOUT_REDIRECTED_TO_DCC
+            new ARMDCC();
+        #endif //STDOUT_REDIRECTED_TO_DCC
+    //#endif
 }
 
 void bspInit2()
