@@ -72,7 +72,7 @@ void configureSdram()
                     RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
                     RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_GPIOHEN;
     RCC_SYNC();
-    
+
     //First, configure SDRAM GPIOs
     GPIOB->AFR[0]=0x0cc00000;
     GPIOC->AFR[0]=0x0000000c;
@@ -191,7 +191,7 @@ void IRQbspInit()
                     RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_GPIOHEN;
     RCC_SYNC();
     #endif //__ENABLE_XRAM
-    
+
     using namespace interfaces;
     spi1::sck::mode(Mode::ALTERNATE);
     spi1::sck::alternateFunction(5);
@@ -199,64 +199,89 @@ void IRQbspInit()
     spi1::miso::alternateFunction(5);
     spi1::mosi::mode(Mode::ALTERNATE);
     spi1::mosi::alternateFunction(5);
-    
+
     spi2::sck::mode(Mode::ALTERNATE);
     spi2::sck::alternateFunction(5);
     spi2::miso::mode(Mode::ALTERNATE);
     spi2::miso::alternateFunction(5);
     spi2::mosi::mode(Mode::ALTERNATE);
     spi2::mosi::alternateFunction(5);
-    
+
     i2c::scl::mode(Mode::ALTERNATE_OD);
     i2c::scl::alternateFunction(4);
     i2c::sda::mode(Mode::ALTERNATE_OD);
     i2c::sda::alternateFunction(4);
-    
+
     uart4::rx::mode(Mode::ALTERNATE);
     uart4::rx::alternateFunction(8);
     uart4::tx::mode(Mode::ALTERNATE);
     uart4::tx::alternateFunction(8);
-    
-    // can::rx::mode(Mode::ALTERNATE);
-    // can::rx::alternateFunction(9);
-    // can::tx::mode(Mode::ALTERNATE);
-    // can::tx::alternateFunction(9);
-    
+
+    can::rx::mode(Mode::ALTERNATE);
+    can::rx::alternateFunction(9);
+    can::tx::mode(Mode::ALTERNATE);
+    can::tx::alternateFunction(9);
+
     using namespace sensors;
     adis16405::cs::mode(Mode::OUTPUT);
     adis16405::cs::high();
-    adis16405::nrst::mode(Mode::OUTPUT);
-    adis16405::nrst::high();
     adis16405::ckIn::mode(Mode::ALTERNATE);
     adis16405::ckIn::alternateFunction(2);
-    adis16405::dio1::mode(Mode::INPUT); 
-    
+    adis16405::dio1::mode(Mode::INPUT);    
+
     ad7994::ab::mode(Mode::INPUT);
     ad7994::nconvst::mode(Mode::OUTPUT);
-    
-    max21105::cs::mode(Mode::OUTPUT);
-    max21105::cs::high();
-    
+
     mpu9250::cs::mode(Mode::OUTPUT);
     mpu9250::cs::high();
-    
-    ms5803::cs::mode(Mode::OUTPUT);
-    ms5803::cs::high(); 
-    
-    using namespace actuators;
-    hbridgel::ena::mode(Mode::OUTPUT);
-    hbridgel::ena::low();
-    hbridgel::in::mode(Mode::ALTERNATE);
-    hbridgel::in::alternateFunction(2);
-    hbridgel::csens::mode(Mode::INPUT_ANALOG);
 
-    hbridger::ena::mode(Mode::OUTPUT);
-    hbridger::ena::low();
-    hbridger::in::mode(Mode::ALTERNATE);
-    hbridger::in::alternateFunction(2);
-    hbridger::csens::mode(Mode::INPUT_ANALOG);
-    
-    
+    ms5803::cs::mode(Mode::OUTPUT);
+    ms5803::cs::high();
+
+    lsm6ds3h::cs::mode(Mode::OUTPUT);
+    lsm6ds3h::cs::high();
+    lsm6ds3h::int1::mode(Mode::INPUT);
+    lsm6ds3h::int2::mode(Mode::INPUT);
+
+    using namespace inputs;
+    vbat::mode(Mode::INPUT_ANALOG);
+    lpDet::mode(Mode::INPUT);
+    btn1::mode(Mode::INPUT);
+    btn2::mode(Mode::INPUT);
+
+    using namespace nosecone;
+    motEn::mode(Mode::OUTPUT);
+    motEn::low();
+
+    motP1::mode(Mode::ALTERNATE);
+    motP1::alternateFunction(3);
+
+    motP2::mode(Mode::ALTERNATE);
+    motP2::alternateFunction(3);
+
+    rogP1::mode(Mode::ALTERNATE);
+    rogP1::alternateFunction(2);
+
+    rogP2::mode(Mode::ALTERNATE);
+    rogP2::alternateFunction(3);
+
+    dtch::mode(Mode::INPUT);
+
+    using namespace actuators;
+    tcPwm::mode(Mode::ALTERNATE);
+    tcPwm::alternateFunction(3);
+
+    thCut1::ena::mode(Mode::OUTPUT);
+    thCut1::ena::low();
+    thCut1::csens::mode(Mode::INPUT_ANALOG);
+
+    thCut2::ena::mode(Mode::OUTPUT);
+    thCut2::ena::low();
+    thCut2::csens::mode(Mode::INPUT_ANALOG);
+
+    misc::buzz::mode(Mode::OUTPUT);
+    misc::buzz::low();
+
     InAir9B::cs::mode(Mode::OUTPUT);
     InAir9B::cs::high();    
     //NOTE: in the InAir9B datasheet is specified that the nRSR line should be
@@ -268,13 +293,11 @@ void IRQbspInit()
     InAir9B::dio2::mode(Mode::INPUT);
     InAir9B::dio3::mode(Mode::INPUT);
 
-    _led::mode(Mode::OUTPUT);    
-    //NOTE: Remove led blink to speed up boot
-     ledOn();
-     delayMs(100);
-     ledOff();
-
-    // Default console PA9,PA10
+//     _led::mode(Mode::OUTPUT);
+// Removed led blink to speed up boot
+//     ledOn();
+//     delayMs(100);
+//     ledOff();
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
         defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
@@ -284,10 +307,7 @@ void bspInit2()
 {
     #ifdef WITH_FILESYSTEM
     intrusive_ref_ptr<DevFs> devFs = basicFilesystemSetup(SDIODriver::instance());
-    // PA2,PA3
-    devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200))); 
-    // PB10,PB11
-    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,57600)));
+    devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));
     #endif //WITH_FILESYSTEM
 }
 
@@ -296,7 +316,7 @@ void bspInit2()
 //
 
 /**
- * For safety reasons, we never want the boadr to shutdown.
+ * For safety reasons, we never want the anakin to shutdown.
  * When requested to shutdown, we reboot instead.
  */
 void shutdown()
