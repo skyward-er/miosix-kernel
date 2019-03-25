@@ -16,6 +16,39 @@
 //stage_2_boot.cpp
 extern "C" void _init();
 
+#define _FLASH_BASE 0x08000000
+#define _FLASH_END  0x0801FFFF
+
+/**
+ * Calculate the CRC of the whole flash and enter an infinite loop if is not 0.
+ *
+ * NOTE: During compilation, the program binary has been padded to reach 128k and
+ *       then the CRC has been calculated and placed in the last 4 bytes of the flash.
+ *       Since CRC(foo + CRC(foo)) = 0, we expect the CRC calculated here to be 0.
+ */
+void checkFlash()
+{
+    // Enable CRC clock
+    RCC->AHBENR |= RCC_AHBENR_CRCEN;
+
+    CRC->CR = 1; // reset initial value
+
+    // Calculate CRC of whole flash (32 bits at a time)
+    // NOTE: writing DR causes the new CRC to be calculated and then loaded back
+    //       in DR for the next iteration
+    for(uint32_t i = _FLASH_BASE; i < _FLASH_END ; i+=4)
+    {
+        CRC->DR = *((uint32_t*)i);
+    }
+
+    // Disable CRC clock
+    RCC->AHBENR &= ~RCC_AHBENR_CRCEN;
+
+    // CRC->DR now contains the CRC value of the whole flash (bin + loaded crc).
+    // If it's not 0, the flash is broken -> enter in an infinite loop.
+    if(CRC->DR != 0 ) for(;;);
+}
+
 /**
  * Called by Reset_Handler, performs initialization and calls main.
  * Never returns.
@@ -25,6 +58,10 @@ void program_startup()
 {
     //Cortex M3 core appears to get out of reset with interrupts already enabled
     __disable_irq();
+
+    // checkFlash() blocks if the flash CRC is not correct: this prevents the 
+    // microcontroller from doing something nasty if the flash is corrupted.
+    checkFlash();
 
 	//SystemInit() is called *before* initializing .data and zeroing .bss
 	//Despite all startup files provided by ST do the opposite, there are three
