@@ -63,8 +63,8 @@ void initSPI1()
     spi1::miso::mode(Mode::ALTERNATE);
     spi1::mosi::mode(Mode::ALTERNATE);
 
+    // Clock
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-    RCC_SYNC();
 
     SPI1->CR1=SPI_CR1_SSM  //No HW cs
         | SPI_CR1_SSI
@@ -79,10 +79,10 @@ void initSPI1()
 void initCAN1()
 {
     using namespace interfaces;
-    // CAN1 initialization
     can1::rx::mode(Mode::ALTERNATE);
     can1::tx::mode(Mode::ALTERNATE);
 
+    // clock
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
     NVIC_SetPriority(CAN1_RX1_IRQn, 1);
@@ -104,14 +104,15 @@ void initTIM2()
     TIM2->CNT  = 0;
     /* Prescaler and Reload set to maximum = overflow every 59.6523235555 sec*/
     TIM2->PSC  = 0xFFFF;
-    TIM2->ARR  = 0xFFFF;  
-    /* Enable Counter */
-    TIM2->CR1  |= TIM_CR1_CEN;  
+    TIM2->ARR  = 0xFFFF;    
 
     /* Configure Interupt */
     TIM2->DIER |= TIM_DIER_UIE; 
     NVIC_SetPriority(TIM2_IRQn, 0);
     NVIC_EnableIRQ(TIM2_IRQn);
+
+    /* Enable Counter */
+    TIM2->CR1  |= TIM_CR1_CEN;
 }
 
 
@@ -148,15 +149,17 @@ void IRQbspInit()
     initCAN1();
     initTIM2();
 
+    // Uart works only in debug mode
     //#ifdef DEBUG
         // UART1 initialization
         uart1::tx::mode(Mode::OUTPUT);
         uart1::rx::mode(Mode::INPUT);
 
+        /* No led in this board
         _led::mode(Mode::OUTPUT_2MHz);
         ledOn();
         delayMs(100);
-        ledOff();
+        ledOff(); */
 
         DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         #ifndef STDOUT_REDIRECTED_TO_DCC
