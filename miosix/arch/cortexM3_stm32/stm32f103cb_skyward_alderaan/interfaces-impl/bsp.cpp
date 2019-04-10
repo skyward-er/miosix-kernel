@@ -126,25 +126,25 @@ void IRQbspInit()
                     RCC_APB2ENR_IOPCEN | RCC_APB2ENR_IOPDEN |
                     RCC_APB2ENR_AFIOEN;
     
-    // Actuator Pins Initialization
+    // Initialize pins
     // Abort pin logic : 0 -> ABORT (burn fuse)
     //                   1 -> NOT ABORT
-    // Ignition pin logic : 0 -> NO IGNITION
-    //                      1 -> IGNITION 
     using namespace actuators;
     abortPin::mode(Mode::OUTPUT);
     abortPin::high();
 
+    // Ignition pin logic : 0 -> NO IGNITION
+    //                      1 -> IGNITION 
     ignitionPin::mode(Mode::OUTPUT);
     ignitionPin::low();
 
-    using namespace interfaces;
     // Spare Pin initialization
     // Spare pin logic : 0 -> AVR BUSY
     //                   1 -> AVR READY
+    using namespace interfaces;
     sparePin::mode(Mode::INPUT);
-    sparePin::high();
 
+    // Initialize peripherals
     initSPI1();
     initCAN1();
     initTIM2();
@@ -154,12 +154,6 @@ void IRQbspInit()
         // UART1 initialization
         uart1::tx::mode(Mode::OUTPUT);
         uart1::rx::mode(Mode::INPUT);
-
-        /* No led in this board
-        _led::mode(Mode::OUTPUT_2MHz);
-        ledOn();
-        delayMs(100);
-        ledOff(); */
 
         DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         #ifndef STDOUT_REDIRECTED_TO_DCC

@@ -49,7 +49,10 @@ ENTRY(_Z13Reset_Handlerv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)   : ORIGIN = 0x08000000, LENGTH = 64K
+    /* 
+     * Note, the last 4 bytes of the flash cannot be used, as they contain the CRC.
+     */
+    flash(rx)   : ORIGIN = 0x08000000, LENGTH = 128K-4 
 
     /*
      * Note, the ram starts at 0x20000000 but it is necessary to add the size
@@ -165,6 +168,13 @@ SECTIONS
     } > ram
     _bss_end = .;
 
+    /* .crc section: flash crc goes in here 
+       .crc_section 0x801FFFB :
+    {
+        KEEP(*(.crc_section)) 
+    } > flash 
+    */
+    
     _end = .;
     PROVIDE(end = .);
 }
