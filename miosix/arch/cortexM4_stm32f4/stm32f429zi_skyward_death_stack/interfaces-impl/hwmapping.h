@@ -75,7 +75,16 @@ using ckIn  = Gpio<GPIOA_BASE, 15>;
 namespace ad7994 {
 using ab      = Gpio<GPIOB_BASE, 1>;
 using nconvst = Gpio<GPIOG_BASE, 9>;
+static constexpr uint8_t addr = 0x22 << 1;
 } //namespace ad7994
+
+namespace lm75b_analog {
+static constexpr uint8_t addr = 0x48 << 1;
+} //namespace lm75b_analog
+
+namespace lm75b_imu {
+static constexpr uint8_t addr = 0x49 << 1;
+} //namespace lm75b_imu
 
 namespace mpu9250 {
 using cs    = Gpio<GPIOC_BASE, 3>;
@@ -97,7 +106,7 @@ using int2  = Gpio<GPIOG_BASE, 3>;
 namespace inputs {
 
 using vbat  = Gpio<GPIOF_BASE, 7>;
-using lpDet = Gpio<GPIOC_BASE, 6>;  //launchpad detach
+using lp_dtch = Gpio<GPIOC_BASE, 6>;  //launchpad detach
 using btn1  = Gpio<GPIOG_BASE, 11>;
 using btn2  = Gpio<GPIOG_BASE, 13>;
 }
@@ -109,7 +118,7 @@ using motP1 = Gpio<GPIOC_BASE, 7>;  //Pwm motore 1
 using motP2 = Gpio<GPIOB_BASE, 0>;  //Pwm motore 2
 using rogP1 = Gpio<GPIOD_BASE, 12>; //Pwm rogallina 1
 using rogP2 = Gpio<GPIOD_BASE, 13>; //Pwm rogallina 2
-using dtch  = Gpio<GPIOB_BASE, 7>;  //Nosecone detach
+using nc_dtch  = Gpio<GPIOB_BASE, 7>;  //Nosecone detach
 }
 
 namespace actuators {
@@ -128,22 +137,26 @@ using csens = Gpio<GPIOF_BASE, 6>;
 } //namespace actuators
 
 namespace misc {
-
 using buzz  = Gpio<GPIOD_BASE, 3>;
+
 using aux1  = Gpio<GPIOE_BASE, 2>;
 using aux2  = Gpio<GPIOE_BASE, 3>;
 using aux3  = Gpio<GPIOE_BASE, 4>;
 using aux4  = Gpio<GPIOC_BASE, 14>;
 using aux5  = Gpio<GPIOC_BASE, 15>;
+/*
+using led1  = Gpio<GPIOG_BASE, 2>;
+using led2  = Gpio<GPIOG_BASE, 3>;
+using led3  = Gpio<GPIOD_BASE, 11>;
+using led4  = Gpio<GPIOB_BASE, 1>;
+using led5  = Gpio<GPIOC_BASE, 4>;
+using led6  = Gpio<GPIOA_BASE, 4>;
+*/
 }
 
-namespace InAir9B {
-using dio0  = Gpio<GPIOB_BASE, 0>;
-using dio1  = Gpio<GPIOC_BASE, 4>;
-using dio2  = Gpio<GPIOA_BASE, 4>;
-using dio3  = Gpio<GPIOC_BASE, 2>;
+namespace xbee {
 using cs    = Gpio<GPIOF_BASE, 9>;
-using nrst  = Gpio<GPIOF_BASE, 7>;
+using attn  = Gpio<GPIOF_BASE, 10>;
 } //namespace InAir9B
 } //namespace miosix
 

@@ -245,7 +245,7 @@ void IRQbspInit()
 
     using namespace inputs;
     vbat::mode(Mode::INPUT_ANALOG);
-    lpDet::mode(Mode::INPUT);
+    lp_dtch::mode(Mode::INPUT);
     btn1::mode(Mode::INPUT);
     btn2::mode(Mode::INPUT);
 
@@ -265,7 +265,7 @@ void IRQbspInit()
     rogP2::mode(Mode::ALTERNATE);
     rogP2::alternateFunction(3);
 
-    dtch::mode(Mode::INPUT);
+    nc_dtch::mode(Mode::INPUT);
 
     using namespace actuators;
     tcPwm::mode(Mode::ALTERNATE);
@@ -282,22 +282,16 @@ void IRQbspInit()
     misc::buzz::mode(Mode::OUTPUT);
     misc::buzz::low();
 
-    InAir9B::cs::mode(Mode::OUTPUT);
-    InAir9B::cs::high();    
-    //NOTE: in the InAir9B datasheet is specified that the nRSR line should be
-    //on hi-Z state when idle, thus we set the gpio as open drain
-    InAir9B::nrst::mode(Mode::OPEN_DRAIN);
-    InAir9B::nrst::high();
-    InAir9B::dio0::mode(Mode::INPUT);
-    InAir9B::dio1::mode(Mode::INPUT);
-    InAir9B::dio2::mode(Mode::INPUT);
-    InAir9B::dio3::mode(Mode::INPUT);
+    xbee::cs::mode(Mode::OUTPUT);
+    xbee::cs::high();    
+    xbee::attn::mode(Mode::INPUT);
 
-//     _led::mode(Mode::OUTPUT);
-// Removed led blink to speed up boot
-//     ledOn();
-//     delayMs(100);
-//     ledOff();
+    //_led::mode(Mode::OUTPUT);
+    //Removed led blink to speed up boot
+    //ledOn();
+    //delayMs(100);
+    //ledOff();
+
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
         defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
@@ -306,6 +300,7 @@ void IRQbspInit()
 void bspInit2()
 {
     #ifdef WITH_FILESYSTEM
+    // PA2,PA3
     intrusive_ref_ptr<DevFs> devFs = basicFilesystemSetup(SDIODriver::instance());
     devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));
     #endif //WITH_FILESYSTEM
