@@ -270,9 +270,9 @@ void IRQbspInit()
 
     _led::mode(Mode::OUTPUT);    
     //NOTE: Remove led blink to speed up boot
-     ledOn();
-     delayMs(100);
-     ledOff();
+    ledOn();
+    delayMs(100);
+    ledOff();
 
     // Default console PA9,PA10
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(

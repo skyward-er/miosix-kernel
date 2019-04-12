@@ -74,7 +74,16 @@ using ckIn  = Gpio<GPIOA_BASE, 15>;
 namespace ad7994 {
 using ab      = Gpio<GPIOB_BASE, 1>;
 using nconvst = Gpio<GPIOG_BASE, 9>;
+static constexpr uint8_t addr = 0x22 << 1;
 } //namespace ad7994
+
+namespace lm75b_analog {
+static constexpr uint8_t addr = 0x48 << 1;
+} //namespace lm75b_analog
+
+namespace lm75b_imu {
+static constexpr uint8_t addr = 0x49 << 1;
+} //namespace lm75b_imu
 
 namespace max21105 {
 using cs    = Gpio<GPIOC_BASE, 1>;
