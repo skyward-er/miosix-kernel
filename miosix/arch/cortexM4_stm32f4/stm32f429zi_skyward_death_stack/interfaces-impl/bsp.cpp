@@ -286,11 +286,24 @@ void IRQbspInit()
     xbee::cs::high();    
     xbee::attn::mode(Mode::INPUT);
 
-    //_led::mode(Mode::OUTPUT);
-    //Removed led blink to speed up boot
-    //ledOn();
-    //delayMs(100);
-    //ledOff();
+    /* NOTE: Direct access to leds is possible
+     * only when the STM board is detached from
+     * the rest of the stack
+     */
+    /*
+    led1::mode(Mode::OUTPUT);
+    led2::mode(Mode::OUTPUT);
+    led3::mode(Mode::OUTPUT);
+    led4::mode(Mode::OUTPUT);
+    led5::mode(Mode::OUTPUT);
+    led6::mode(Mode::OUTPUT);
+    */
+
+    /* NOTE: No led for this board */
+    // _led::mode(Mode::OUTPUT);
+    // ledOn();
+    // delayMs(100);
+    // ledOff();
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,

@@ -144,6 +144,11 @@ using aux2  = Gpio<GPIOE_BASE, 3>;
 using aux3  = Gpio<GPIOE_BASE, 4>;
 using aux4  = Gpio<GPIOC_BASE, 14>;
 using aux5  = Gpio<GPIOC_BASE, 15>;
+
+/* NOTE: Direct access to leds is possible
+ * only when the STM board is detached from
+ * the rest of the stack
+ */
 /*
 using led1  = Gpio<GPIOG_BASE, 2>;
 using led2  = Gpio<GPIOG_BASE, 3>;
