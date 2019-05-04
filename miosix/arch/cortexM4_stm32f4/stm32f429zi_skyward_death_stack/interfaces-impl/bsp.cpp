@@ -253,11 +253,10 @@ void IRQbspInit()
     motEn::mode(Mode::OUTPUT);
     motEn::low();
 
-    motP1::mode(Mode::ALTERNATE);
-    motP1::alternateFunction(3);
-
-    motP2::mode(Mode::ALTERNATE);
-    motP2::alternateFunction(3);
+    motP1::mode(Mode::OUTPUT);
+    motP1::low();
+    motP2::mode(Mode::OUTPUT);
+    motP2::low();
 
     rogP1::mode(Mode::ALTERNATE);
     rogP1::alternateFunction(2);
