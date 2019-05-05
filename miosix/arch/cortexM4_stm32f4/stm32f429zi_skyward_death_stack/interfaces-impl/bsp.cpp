@@ -239,6 +239,7 @@ void IRQbspInit()
 
     mpu9250::cs::mode(Mode::OUTPUT);
     mpu9250::cs::high();
+    mpu9250::intr::mode(Mode::INPUT);
 
     ms5803::cs::mode(Mode::OUTPUT);
     ms5803::cs::high();
