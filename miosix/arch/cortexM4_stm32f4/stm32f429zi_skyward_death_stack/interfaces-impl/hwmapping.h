@@ -69,6 +69,7 @@ using cs    = Gpio<GPIOA_BASE, 8>;
 using dio1  = Gpio<GPIOB_BASE, 4>;
 using dio2  = Gpio<GPIOD_BASE, 6>;
 using dio3  = Gpio<GPIOD_BASE, 4>;
+using rst   = Gpio<GPIOD_BASE, 5>;
 using ckIn  = Gpio<GPIOA_BASE, 15>;
 } //namespace adis16405
 
@@ -149,15 +150,18 @@ using aux5  = Gpio<GPIOC_BASE, 15>;
  * only when the STM board is detached from
  * the rest of the stack
  */
+
+}
+
+using led1  = Gpio<GPIOC_BASE, 4>;
+using led2  = Gpio<GPIOA_BASE, 4>;
+
 /*
-using led1  = Gpio<GPIOG_BASE, 2>;
-using led2  = Gpio<GPIOG_BASE, 3>;
+using led2  = Gpio<GPIOG_BASE, 2>;
 using led3  = Gpio<GPIOD_BASE, 11>;
 using led4  = Gpio<GPIOB_BASE, 1>;
-using led5  = Gpio<GPIOC_BASE, 4>;
-using led6  = Gpio<GPIOA_BASE, 4>;
+using led1  = Gpio<GPIOG_BASE, 3>;
 */
-}
 
 namespace xbee {
 using cs    = Gpio<GPIOF_BASE, 9>;
