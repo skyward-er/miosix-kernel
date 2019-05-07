@@ -348,7 +348,9 @@ void IRQbspInit()
     adis16405::cs::high();
     adis16405::ckIn::mode(Mode::ALTERNATE);
     adis16405::ckIn::alternateFunction(2);
-    adis16405::dio1::mode(Mode::INPUT);    
+    adis16405::dio1::mode(Mode::INPUT);
+    adis16405::rst::mode(Mode::OUTPUT);
+    adis16405::rst::high();
 
     ad7994::ab::mode(Mode::INPUT);
     ad7994::nconvst::mode(Mode::OUTPUT);
