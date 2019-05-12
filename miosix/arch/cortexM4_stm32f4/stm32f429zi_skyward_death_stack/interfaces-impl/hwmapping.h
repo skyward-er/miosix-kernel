@@ -166,6 +166,8 @@ using led1  = Gpio<GPIOG_BASE, 3>;
 namespace xbee {
 using cs    = Gpio<GPIOF_BASE, 9>;
 using attn  = Gpio<GPIOF_BASE, 10>;
+using reset  = Gpio<GPIOC_BASE, 13>;
+using sleep_req  = Gpio<GPIOC_BASE, 2>;
 } //namespace InAir9B
 } //namespace miosix
 
