@@ -1675,6 +1675,7 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
         arch/common/drivers/stm32_hardware_rng.cpp   \
         arch/common/drivers/stm32_sgm.cpp            \
         arch/common/drivers/stm32_wd.cpp             \
+        arch/common/drivers/servo_stm32.cpp          \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
