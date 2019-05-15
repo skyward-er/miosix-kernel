@@ -415,7 +415,7 @@ void IRQbspInit()
 
     xbee::cs::mode(Mode::OUTPUT);
     xbee::cs::high();    
-    xbee::attn::mode(Mode::INPUT);
+    xbee::attn::mode(Mode::INPUT_PULL_UP);
 
     /* Led blink */
     led2::mode(Mode::OUTPUT);
