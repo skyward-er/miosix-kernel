@@ -105,15 +105,13 @@ using int2  = Gpio<GPIOG_BASE, 3>;
 } //namespace sensors
 
 namespace inputs {
-
-using vbat  = Gpio<GPIOF_BASE, 7>;
-using lp_dtch = Gpio<GPIOC_BASE, 6>;  //launchpad detach
-using btn1  = Gpio<GPIOG_BASE, 11>;
-using btn2  = Gpio<GPIOG_BASE, 13>;
+using vbat       = Gpio<GPIOF_BASE, 7>;
+using lp_dtch    = Gpio<GPIOC_BASE, 6>;  //launchpad detach
+using btn_open   = Gpio<GPIOG_BASE, 11>;
+using btn_close  = Gpio<GPIOG_BASE, 13>;
 }
 
 namespace nosecone {
-
 using motEn = Gpio<GPIOG_BASE, 14>;
 using motP1 = Gpio<GPIOC_BASE, 7>;  //Pwm motore 1
 using motP2 = Gpio<GPIOB_BASE, 0>;  //Pwm motore 2
@@ -146,16 +144,15 @@ using aux3  = Gpio<GPIOE_BASE, 4>;
 using aux4  = Gpio<GPIOC_BASE, 14>;
 using aux5  = Gpio<GPIOC_BASE, 15>;
 
-/* NOTE: Direct access to leds is possible
- * only when the STM board is detached from
- * the rest of the stack
- */
-
 }
 
 using led1  = Gpio<GPIOC_BASE, 4>;
 using led2  = Gpio<GPIOA_BASE, 4>;
 
+/* NOTE: Direct access to these leds is possible
+ * only when the STM board is detached from
+ * the rest of the stack
+ */
 /*
 using led2  = Gpio<GPIOG_BASE, 2>;
 using led3  = Gpio<GPIOD_BASE, 11>;

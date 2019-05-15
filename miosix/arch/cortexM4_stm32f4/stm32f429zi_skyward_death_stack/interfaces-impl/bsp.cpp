@@ -378,8 +378,8 @@ void IRQbspInit()
     using namespace inputs;
     vbat::mode(Mode::INPUT_ANALOG);
     lp_dtch::mode(Mode::INPUT);
-    btn1::mode(Mode::INPUT);
-    btn2::mode(Mode::INPUT);
+    btn_open::mode(Mode::INPUT);
+    btn_close::mode(Mode::INPUT);
 
     using namespace nosecone;
     motEn::mode(Mode::OUTPUT);
@@ -418,12 +418,12 @@ void IRQbspInit()
     xbee::attn::mode(Mode::INPUT_PULL_UP);
 
     /* Led blink */
+    led1::mode(Mode::OUTPUT);
     led2::mode(Mode::OUTPUT);
 
-    led1::mode(Mode::OUTPUT);
-    led1::high();
+    ledOn();
     delayMs(100);
-    led1::low();
+    ledOff();
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,

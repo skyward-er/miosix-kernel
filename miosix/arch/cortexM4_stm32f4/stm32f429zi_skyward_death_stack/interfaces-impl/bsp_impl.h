@@ -36,6 +36,7 @@
 #include "config/miosix_settings.h"
 #include "interfaces/gpio.h"
 #include "drivers/stm32_hardware_rng.h"
+#include "hwmapping.h"
 
 namespace miosix {
 
@@ -58,12 +59,12 @@ void configureSdram();
 
 inline void ledOn()
 {
-    // No led for this board, unimplemented
+    led1::high();
 }
 
 inline void ledOff()
 {
-    // No led for this board, unimplemented
+    led1::low();
 }
 
 /**
