@@ -336,10 +336,11 @@ void IRQbspInit()
     spi2::mosi::mode(Mode::ALTERNATE);
     spi2::mosi::alternateFunction(5);
 
-    i2c::scl::mode(Mode::ALTERNATE_OD);
-    i2c::scl::alternateFunction(4);
-    i2c::sda::mode(Mode::ALTERNATE_OD);
-    i2c::sda::alternateFunction(4);
+    // Software I2C
+    i2c::scl::high();
+    i2c::scl::mode(Mode::OPEN_DRAIN);
+    i2c::sda::high();
+    i2c::sda::mode(Mode::OPEN_DRAIN);
 
     uart4::rx::mode(Mode::ALTERNATE);
     uart4::rx::alternateFunction(8);
