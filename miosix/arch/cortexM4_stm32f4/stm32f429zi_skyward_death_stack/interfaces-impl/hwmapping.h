@@ -124,12 +124,12 @@ namespace actuators {
 
 using tcPwm = Gpio<GPIOE_BASE, 6>;  //Pwm thermal cutters
 
-namespace thCut1 {
+namespace thCut2 {
 using ena   = Gpio<GPIOD_BASE, 11>;
 using csens = Gpio<GPIOF_BASE, 8>;
 }
 
-namespace thCut2 {
+namespace thCut1 {
 using ena   = Gpio<GPIOG_BASE, 2>;
 using csens = Gpio<GPIOF_BASE, 6>;
 }
