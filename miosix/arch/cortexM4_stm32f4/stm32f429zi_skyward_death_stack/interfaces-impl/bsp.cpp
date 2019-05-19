@@ -395,7 +395,7 @@ void IRQbspInit()
     rogP1::alternateFunction(2);
 
     rogP2::mode(Mode::ALTERNATE);
-    rogP2::alternateFunction(3);
+    rogP2::alternateFunction(2);
 
     nc_dtch::mode(Mode::INPUT);
 
