@@ -417,10 +417,10 @@ void IRQbspInit()
     xbee::cs::mode(Mode::OUTPUT);
     xbee::cs::high();    
     xbee::attn::mode(Mode::INPUT_PULL_UP);
+    xbee::sleep_status::mode(Mode::INPUT);
 
     /* Led blink */
     led1::mode(Mode::OUTPUT);
-    led2::mode(Mode::OUTPUT);
 
     ledOn();
     delayMs(100);

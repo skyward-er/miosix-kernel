@@ -147,7 +147,7 @@ using aux5  = Gpio<GPIOC_BASE, 15>;
 }
 
 using led1  = Gpio<GPIOC_BASE, 4>;
-using led2  = Gpio<GPIOA_BASE, 4>;
+
 
 /* NOTE: Direct access to these leds is possible
  * only when the STM board is detached from
@@ -165,6 +165,7 @@ using cs    = Gpio<GPIOF_BASE, 9>;
 using attn  = Gpio<GPIOF_BASE, 10>;
 using reset  = Gpio<GPIOC_BASE, 13>;
 using sleep_req  = Gpio<GPIOC_BASE, 2>;
+using sleep_status  = Gpio<GPIOA_BASE, 4>;
 } //namespace InAir9B
 } //namespace miosix
 
