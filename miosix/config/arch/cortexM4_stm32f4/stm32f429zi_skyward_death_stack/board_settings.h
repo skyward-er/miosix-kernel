@@ -46,7 +46,7 @@ namespace miosix {
 /// Size of stack for main().
 /// The C standard library is stack-heavy (iprintf requires 1KB) but the
 /// STM32F407VG only has 192KB of RAM so there is room for a big 4K stack.
-const unsigned int MAIN_STACK_SIZE=4*1024;
+const unsigned int MAIN_STACK_SIZE=16*1024;
 
 /// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
 /// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
