@@ -51,19 +51,19 @@
 namespace miosix {
 
 /**
- * Initilize SPI
+ * \brief Initialize SPI1
  */
 void initSPI1()
 {
     using namespace interfaces;
-    // SPI1 intialization
+
     spi1::cs::mode(Mode::OUTPUT); 
     spi1::cs::high();
     spi1::sck::mode(Mode::ALTERNATE);
     spi1::miso::mode(Mode::ALTERNATE);
     spi1::mosi::mode(Mode::ALTERNATE);
 
-    // Clock
+    // APB2 clock
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
 
     SPI1->CR1=SPI_CR1_SSM  //No HW cs
@@ -74,7 +74,7 @@ void initSPI1()
 }
 
 /**
- * Initialize Canbus
+ * \brief Initialize Canbus CAN1
  */
 void initCAN1()
 {
@@ -82,37 +82,26 @@ void initCAN1()
     can1::rx::mode(Mode::ALTERNATE);
     can1::tx::mode(Mode::ALTERNATE);
 
-    // clock
+    // APB1 clock
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
-
-    NVIC_SetPriority(CAN1_RX1_IRQn, 1);
-    NVIC_EnableIRQ(CAN1_RX1_IRQn);
 }
 
 /**
- * Initialize hardware timer
+ * \brief Initialize hardware timer TIM2
  */
 void initTIM2()
 {
     using namespace interfaces;
-    // TIM2 initialization
+    // APB1 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-    /* Clear the update event flag */
+    // Clear the update event flag
     TIM2->SR   = 0;
-    /* Clear the counter value */
+    // Clear the counter value
     TIM2->CNT  = 0;
-    /* Prescaler and Reload set to maximum = overflow every 59.6523235555 sec*/
+    // Prescaler and Reload set to maximum = overflow every 59.6523235555 sec
     TIM2->PSC  = 0xFFFF;
     TIM2->ARR  = 0xFFFF;    
-
-    /* Configure Interupt */
-    TIM2->DIER |= TIM_DIER_UIE; 
-    NVIC_SetPriority(TIM2_IRQn, 0);
-    NVIC_EnableIRQ(TIM2_IRQn);
-
-    /* Enable Counter */
-    TIM2->CR1  |= TIM_CR1_CEN;
 }
 
 
@@ -149,20 +138,17 @@ void IRQbspInit()
     initCAN1();
     initTIM2();
 
-    // Uart works only in debug mode
-    //#ifdef DEBUG
-        // UART1 initialization
-        uart1::tx::mode(Mode::OUTPUT);
-        uart1::rx::mode(Mode::INPUT);
+    // UART1 initialization
+    uart1::tx::mode(Mode::OUTPUT);
+    uart1::rx::mode(Mode::INPUT);
 
-        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        #ifndef STDOUT_REDIRECTED_TO_DCC
-            new STM32Serial(defaultSerial,defaultSerialSpeed,
-            defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
-        #else //STDOUT_REDIRECTED_TO_DCC
-            new ARMDCC();
-        #endif //STDOUT_REDIRECTED_TO_DCC
-    //#endif
+    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+    #ifndef STDOUT_REDIRECTED_TO_DCC
+        new STM32Serial(defaultSerial,defaultSerialSpeed,
+        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+    #else //STDOUT_REDIRECTED_TO_DCC
+        new ARMDCC();
+    #endif //STDOUT_REDIRECTED_TO_DCC
 }
 
 void bspInit2()
