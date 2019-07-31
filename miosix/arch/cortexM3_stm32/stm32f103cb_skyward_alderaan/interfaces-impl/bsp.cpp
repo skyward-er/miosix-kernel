@@ -74,7 +74,8 @@ void initSPI1()
 }
 
 /**
- * \brief Initialize Canbus CAN1
+ * \brief Initialize Canbus CAN1. See CANBus::setup() driver for timings and 
+ * other settings.
  */
 void initCAN1()
 {
@@ -88,6 +89,12 @@ void initCAN1()
 
 /**
  * \brief Initialize hardware timer TIM2
+ * TIMING: 
+ * TIM frequency = CLOCK_FREQ / ((PSC +1) * (ARR+1))
+ * - CLOCK_FREQ = 24MHz     (defined in miosix/config/Makefile.inc)
+ * - TIM2->PSC = 0xFFFF
+ * - TIM2->ARR = 0x07FF
+ * - hence, TIM2 period is ~10.72sec
  */
 void initTIM2()
 {
@@ -96,14 +103,38 @@ void initTIM2()
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
     // Clear the update event flag
-    TIM2->SR   = 0;
+    TIM2->SR   &= ~TIM_SR_UIF;
     // Clear the counter value
     TIM2->CNT  = 0;
-    // Prescaler and Reload set to maximum = overflow every 59.6523235555 sec
-    TIM2->PSC  = 0xFFFF;
-    TIM2->ARR  = 0xFFFF;    
+    // Prescaler and Reload
+    TIM2->PSC  = 0xFFFFU;
+    TIM2->ARR  = 0x07FFU;
 }
 
+/**
+ * \brief Initialize the independent watchdog
+ * TIMING: 
+ * IDWG Timeout ~= (4*(2^PR)*RLR) / LSI_freq
+ * - LSI_freq   ~= 45kHz  (nominal between 30 and 60, see datasheet)
+ * - IWDG->PR    = 5
+ * - IWDG->RLR   = 0xFFF
+ * - hence, IWDG period is ~11.651sec (between 8.738s and 17.476s)
+ */
+void initIWDG()
+{
+    RCC->CSR |= RCC_CSR_LSION; //Enable LSI Clock
+    while((RCC->CSR & RCC_CSR_LSIRDY)==0);
+
+    IWDG->KR = 0xCCCC; //Enable IWDG
+    IWDG->KR = 0x5555; //Enable register access
+    IWDG->PR |= IWDG_PR_PR_0
+               | IWDG_PR_PR_2; //Set prescaler to 5
+    IWDG->RLR = 0xFFF; //Set max reload value
+
+    while(IWDG->SR); //Check if flags are reset
+
+    IWDG->KR = 0xAAAA; //Refresh the counter
+}
 
 //
 // Initialization
@@ -134,6 +165,7 @@ void IRQbspInit()
     sparePin::mode(Mode::INPUT);
 
     // Initialize peripherals
+    initIWDG();
     initSPI1();
     initCAN1();
     initTIM2();

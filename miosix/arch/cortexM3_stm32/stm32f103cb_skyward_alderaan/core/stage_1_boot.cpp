@@ -22,9 +22,9 @@ extern "C" void _init();
 /**
  * Calculate the CRC of the whole flash and enter an infinite loop if is not 0.
  *
- * NOTE: During compilation, the program binary has been padded to reach 128k and
- *       then the CRC has been calculated and placed in the last 4 bytes of the flash.
- *       Since CRC(foo + CRC(foo)) = 0, we expect the CRC calculated here to be 0.
+ * During compilation, the program binary has been padded to reach 128k and
+ * then the CRC has been calculated and placed in the last 4 bytes of the flash.
+ * Since CRC(foo + CRC(foo)) = 0, we expect the CRC calculated here to be 0.
  */
 void checkFlash()
 {
@@ -59,8 +59,9 @@ void program_startup()
     //Cortex M3 core appears to get out of reset with interrupts already enabled
     __disable_irq();
 
-    // checkFlash() blocks if the flash CRC is not correct: this prevents the 
-    // microcontroller from doing something nasty if the flash is corrupted.
+    // checkFlash() checks the CRC of the whole flash. If it's not corrects,
+    // enters in an infinite loop. This prevents the microcontroller from doing
+    // something nasty if the flash is corrupted.
     checkFlash();
 
 	//SystemInit() is called *before* initializing .data and zeroing .bss
