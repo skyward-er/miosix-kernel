@@ -117,8 +117,8 @@ void initTIM2()
  * IDWG Timeout ~= (4*(2^PR)*RLR) / LSI_freq
  * - LSI_freq   ~= 45kHz  (nominal between 30 and 60, see datasheet)
  * - IWDG->PR    = 5
- * - IWDG->RLR   = 0xFFF
- * - hence, IWDG period is ~11.651sec (between 8.738s and 17.476s)
+ * - IWDG->RLR   = 0x7
+ * - hence, IWDG period is ~19.911ms (between 14.933ms and 29.866ms)
  */
 void initIWDG()
 {
@@ -129,7 +129,7 @@ void initIWDG()
     IWDG->KR = 0x5555; //Enable register access
     IWDG->PR |= IWDG_PR_PR_0
                | IWDG_PR_PR_2; //Set prescaler to 5
-    IWDG->RLR = 0xFFF; //Set max reload value
+    IWDG->RLR = 0x7; //Set reload value
 
     while(IWDG->SR); //Check if flags are reset
 
