@@ -1139,8 +1139,8 @@ else ifeq ($(ARCH),cortexM3_stm32)
         $(BOARD_INC)/interfaces-impl/bsp.cpp        
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -D_BOARD_STM32F103CB_SKYWARD_ALDERAAN -DSTM32F10X_MD
-        CXXFLAGS_BASE += -D_BOARD_STM32F103CB_SKYWARD_ALDERAAN -DSTM32F10X_MD
+        CFLAGS_BASE   += -D_BOARD_STM32F103CB_SKYWARD_ALDERAAN -DSTM32F10X_MD $(OPT_ALDERAAN_FLAGS)
+        CXXFLAGS_BASE += -D_BOARD_STM32F103CB_SKYWARD_ALDERAAN -DSTM32F10X_MD $(OPT_ALDERAAN_FLAGS)
        
         ## Select programmer command line
         ## This is the program that is invoked when the user types
