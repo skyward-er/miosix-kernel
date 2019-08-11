@@ -166,7 +166,9 @@ void IRQbspInit()
     sparePin::mode(Mode::INPUT);
 
     // Initialize peripherals
+    #ifndef NOWDG
     initIWDG();
+    #endif
     initSPI1();
     initCAN1();
     initTIM2();
@@ -175,8 +177,8 @@ void IRQbspInit()
     uart1::tx::mode(Mode::OUTPUT);
     uart1::rx::mode(Mode::INPUT);
 
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
     #ifndef STDOUT_REDIRECTED_TO_DCC
+    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
         defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
     #else //STDOUT_REDIRECTED_TO_DCC
