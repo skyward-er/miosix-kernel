@@ -74,8 +74,9 @@ void initSPI1()
 }
 
 /**
- * \brief Initialize Canbus CAN1. See CANBus::setup() driver for timings and 
- * other settings.
+ * \brief Activate the CAN1 peripheral.
+ * NOTE: no initialization is made here: timings and register settings
+ * should be taken care of by a dedicated CAN bus driver.
  */
 void initCAN1()
 {
@@ -93,8 +94,8 @@ void initCAN1()
  * TIM frequency = CLOCK_FREQ / ((PSC +1) * (ARR+1))
  * - CLOCK_FREQ = 24MHz     (defined in miosix/config/Makefile.inc)
  * - TIM2->PSC = 0xFFFF
- * - TIM2->ARR = 0x07FF
- * - hence, TIM2 period is ~10.72sec
+ * - TIM2->ARR = 0x0E4E
+ * - hence, TIM2 period is ~10.002sec
  */
 void initTIM2()
 {
@@ -108,7 +109,7 @@ void initTIM2()
     TIM2->CNT  = 0;
     // Prescaler and Reload
     TIM2->PSC  = 0xFFFFU;
-    TIM2->ARR  = 0x07FFU;
+    TIM2->ARR  = 0x0E4EU;
 }
 
 /**
