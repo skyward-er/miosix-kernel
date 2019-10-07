@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # Script to build the gcc compiler required for Miosix.
-# Usage: ./install-script -j2
-# The first parameter is used to speed up compiling for multicore processors,
-# use -j2 for a dual core, -j4 for a quad core, ...
+# Usage: ./install-script -j`nproc`
+# The -j parameter is passed to make for parallel compilation
 #
 # Building Miosix is officially supported only through the gcc compiler built
 # with this script. This is because this script patches the compiler.
@@ -34,8 +33,8 @@ SUDO=
 # -march= -mtune= flags to optimize for your processor, but the code
 # won't be portable to other architectures, so don't distribute it
 HOST=
-# Uncomment if targeting linux 32 bit (distributable)
-#HOST=i686-linux-gnu
+# Uncomment if targeting linux 64 bit (distributable)
+#HOST=x86_64-linux-gnu
 # Uncomment if targeting windows (distributable)
 # you have to run this script from Linux anyway (see canadian cross compiling)
 #HOST=i686-w64-mingw32
@@ -46,12 +45,12 @@ HOST=
 LIB_DIR=`pwd`/lib
 
 # Program versions
-BINUTILS=binutils-2.31.1
-GCC=gcc-8.2.0
-NEWLIB=newlib-3.0.0.20180802
-GDB=gdb-8.1.1
+BINUTILS=binutils-2.32
+GCC=gcc-9.2.0
+NEWLIB=newlib-3.1.0
+GDB=gdb-8.3
 GMP=gmp-6.1.2
-MPFR=mpfr-4.0.1
+MPFR=mpfr-4.0.2
 MPC=mpc-1.1.0
 # NCURSES=ncurses-5.9
 # MAKE=make-4.0
@@ -75,8 +74,13 @@ if [[ $HOST ]]; then
 	# libc, libstdc++, ...
 	# Please note that since the already installed version of
 	# arm-miosix-eabi-gcc is used to build the standard libraries, it
-	# NUST BE THE EXACT SAME VERSION, including miosix-specific patches
-	which arm-miosix-eabi-gcc > /dev/null || quit ":: Error must first install arm-miosix-eabi-gcc"
+	# MUST BE THE EXACT SAME VERSION, including miosix-specific patches
+	# TODO: check miosix patch version too
+	__GCCVER=`arm-miosix-eabi-gcc --version | perl -e \
+		'while(<>) { next unless(/(\d+\.\d+.\d+)/); print "gcc-$1\n"; }'`;
+	if [[ $__GCCVER != $GCC ]]; then
+		quit ":: Error must first install $GCC system-wide"
+	fi
 
 	HOSTCC="$HOST-gcc"
 	HOSTSTRIP="$HOST-strip"
@@ -103,6 +107,9 @@ if [[ $HOST ]]; then
 		# Also, these scripts work around gdb needing libncurses and
 		# totally ignoring the --with-sysroot flag by adding `pwd`/lib
 		# to the compiler search path.
+
+		# FIXME: candidate for removal, do we still need this now that we're targeting linux 64 bit?
+		# Maybe yes, check the --with-sysroot issue in gdb
 		mkdir quickfix
 		cd quickfix
 		echo "gcc -m32 -march=i686 -I$LIB_DIR/include -L$LIB_DIR/lib "'"$@"' > "$HOST-gcc"
@@ -138,13 +145,13 @@ fi
 #
 
 echo "Extracting files, please wait..."
-tar -xf  $BINUTILS.tar.xz			|| quit ":: Error extracting binutils"
-tar -xf  $GCC.tar.xz				|| quit ":: Error extracting gcc"
-tar -xf  $NEWLIB.tar.gz				|| quit ":: Error extracting newlib"
-tar -xf  $GDB.tar.xz				|| quit ":: Error extracing gdb"
-tar -xf  $GMP.tar.xz				|| quit ":: Error extracting gmp"
-tar -xf  $MPFR.tar.xz				|| quit ":: Error extracting mpfr"
-tar -xf  $MPC.tar.gz				|| quit ":: Error extracting mpc"
+tar -xf  downloaded/$BINUTILS.tar.xz		|| quit ":: Error extracting binutils"
+tar -xf  downloaded/$GCC.tar.xz				|| quit ":: Error extracting gcc"
+tar -xf  downloaded/$NEWLIB.tar.gz			|| quit ":: Error extracting newlib"
+tar -xf  downloaded/$GDB.tar.xz				|| quit ":: Error extracing gdb"
+tar -xf  downloaded/$GMP.tar.xz				|| quit ":: Error extracting gmp"
+tar -xf  downloaded/$MPFR.tar.xz			|| quit ":: Error extracting mpfr"
+tar -xf  downloaded/$MPC.tar.gz				|| quit ":: Error extracting mpc"
 
 if [[ $HOST == *mingw* ]]; then
 	tar -xf  $MAKE.tar.bz2			|| quit ":: Error extracting make"
@@ -161,8 +168,9 @@ mkdir log
 #
 
 patch -p0 < patches/gcc.patch		|| quit ":: Failed patching gcc 1"
-# patch -p0 < patches/force-got.patch	|| quit ":: Failed patching gcc 2"
+patch -p0 < patches/force-got.patch	|| quit ":: Failed patching gcc 2"
 patch -p0 < patches/newlib.patch	|| quit ":: Failed patching newlib"
+#patch -p0 < ../fixme-reducecompiletime.patch || quit ":: Failed fixme patch"
 
 #
 # Part 3: compile libraries
@@ -288,6 +296,7 @@ $SUDO make all-gcc $PARALLEL 2>../log/e.txt	|| quit ":: Error compiling gcc-star
 
 $SUDO make install-gcc 2>../log/f.txt		|| quit ":: Error installing gcc-start"
 
+# FIXME: do we still need this? reevaluate
 # Remove the sys-include directory
 # There are two reasons why to remove it: first because it is unnecessary,
 # second because it is harmful. Apparently GCC needs the C headers of the target
@@ -304,6 +313,7 @@ $SUDO make install-gcc 2>../log/f.txt		|| quit ":: Error installing gcc-start"
 # GCC seems to take the wrong newlib.h and user code gets the wrong _Reent struct
 $SUDO rm -rf $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/sys-include
 
+# FIXME: do we still need this? reevaluate
 # Another fix, looks like export PATH isn't enough for newlib, it fails
 # running arm-miosix-eabi-ranlib when installing
 if [[ $SUDO ]]; then
@@ -347,28 +357,6 @@ cd ..
 
 cd objdir
 
-# This fails with windows crosscompiling because GCC seems to have a bug when
-# compiling crtstuff.c, the following error is found:
-# sys/types.h:130:16: error: expected identifier or '(' before 'char'
-# the line in question is 'typedef	char *	caddr_t;', but a look at the
-# compiler output after the preprocessor (-E option) it becomes
-# 'typedef	char *	char *;' so someone is doing a '#define caddr_t char *'
-# A look at objdir/gcc/config.log shows
-# configure:9173: checking for caddr_t
-# configure:9173: i686-w64-mingw32-gcc -c -g -D__USE_MINGW_ACCESS  conftest.c >&5
-# conftest.c: In function 'main':
-# conftest.c:108:13: error: 'caddr_t' undeclared (first use in this function)
-# so there's likely a bug in GCC configure scripts that define caddr_t for the
-# TARGET compiler if the HOST compiler doesn't have it. This seems to explain
-# why while building for linux this bug was never found.
-# The #define seems to be in 'objdir/gcc/auto-host.h', and sure enough having a
-# look at line 53 of crtstuff.c we have this comment:
-# /* FIXME: Including auto-host is incorrect, but until we have
-#   identified the set of defines that need to go into auto-target.h,
-#   this will have to do.  */
-# To fix this we add an '#undef caddr_t' to crtstuff.c
-sed -i 's/#include "auto-host.h"/#include "auto-host.h"\n#undef caddr_t/' ../$GCC/libgcc/crtstuff.c
-
 $SUDO make all $PARALLEL 2>../log/j.txt		|| quit ":: Error compiling gcc-end"
 
 $SUDO make install 2>../log/k.txt			|| quit ":: Error installing gcc-end"
@@ -402,7 +390,8 @@ check_multilibs() {
 	fi 
 }
 
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/arm
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm0
 check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm3
 check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm4/hardfp/fpv4sp
 check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm7/hardfp/fpv5
@@ -505,14 +494,15 @@ fi
 # Remove this since its name is not arm-miosix-eabi-
 $SUDO rm $INSTALL_DIR/arm-miosix-eabi/bin/arm-miosix-eabi-$GCC$EXT
 
+# Strip stuff that is very large when having debug symbols to save disk space
+# This simple thing can easily save 100+MB
+find $INSTALL_DIR -name cc1$EXT | xargs $HOSTSTRIP
+find $INSTALL_DIR -name cc1plus$EXT | xargs $HOSTSTRIP
+find $INSTALL_DIR -name lto1$EXT | xargs $HOSTSTRIP
+strip $INSTALL_DIR/arm-miosix-eabi/bin/*
+
 # Installers, env variables and other stuff
 if [[ $HOST ]]; then
-	# Strip stuff that is very large when having debug symbols to save disk space
-	# This simple thing can easily save 100+MB
-	find $INSTALL_DIR -name cc1$EXT | xargs $HOSTSTRIP
-	find $INSTALL_DIR -name cc1plus$EXT | xargs $HOSTSTRIP
-	find $INSTALL_DIR -name lto1$EXT | xargs $HOSTSTRIP
-
 	if [[ $HOST == *mingw* ]]; then
 		cd windows-installer
 		wine "C:\Program Files\Inno Setup 5\Compil32.exe" /cc MiosixInstaller.iss

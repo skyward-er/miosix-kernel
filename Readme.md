@@ -30,13 +30,13 @@ Note that these changes must be respected when pulling from the original repo
 
 ### Pulling from Original Repo
 
-If you wish to pull in the changes that were made in the original kernel repo you should:
+If you wish to pull from the original kernel repo you should:
 
 ```
-git fetch upstream
-git merge upstream/testing
-git push
+git pull https://github.com/fedetft/miosix-kernel.git testing
 ```
+
+Then merge (keeping the 1.07S check in the Makefiles), commit and push.
 
 Note that the testing branch is were normally the latest updates
 are made for the Skyward guys.

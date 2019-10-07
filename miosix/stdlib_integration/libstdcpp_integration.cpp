@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 by Terraneo Federico *
+ *   Copyright (C) 2008-2019 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -42,27 +42,42 @@ using namespace std;
 // C++ exception support
 // =====================
 
+#if __cplusplus >= 201703L
+#warning: TODO: Override new with alignment (libsupc++/new_opa.cc, new_opv.cc, ...
+#warning: TODO: FIX __gthread_key_t in libstdc++/include/std/memory_resource
+#endif
+
 #ifdef __NO_EXCEPTIONS
 /*
  * If not using exceptions, ovverride the default new, delete with
  * an implementation that does not throw, to minimze code size
  */
-void *operator new(size_t size) throw()
+void *operator new(size_t size) noexcept
 {
     return malloc(size);
 }
 
-void *operator new[](size_t size) throw()
+void *operator new(size_t size, const std::nothrow_t&) noexcept
 {
     return malloc(size);
 }
 
-void operator delete(void *p) throw()
+void *operator new[](size_t size) noexcept
+{
+    return malloc(size);
+}
+
+void *operator new[](size_t size, const std::nothrow_t&) noexcept
+{
+    return malloc(size);
+}
+
+void operator delete(void *p) noexcept
 {
     free(p);
 }
 
-void operator delete[](void *p) throw()
+void operator delete[](void *p) noexcept
 {
     free(p);
 }
@@ -87,6 +102,13 @@ extern "C" void __cxxabiv1::__cxa_deleted_virtual(void)
     _exit(1);
 }
 
+#if _MIOSIX_GCC_PATCH_MAJOR > 2
+namespace std {
+void terminate()  noexcept { _exit(1); } //Since GCC 9.2.0
+void unexpected() noexcept { _exit(1); } //Since GCC 9.2.0
+} //namespace std
+#endif
+
 /*
  * If not using exceptions, ovverride these functions with
  * an implementation that does not throw, to minimze code size
@@ -101,15 +123,23 @@ void __throw_domain_error(const char*) { _exit(1); }
 void __throw_invalid_argument(const char*) { _exit(1); }
 void __throw_length_error(const char*) { _exit(1); }
 void __throw_out_of_range(const char*) { _exit(1); }
+void __throw_out_of_range_fmt(const char*, ...) { exit(1); } //Since GCC 9.2.0
 void __throw_runtime_error(const char*) { _exit(1); }
 void __throw_range_error(const char*) { _exit(1); }
 void __throw_overflow_error(const char*) { _exit(1); }
 void __throw_underflow_error(const char*) { _exit(1); }
-void __throw_ios_failure(const char*) { _exit(1); }
+void __throw_ios_failure(const char*) { _exit(1); } //Unused since GCC 9.2.0
 void __throw_system_error(int) { _exit(1); }
 void __throw_future_error(int) { _exit(1); }
 void __throw_bad_function_call() { _exit(1); }
 } //namespace std
+
+namespace __cxxabiv1 {
+extern "C" void __cxa_throw_bad_array_length() { exit(1); } //Since GCC 9.2.0
+extern "C" void __cxa_bad_cast() { exit(1); } //Since GCC 9.2.0
+extern "C" void __cxa_bad_typeid() { exit(1); } //Since GCC 9.2.0
+extern "C" void __cxa_throw_bad_array_new_length() { exit(1); } //Since GCC 9.2.0
+} //namespace __cxxabiv1
 
 #endif //__NO_EXCEPTIONS
 
@@ -273,3 +303,33 @@ extern "C" void __cxa_guard_abort(__guard *g) noexcept
 }
 
 } //namespace __cxxabiv1
+
+//
+// libatomic support, to provide thread safe atomic operation fallbacks
+// ====================================================================
+
+// Not using the fast version, as these may be used before the kernel is started
+
+extern "C" unsigned int libat_quick_lock_n(void *ptr)
+{
+    miosix::disableInterrupts();
+    return 0;
+}
+
+extern "C" void libat_quick_unlock_n(void *ptr, unsigned int token)
+{
+    miosix::enableInterrupts();
+}
+
+// These are to implement "heavy" atomic operations, which are not used in
+// libstdc++. For now let's keep them disbaled.
+
+// extern "C" void libat_lock_n(void *ptr, size_t n)
+// {
+//     miosix::pauseKernel();
+// }
+// 
+// extern "C" void libat_unlock_n(void *ptr, size_t n)
+// {
+//     miosix::restartKernel();
+// }

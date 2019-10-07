@@ -25,51 +25,52 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "interfaces/arch_registers.h"
-#include "pll.h"
+#ifndef BOARD_SETTINGS_H
+#define	BOARD_SETTINGS_H
 
-void startPll()
-{
-    //In the STM32H7 DVFS was introduced (chapter 6, Power control)
-    //The default voltage is the lowest, switch to highest to run @ 400MHz
-    //QUIRK: it looks like VOS can only be set by first setting SCUEN to 0.
-    //This isn't documented anywhere in the reference manual
-    PWR->CR3 &= ~PWR_CR3_SCUEN;
-    PWR->D3CR = PWR_D3CR_VOS_1 | PWR_D3CR_VOS_0;
-    while((PWR->D3CR & PWR_D3CR_VOSRDY)==0) ; //Wait
-    
-    //Enable HSE oscillator
-    RCC->CR |= RCC_CR_HSEON;
-    while((RCC->CR & RCC_CR_HSERDY)==0) ; //Wait
-    
-    //Start the PLL
-    RCC->PLLCKSELR |= RCC_PLLCKSELR_DIVM1_0
-                    | RCC_PLLCKSELR_DIVM1_2     //M=5 (25MHz/5)5MHz
-                    | RCC_PLLCKSELR_PLLSRC_HSE; //HSE selected as PLL source
-    RCC->PLL1DIVR = (2-1)<<24 // R=2
-                  | (8-1)<<16 // Q=8
-                  | (2-1)<<9  // P=2
-                  | (160-1);  // N=160
-    RCC->PLLCFGR |= RCC_PLLCFGR_PLL1RGE_2 // Pll ref clock between 4 and 8MHz
-                  | RCC_PLLCFGR_DIVP1EN   // Enable output P
-                  | RCC_PLLCFGR_DIVQ1EN   // Enable output Q
-                  | RCC_PLLCFGR_DIVR1EN;  // Enable output R
-    RCC->CR |= RCC_CR_PLL1ON;
-    while((RCC->CR & RCC_CR_PLL1RDY)==0) ; //Wait
-    
-    //Before increasing the fequency set dividers 
-    RCC->D1CFGR = RCC_D1CFGR_D1CPRE_DIV1  //CPU clock /1
-                | RCC_D1CFGR_D1PPRE_DIV2  //D1 APB3   /2
-                | RCC_D1CFGR_HPRE_DIV2;   //D1 AHB    /2
-    RCC->D2CFGR = RCC_D2CFGR_D2PPRE2_DIV2 //D2 APB2   /2
-                | RCC_D2CFGR_D2PPRE1_DIV2;//D2 APB1   /2
-    RCC->D3CFGR = RCC_D3CFGR_D3PPRE_DIV2; //D3 APB4   /2
-    
-    //And increase FLASH wait states
-    FLASH->ACR = FLASH_ACR_WRHIGHFREQ_2   //Settings for FLASH freq=200MHz
-               | FLASH_ACR_LATENCY_3WS;
-    
-    //Finally, increase frequency
-    RCC->CFGR |= RCC_CFGR_SW_PLL1;
-    while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL1) ; //Wait
-}
+#include "util/version.h"
+
+/**
+ * \internal
+ * Versioning for board_settings.h for out of git tree projects
+ */
+#define BOARD_SETTINGS_VERSION 100
+
+namespace miosix {
+
+/**
+ * \addtogroup Settings
+ * \{
+ */
+
+/// Size of stack for main().
+/// The C standard library is stack-heavy (iprintf requires 1KB)
+const unsigned int MAIN_STACK_SIZE=2048;
+
+/// Frequency of tick (in Hz)
+/// For the priority scheduler this is also the context switch frequency
+const unsigned int TICK_FREQ=1000;
+
+///\internal Aux timer run @ 100KHz
+///Note that since the timer is only 16 bits this imposes a limit on the
+///burst measurement of 655ms. If due to a pause_kernel() or
+///disable_interrupts() section a thread runs for more than that time, a wrong
+///burst value will be measured
+const unsigned int AUX_TIMER_CLOCK=100000;
+const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
+
+/// Serial port
+const unsigned int defaultSerial=1;
+const unsigned int defaultSerialSpeed=19200;
+const bool defaultSerialFlowctrl=false;
+#define SERIAL_1_DMA
+//#define SERIAL_2_DMA //Serial 1 is not used, so not enabling DMA
+//#define SERIAL_3_DMA //Serial 1 is not used, so not enabling DMA
+
+/**
+ * \}
+ */
+
+} //namespace miosix
+
+#endif	/* BOARD_SETTINGS_H */
