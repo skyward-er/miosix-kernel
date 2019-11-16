@@ -398,6 +398,13 @@ void IRQbspInit()
     rogP2::alternateFunction(2);
 
     nc_dtch::mode(Mode::INPUT);
+    motor_act::mode(Mode::INPUT);
+
+    motor_3v::mode(Mode::OUTPUT);
+    motor_3v::high();
+
+    motor_gnd::mode(Mode::OUTPUT);
+    motor_gnd::low();
 
     using namespace actuators;
     tcPwm::mode(Mode::ALTERNATE);

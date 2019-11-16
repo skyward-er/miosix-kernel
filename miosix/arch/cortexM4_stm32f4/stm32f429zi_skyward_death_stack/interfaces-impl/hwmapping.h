@@ -118,6 +118,10 @@ using motP2 = Gpio<GPIOB_BASE, 0>;  //Pwm motore 2
 using rogP1 = Gpio<GPIOD_BASE, 12>; //Pwm rogallina 1
 using rogP2 = Gpio<GPIOD_BASE, 13>; //Pwm rogallina 2
 using nc_dtch  = Gpio<GPIOB_BASE, 7>;  //Nosecone detach
+
+using motor_act  = Gpio<GPIOE_BASE, 3>;  //Motor actuation
+using motor_3v  = Gpio<GPIOC_BASE, 15>;  //Motor actuation 3v
+using motor_gnd  = Gpio<GPIOE_BASE, 2>;  //Motor actuation gnd
 }
 
 namespace actuators {
