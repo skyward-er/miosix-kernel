@@ -220,7 +220,7 @@ void SystemInit(void)
   #else
   #error "FPU disabled!" //By TFT: added a check to be really sure the FPU is on
   #endif
-
+  
   /* Reset the RCC clock configuration to the default reset state ------------*/
   /* Set HSION bit */
   RCC->CR |= (uint32_t)0x00000001;
@@ -356,8 +356,10 @@ static void SetSysClock(void)
 /******************************************************************************/
 /*            PLL (clocked by HSE) used as System clock source                */
 /******************************************************************************/
-  __IO uint32_t StartUpCounter = 0, HSEStatus = 0;
   
+#ifndef USE_INTERNAL_CLOCK
+
+  __IO uint32_t StartUpCounter = 0, HSEStatus = 0;
   /* Enable HSE */
   RCC->CR |= ((uint32_t)RCC_CR_HSEON);
  
@@ -418,10 +420,76 @@ static void SetSysClock(void)
     }
   }
   else
-  { /* If HSE fails to start-up, the application will have wrong clock
+  {
+#endif
+     /* If HSE fails to start-up, the application will have wrong clock
          configuration. User can add here some code to deal with this error */
-  }
+         
+    /*Thanks, I will add some code, by LE, MF, PM in the role of cursing colleagues*/
 
+     /* Select regulator voltage output Scale 1 mode, System frequency up to 168 MHz */
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    RCC_SYNC();
+    PWR->CR |= PWR_CR_VOS;
+
+    /* HCLK = SYSCLK / 1*/
+    RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
+      
+    /* PCLK2 = HCLK / 2*/
+    RCC->CFGR |= RCC_CFGR_PPRE2_DIV2;
+    
+    /* PCLK1 = HCLK / 4*/
+    RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;
+
+    RCC->CR &= ~((uint32_t)RCC_CR_HSEON);
+
+    RCC->CR |= ((uint32_t)RCC_CR_HSION);
+
+    /* Reset HSEBYP bit */
+    RCC->CR &= ~((uint32_t)RCC_CR_HSEBYP);
+
+    /* Set HSI as input to PLL */
+    RCC->PLLCFGR &= ~((uint32_t)RCC_PLLCFGR_PLLSRC);
+
+    /* Reset PLLM bits */
+    RCC->PLLCFGR &= ~((uint32_t)0x3F);
+
+    /* Set PLLM bits to have VCO input frequency to 1 MHz */
+    RCC->PLLCFGR |= (uint32_t)16;
+
+    /* Reset PLLN bits to 0 */
+    RCC->PLLCFGR &= 0xFFFF803F;
+    /* Set PLLN - HSI multiplier to reach 336 MHz */
+    RCC->PLLCFGR |= (uint32_t)336 << 6;
+
+    /* Set PLLQ to configure SDIO, USB OTG and RNG */    
+    RCC->PLLCFGR |= (uint32_t)7 << 24;
+
+    /* Set PLLP to 2 to reach 168 MHz */
+    RCC->PLLCFGR &= ~((uint32_t)(RCC_PLLCFGR_PLLP_0 | RCC_PLLCFGR_PLLP_1));
+
+    /* Enable the main PLL */
+    RCC->CR |= RCC_CR_PLLON;
+
+    /* Wait till the main PLL is ready */
+    while((RCC->CR & RCC_CR_PLLRDY) == 0)
+    {
+    }
+   
+    /* Configure Flash prefetch, Instruction cache, Data cache and wait state */
+    FLASH->ACR = FLASH_ACR_ICEN |FLASH_ACR_DCEN |FLASH_ACR_LATENCY_5WS;
+
+    /* Select the main PLL as system clock source */
+    RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));
+    RCC->CFGR |= RCC_CFGR_SW_PLL;
+
+    /* Wait till the main PLL is used as system clock source */
+    while ((RCC->CFGR & (uint32_t)RCC_CFGR_SWS ) != RCC_CFGR_SWS_PLL)
+    {
+    }
+#ifndef USE_INTERNAL_CLOCK
+  }
+#endif
 }
 // By TFT -- end
 

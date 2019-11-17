@@ -622,14 +622,14 @@ ifeq ($(OPT_BOARD),stm32f429zi_skyward_death_stack)
     ## Uncommenting __ENABLE_XRAM enables the initialization of the external
     ## 8MB SDRAM memory.
     XRAM := -D__ENABLE_XRAM
-
     ## Select clock frequency. Warning: the default clock frequency for
     ## this board is 168MHz and not 180MHz because, due to a limitation in
     ## the PLL, it is not possible to generate a precise 48MHz output when
     ## running the core at 180MHz. If 180MHz is chosen the USB peripheral will
     ## NOT WORK and the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
+    ## Define USE_INTERNAL_CLOCK to bypass the external oscillator
     #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000
-    CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000
+    CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000 -DUSE_INTERNAL_CLOCK
     #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000
 
 endif
