@@ -23,7 +23,7 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
 /***********************************************************************
 * bsp.cpp Part of the Miosix Embedded OS.
@@ -94,7 +94,7 @@ void configureSdram()
     GPIOE->MODER=0xaaaa800a;
     GPIOF->MODER=0xaa800aaa;
     GPIOG->MODER=0x80020a0a;
-    
+
     GPIOA->OSPEEDR=0xaaaaaaaa; //Default to 50MHz speed for all GPIOs...
     GPIOB->OSPEEDR=0xaaaaaaaa | 0x00003c00; //...but 100MHz for the SDRAM pins
     GPIOC->OSPEEDR=0xaaaaaaaa | 0x00000003;
@@ -103,15 +103,15 @@ void configureSdram()
     GPIOF->OSPEEDR=0xaaaaaaaa | 0xffc00fff;
     GPIOG->OSPEEDR=0xaaaaaaaa | 0xc0030f0f;
     GPIOH->OSPEEDR=0xaaaaaaaa;
-    
+
     //Since we'we un-configured PB3/PB4 from the default at boot TDO,NTRST,
     //finish the job and remove the default pull-up
     GPIOB->PUPDR=0;
-    
+
     //Second, actually start the SDRAM controller
     RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
     RCC_SYNC();
-    
+
     //SDRAM is a IS42S16400J -7 speed grade, connected to bank 2 (0xd0000000)
     //Some bits in SDCR[1] are don't care, and the have to be set in SDCR[0],
     //they aren't just don't care, the controller will fail if they aren't at 0
@@ -123,7 +123,7 @@ void configureSdram()
                        | FMC_SDCR1_MWID_0 // 16 bit data bus
                        | FMC_SDCR1_NB     //  4 banks
                        | FMC_SDCR1_CAS_1; //  2 cycle CAS latency (F<133MHz)
-    
+
     #ifdef SYSCLK_FREQ_180MHz
     //One SDRAM clock cycle is 11.1ns
     //Some bits in SDTR[1] are don't care, and the have to be set in SDTR[0],
@@ -153,14 +153,14 @@ void configureSdram()
     FMC_Bank5_6->SDCMR=  FMC_SDCMR_CTB2   // Enable bank 2
                        | 1;               // MODE=001 clock enabled
     sdramCommandWait();
-    
+
     //ST and SDRAM datasheet agree a 100us delay is required here.
     delayUs(100);
 
     FMC_Bank5_6->SDCMR=  FMC_SDCMR_CTB2   // Enable bank 2
                        | 2;               // MODE=010 precharge all command
     sdramCommandWait();
-    
+
     FMC_Bank5_6->SDCMR=  (8-1)<<5         // NRFS=8 SDRAM datasheet says
                                           // "at least two AUTO REFRESH cycles"
                        | FMC_SDCMR_CTB2   // Enable bank 2
@@ -194,7 +194,7 @@ void configureSdram()
                     RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
                     RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_GPIOHEN;
     RCC_SYNC();
-    
+
     //First, configure SDRAM GPIOs
     GPIOB->AFR[0]=0x0cc00000;
     GPIOC->AFR[0]=0x0000000c;
@@ -213,7 +213,7 @@ void configureSdram()
     GPIOE->MODER=0xaaaa800a;
     GPIOF->MODER=0xaa800aaa;
     GPIOG->MODER=0x80020a0a;
-    
+
     GPIOA->OSPEEDR=0xaaaaaaaa; //Default to 50MHz speed for all GPIOs...
     GPIOB->OSPEEDR=0xaaaaaaaa | 0x00003c00; //...but 100MHz for the SDRAM pins
     GPIOC->OSPEEDR=0xaaaaaaaa | 0x00000003;
@@ -222,15 +222,15 @@ void configureSdram()
     GPIOF->OSPEEDR=0xaaaaaaaa | 0xffc00fff;
     GPIOG->OSPEEDR=0xaaaaaaaa | 0xc0030f0f;
     GPIOH->OSPEEDR=0xaaaaaaaa;
-    
+
     //Since we'we un-configured PB3/PB4 from the default at boot TDO,NTRST,
     //finish the job and remove the default pull-up
     GPIOB->PUPDR=0;
-    
+
     //Second, actually start the SDRAM controller
     RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
     RCC_SYNC();
-    
+
     //SDRAM is a AS4C4M16SA-6TAN, connected to bank 2 (0xd0000000)
     //Some bits in SDCR[1] are don't care, and the have to be set in SDCR[0],
     //they aren't just don't care, the controller will fail if they aren't at 0
@@ -242,7 +242,7 @@ void configureSdram()
                        | FMC_SDCR1_MWID_0 // 16 bit data bus
                        | FMC_SDCR1_NB     //  4 banks
                        | FMC_SDCR1_CAS_1; //  2 cycle CAS latency (TCK>9+0.5ns [1])
-    
+
     #ifdef SYSCLK_FREQ_180MHz
     //One SDRAM clock cycle is 11.1ns
     //Some bits in SDTR[1] are don't care, and the have to be set in SDTR[0],
@@ -275,7 +275,7 @@ void configureSdram()
     FMC_Bank5_6->SDCMR=  FMC_SDCMR_CTB2   // Enable bank 2
                        | 1;               // MODE=001 clock enabled
     sdramCommandWait();
-    
+
     //SDRAM datasheet requires 200us delay here (note 11), here we use 10% more
     delayUs(220);
 
@@ -289,7 +289,7 @@ void configureSdram()
                        | FMC_SDCMR_CTB2   // Enable bank 2
                        | 4;               // MODE=100 load mode register
     sdramCommandWait();
-    
+
     FMC_Bank5_6->SDCMR=  (4-1)<<5         // NRFS=8 SDRAM datasheet requires
                                           // a minimum of 2 cycles, here we use 4
                        | FMC_SDCMR_CTB2   // Enable bank 2
@@ -422,14 +422,14 @@ void IRQbspInit()
     misc::buzz::low();
 
     xbee::cs::mode(Mode::OUTPUT);
-    xbee::cs::high();    
+    xbee::cs::high();
     xbee::attn::mode(Mode::INPUT_PULL_UP);
     xbee::sleep_status::mode(Mode::INPUT);
-    
+
     xbee::reset::mode(Mode::OPEN_DRAIN);
     xbee::reset::high();
 
-    /* Led blink */
+    // Led blink
     led1::mode(Mode::OUTPUT);
 
     ledOn();
@@ -455,7 +455,7 @@ void bspInit2()
 //
 
 /**
- * For safety reasons, we never want the anakin to shutdown.
+ * For safety reasons, we never want the board to shutdown.
  * When requested to shutdown, we reboot instead.
  */
 void shutdown()
@@ -466,7 +466,7 @@ void shutdown()
 void reboot()
 {
     ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
-    
+
     #ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
     #endif //WITH_FILESYSTEM

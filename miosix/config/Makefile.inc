@@ -49,6 +49,7 @@
 #OPT_BOARD := stm32f072rb_stm32f0discovery
 #OPT_BOARD := stm32f429zi_skyward_death_stack
 #OPT_BOARD := stm32f100cx_generic
+#OPT_BOARD := stm32f407vg_skyward_tortellino
 
 ##
 ## Optimization flags, choose one.
@@ -161,6 +162,32 @@ ifeq ($(OPT_BOARD),stm32f407vg_stm32f4discovery)
     ## 3) Same as 1) but space has been reserved for a process pool, allowing
     ##    to configure the kernel with "#define WITH_PROCESSES"
     LINKER_SCRIPT_PATH := arch/cortexM4_stm32f4/stm32f407vg_stm32f4discovery/
+    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_rom.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_ram.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_rom_processes.ld
+
+    ## This causes the interrupt vector table to be relocated in SRAM, must be
+    ## uncommented when using the ram linker script
+    #SRAM_BOOT := -DVECT_TAB_SRAM
+
+    ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
+    CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000
+    #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000
+    #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000
+
+endif
+
+##---------------------------------------------------------------------------
+## stm32f407vg_skyward_tortellino
+##
+ifeq ($(OPT_BOARD),stm32f407vg_skyward_tortellino)
+
+    ## Linker script type, there are two options
+    ## 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
+    ## 2) Code + stack + heap in internal RAM (file *_ram.ld)
+    ## 3) Same as 1) but space has been reserved for a process pool, allowing
+    ##    to configure the kernel with "#define WITH_PROCESSES"
+    LINKER_SCRIPT_PATH := arch/cortexM4_stm32f4/stm32f407vg_skyward_tortellino/
     LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_rom.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_ram.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_rom_processes.ld
@@ -662,6 +689,8 @@ else ifeq ($(OPT_BOARD),stm32f103ve_strive_mini)
 else ifeq ($(OPT_BOARD),stm32f103ze_redbull_v2)
     ARCH := cortexM3_stm32
 else ifeq ($(OPT_BOARD),stm32f407vg_stm32f4discovery)
+    ARCH := cortexM4_stm32f4
+else ifeq ($(OPT_BOARD),stm32f407vg_skyward_tortellino)
     ARCH := cortexM4_stm32f4
 else ifeq ($(OPT_BOARD),stm32f207ig_stm3220g-eval)
     ARCH := cortexM3_stm32f2
@@ -1322,6 +1351,38 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
     ifeq ($(OPT_BOARD),stm32f407vg_stm32f4discovery)
         ## Base directory with header files for this board
         BOARD_INC := arch/cortexM4_stm32f4/stm32f407vg_stm32f4discovery
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
+        #LINKER_SCRIPT := already selected in board options
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        arch/common/drivers/stm32f2_f4_i2c.cpp       \
+        arch/common/drivers/stm32_hardware_rng.cpp   \
+        arch/common/drivers/servo_stm32.cpp          \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32F4DISCOVERY
+        CXXFLAGS_BASE += -D_BOARD_STM32F4DISCOVERY
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROGRAM_CMDLINE := qstlink2 -cqewV ./main.bin
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f407vg_skyward_tortellino
+    ##
+    else ifeq ($(OPT_BOARD),stm32f407vg_skyward_tortellino)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM4_stm32f4/stm32f407vg_skyward_tortellino
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
