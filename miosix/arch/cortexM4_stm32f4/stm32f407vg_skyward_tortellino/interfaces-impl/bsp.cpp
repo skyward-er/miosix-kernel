@@ -100,7 +100,34 @@ void IRQbspInit()
     lsm9ds1::cs_ag::high();
     lsm9ds1::cs_mag::mode(Mode::OUTPUT);
     lsm9ds1::cs_mag::high();
-    lsm9ds1::int1_ag::mode(Mode::INPUT);
+    lsm9ds1::int_ag::mode(Mode::INPUT);
+    lsm9ds1::ready_mag::mode(Mode::INPUT);
+
+    slitta::mode(Mode::INPUT);
+    finecorsa::mode(Mode::INPUT);
+
+    nosecone_dtch::mode(Mode::INPUT);
+    launchpad_dtch::mode(Mode::INPUT);
+
+    using namespace actuators;
+    hbridge::is::mode(Mode::INPUT);
+    hbridge::in::mode(Mode::OUTPUT);
+    hbridge::in::low();
+    hbridge::inh::mode(Mode::OUTPUT);
+    hbridge::in::low();
+
+    servo::in::mode(Mode::OUTPUT);
+    servo::in::low();
+
+    using namespace misc;
+    leds::green::mode(Mode::OUTPUT);
+    leds::green::low();
+    leds::orange::mode(Mode::OUTPUT);
+    leds::orange::low();
+    leds::red::mode(Mode::OUTPUT);
+    leds::red::low();
+    leds::blue::mode(Mode::OUTPUT);
+    leds::blue::low();
 
     xbee::cs::mode(Mode::OUTPUT);
     xbee::cs::high();
@@ -114,7 +141,7 @@ void IRQbspInit()
     delayMs(100);
     ledOff();
 
-    // Open default serial on USART1
+    // Open default serial on USART3 (PB10, PB11)
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(3, 9600,
         defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
