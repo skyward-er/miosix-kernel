@@ -23,7 +23,7 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
 /***********************************************************************
 * bsp_impl.h Part of the Miosix Embedded OS.
@@ -48,7 +48,7 @@ namespace miosix {
  * \internal
  * used by the ledOn() and ledOff() implementation
  */
-typedef Gpio<GPIOD_BASE,14> _led;
+typedef Gpio<GPIOD_BASE,12> _led;
 
 inline void ledOn()
 {
@@ -62,7 +62,7 @@ inline void ledOff()
 
 /**
  * Polls the SD card sense GPIO.
- * 
+ *
  * This board has no SD card whatsoever, but a card can be connected to the
  * following GPIOs:
  * D0  : PC8
@@ -71,10 +71,10 @@ inline void ledOff()
  * D3  : PC11
  * CLK : PC12 (conflicts with CS43L22 SDIN)
  * CMD : PD2
- * 
+ *
  * The conflicts mean that it's not possible to use both the SD card and
  * the audio playback feature on this board.
- * 
+ *
  * \return true. As there's no SD card sense switch, let's pretend that
  * the card is present.
  */

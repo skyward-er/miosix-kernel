@@ -114,7 +114,7 @@ void IRQbspInit()
     hbridge::in::mode(Mode::OUTPUT);
     hbridge::in::low();
     hbridge::inh::mode(Mode::OUTPUT);
-    hbridge::in::low();
+    hbridge::inh::low();
 
     servo::in::mode(Mode::OUTPUT);
     servo::in::low();
