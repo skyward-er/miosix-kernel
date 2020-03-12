@@ -101,7 +101,7 @@ void IRQbspInit()
     lsm9ds1::cs_mag::mode(Mode::OUTPUT);
     lsm9ds1::cs_mag::high();
     lsm9ds1::int_ag::mode(Mode::INPUT);
-    lsm9ds1::ready_mag::mode(Mode::INPUT);
+    lsm9ds1::drdy_mag::mode(Mode::INPUT);
 
     slitta::mode(Mode::INPUT);
     finecorsa::mode(Mode::INPUT);
