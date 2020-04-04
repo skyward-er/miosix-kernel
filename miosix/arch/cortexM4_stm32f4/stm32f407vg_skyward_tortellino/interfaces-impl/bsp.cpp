@@ -111,12 +111,13 @@ void IRQbspInit()
 
     using namespace actuators;
     hbridge::is::mode(Mode::INPUT);
-    hbridge::in::mode(Mode::OUTPUT);
-    hbridge::in::low();
+    hbridge::in::mode(Mode::ALTERNATE);
+    hbridge::in::alternateFunction(2);
     hbridge::inh::mode(Mode::OUTPUT);
     hbridge::inh::low();
 
-    servo::in::mode(Mode::OUTPUT);
+    servo::in::mode(Mode::ALTERNATE);
+    servo::in::alternateFunction(3);
     servo::in::low();
 
     using namespace misc;
