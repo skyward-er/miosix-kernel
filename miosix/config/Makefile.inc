@@ -50,6 +50,8 @@
 #OPT_BOARD := stm32f429zi_skyward_death_stack
 #OPT_BOARD := stm32f100cx_generic
 #OPT_BOARD := stm32f407vg_skyward_tortellino
+#OPT_BOARD := stm32f303vc_stm32f3discovery
+#OPT_BOARD := stm32f100c8_vaisala_rs41
 
 ##
 ## Optimization flags, choose one.
@@ -659,6 +661,35 @@ ifeq ($(OPT_BOARD),stm32f429zi_skyward_death_stack)
     CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000 -DUSE_INTERNAL_CLOCK
     #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000
 
+endif 
+
+##---------------------------------------------------------------------------
+## stm32f303vc_stm32f3discovery
+##
+
+ifeq ($(OPT_BOARD),stm32f303vc_stm32f3discovery)
+
+    ## Select clock frequency
+    ## Not defining any of these results in the internal 8MHz clock to be used
+    #CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI
+    #CLOCK_FREQ := -DSYSCLK_FREQ_36MHz=36000000 -DRUN_WITH_HSI
+    #CLOCK_FREQ := -DSYSCLK_FREQ_48MHz=48000000 -DRUN_WITH_HSI
+    CLOCK_FREQ := -DSYSCLK_FREQ_56MHz=56000000 -DRUN_WITH_HSI
+
+endif
+
+##---------------------------------------------------------------------------
+## stm32f100c8_vaisala_rs41
+##
+
+ifeq ($(OPT_BOARD),stm32f100cx_generic)
+
+    ## Select clock frequency
+    ## Not defining anything results in HSI being used
+    #CLOCK_FREQ := -DSYSCLK_FREQ_8MHz=8000000
+    CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI
+    #CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000 -DHSE_VALUE=24000000
+
 endif
 
 ############################################################################
@@ -753,6 +784,10 @@ else ifeq ($(OPT_BOARD),stm32f072rb_stm32f0discovery)
 else ifeq ($(OPT_BOARD),stm32f429zi_skyward_death_stack)
     ARCH := cortexM4_stm32f4
 else ifeq ($(OPT_BOARD),stm32f100cx_generic)
+    ARCH := cortexM3_stm32
+else ifeq ($(OPT_BOARD),stm32f303vc_stm32f3discovery)
+    ARCH := cortexM4_stm32f3
+else ifeq ($(OPT_BOARD),stm32f100c8_vaisala_rs41)
     ARCH := cortexM3_stm32
 else
     $(info Error: no board specified in miosix/config/Makefile.inc)
@@ -1289,6 +1324,36 @@ else ifeq ($(ARCH),cortexM3_stm32)
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F100CX_GENERIC -DSTM32F10X_MD
         CXXFLAGS_BASE += -D_BOARD_STM32F100CX_GENERIC -DSTM32F10X_MD
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROGRAM_CMDLINE := stm32flash -w main.hex -v /dev/ttyUSB0
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f100c8_vaisala_rs41
+    ##
+    else ifeq ($(OPT_BOARD),stm32f100c8_vaisala_rs41)
+
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM3_stm32/stm32f100c8_vaisala_rs41
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_64k+8k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_VAISALA_RS41 -DSTM32F10X_MD_VL
+        CXXFLAGS_BASE += -D_BOARD_VAISALA_RS41 -DSTM32F10X_MD_VL
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -2527,6 +2592,82 @@ else ifeq ($(ARCH),cortexM0_stm32f0)
     $(ARCH_INC)/interfaces-impl/gpio_impl.cpp                \
     arch/common/CMSIS/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c
 
+##-----------------------------------------------------------------------------
+## ARCHITECTURE: cortexM4_stm32f3
+##
+else ifeq ($(ARCH),cortexM4_stm32f3)
+    ## Base directory with else header files for this board
+    ARCH_INC := arch/cortexM4_stm32f3/common
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f303vc_stm32f3discovery
+    ##
+    ifeq ($(OPT_BOARD),stm32f303vc_stm32f3discovery)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM4_stm32f3/stm32f303vc_stm32f3discovery
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_256k+48k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32F3DISCOVERY
+        CXXFLAGS_BASE += -D_BOARD_STM32F3DISCOVERY
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROGRAM_CMDLINE := qstlink2 -cqewV ./main.bin
+
+    ##-------------------------------------------------------------------------
+    ## End of board list
+    ##
+    endif
+
+    ## Select compiler
+    PREFIX=arm-miosix-eabi-
+
+    ## From compiler prefix form the name of the compiler and other tools
+    CC  := $(PREFIX)gcc
+    CXX := $(PREFIX)g++
+    LD  := $(PREFIX)ld
+    AR  := $(PREFIX)ar
+    AS  := $(PREFIX)as
+    CP  := $(PREFIX)objcopy
+    OD  := $(PREFIX)objdump
+    SZ  := $(PREFIX)size
+
+    ## Select appropriate compiler flags for both ASM/C/C++/linker
+    AFLAGS_BASE   := -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+    CFLAGS_BASE   += -D_ARCH_CORTEXM4_STM32F3 $(CLOCK_FREQ) $(XRAM)             \
+                     -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
+                     $(OPT_OPTIMIZATION) -c
+    CXXFLAGS_BASE += -D_ARCH_CORTEXM4_STM32F3 $(CLOCK_FREQ) $(XRAM)             \
+                     -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
+                     $(OPT_EXCEPT) $(OPT_OPTIMIZATION) -c
+    LFLAGS_BASE   := -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
+                     -Wl,--gc-sections,-Map,main.map                            \
+                     -Wl,-T$(KPATH)/$(LINKER_SCRIPT) $(OPT_EXCEPT)              \
+                     $(OPT_OPTIMIZATION) -nostdlib
+
+    ## Select architecture specific files
+    ## These are the files in arch/<arch name>/common
+    ARCH_SRC +=                                              \
+    arch/common/core/interrupts_cortexMx.cpp                 \
+    arch/common/drivers/serial_stm32.cpp                     \
+    $(ARCH_INC)/interfaces-impl/portability.cpp              \
+    $(ARCH_INC)/interfaces-impl/gpio_impl.cpp                \
+    $(ARCH_INC)/interfaces-impl/delays.cpp                   \
+    arch/common/CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c
 ##-----------------------------------------------------------------------------
 ## end of architecture list
 ##

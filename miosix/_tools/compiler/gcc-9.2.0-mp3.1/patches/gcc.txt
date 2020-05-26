@@ -43,7 +43,7 @@ This patch does the following:
    full. By default it is set to a conservative value that is too large when
    compared with the RAM size of microcontrollers.
 
-10) It makes the verbose terminate handler a weak synbos to save code size.
+10) It makes the verbose terminate handler a weak symbol to save code size.
 
 11) It adds __attribute__((weak)) to some functions that pull in exception
    support to make them overridable by miosix when compiling without exceptions
@@ -53,8 +53,47 @@ This patch does the following:
    - occurrences of _GLIBCXX_THROW_OR_ABORT in headers. Don't know how to fix
      those, if they are ever used inside a .cc file within libstdc++ itself.
 
+12) It moves some functions from a .cc file within libstdc++ to the header file,
+  as when libstdc++ is compiled, exceptions are enabled. This code then pulls
+  in exception support (and its code size penalty) even when Miosix is built
+  with exceptions disabled. string, condition_variable and thread have
+  been patched to avoid this. For string, removing template instantiation
+  prevention code for basic_string was needed to generate non-exception code
+  that is preferentially linked instead of the one in libstdc++ forcedly
+  instantiated in libstdc++.
+
 NOTES
 -----
+
+Atomicity of libstdc++
+----------------------
+from objdir/arm-miosix-eabi/<arch>/libstdc++-v3/config.log
+                               ARM CM0 CM3 CM4 CM7
+atomic builtins for bool        -   -   Y   Y   Y
+atomic builtins for short       -   -   Y   Y   Y
+atomic builtins for int         -   -   Y   Y   Y
+atomic builtins for long long   -   -   -   -   -
+lock policy for shared_ptr      F   F   Y*  Y*  Y*
+* configure:15883: result: atomic
+Note that:
+- atomic_store still uses mutex anyway, see bits/shared_ptr_atomic.h
+
+Autotools issue
+---------------
+Some configure checks fail because in order to check for the presence of a
+particular function, a sample C program is compiled AND LINKED. Now, the
+GCC for miosix is meant to work if linked to libmiosix.a which isn't there yet,
+so code depending on syscalls causes "undefined reference" link failures.
+Do check the output of configure (configure.log) for check failures and
+add stubs to newlib accordingly.
+Note: look for configure.log in objdir/arm-miosix-eabi subdirectories,
+which curently are libatomic, libgcc, libquadmath and libstdc++-v3.
+The one that does more syscall-dependent configure checks is libstdc++
+
+Checks
+------
+thread_local is not supported, check that an example with thread_local produces
+compile-time errors to avoid giving the false impression that it works.
 
 Types to watch out
 ------------------
@@ -144,7 +183,7 @@ Thus allocating bad_alloc takes 132Bytes on ARM, and 148Bytes on other archs.
 
 It is recomended to leave some space just in case a different exception is
 thrown, like logic_error or runtime_error and there is no heap to allocate it.
-By seeing stdecept and stdexcept.cc these classes only contain a string object,
+By seeing stdexcept and stdexcept.cc these classes only contain a string object,
 and sizeof(logic_error) returns 8 bytes (4=vptr 4=string).
 
 Note Jul 5, 2010.

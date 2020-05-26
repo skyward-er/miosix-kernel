@@ -3296,11 +3296,17 @@ static void *t22_t1(void*)
 }
 
 #ifdef _MIOSIX_GCC_PATCH_MAJOR
+int t22_v8;
+
 class t22_c1
 {
 public:
     bool canDelete=false;
-    ~t22_c1() { if(canDelete==false) fail("Deleted too soon"); }
+    ~t22_c1()
+    {
+        if(canDelete==false) fail("Deleted too soon");
+        atomicAdd(&t22_v8,1);
+    }
 };
 
 shared_ptr<t22_c1> t22_v7;
@@ -3310,7 +3316,6 @@ void t22_t3(void*)
     auto inst1=make_shared<t22_c1>();
     for(int i=0;i<100000;i++) atomic_store(&t22_v7,inst1);
     atomic_store(&t22_v7,shared_ptr<t22_c1>(nullptr));
-    if(inst1.use_count()!=1) fail("shared_ptr atomic_store (1)");
     inst1->canDelete=true;
 }
 #endif //_MIOSIX_GCC_PATCH_MAJOR
@@ -3426,14 +3431,28 @@ static void test_22()
     t2->join();
     
     #ifdef _MIOSIX_GCC_PATCH_MAJOR
-    Thread *t3=Thread::create(t22_t3,STACK_SMALL,0,0,Thread::JOINABLE);
-    auto inst2=make_shared<t22_c1>();
-    for(int i=0;i<100000;i++) atomic_store(&t22_v7,inst2);
-    atomic_store(&t22_v7,shared_ptr<t22_c1>(nullptr));
-    if(inst2.use_count()!=1) fail("shared_ptr atomic_store (2)");
-    inst2->canDelete=true;
-    t3->join();
-    if(atomic_load(&t22_v7)!=nullptr) fail("shared_ptr atomic_load");
+    t22_v8=0;
+    {
+        Thread *t3=Thread::create(t22_t3,STACK_SMALL,0,0,Thread::JOINABLE);
+        auto inst2=make_shared<t22_c1>();
+        for(int i=0;i<100000;i++) atomic_store(&t22_v7,inst2);
+        atomic_store(&t22_v7,shared_ptr<t22_c1>(nullptr));
+        // NOTE: we can't check use_count to be 1 because the C++ specs say it
+        // can provide inaccurate results, and it does. Apparently atomic_store
+        // as of GCC 9.2.0 is implemented as a mutex lock and a swap(), see
+        // include/bits/shred_ptr_atomic.h
+        // Now, if the thread is interrupted after the swap but before returning
+        // from atomic_store a copy of the pointer remains for a short while on
+        // its stack and use_count() returns 2.
+        inst2->canDelete=true;
+        t3->join();
+        if(atomic_load(&t22_v7)!=nullptr) fail("shared_ptr atomic_load");
+    }
+    if(t22_v8!=2)
+    {
+        iprintf("deleted %d\n",t22_v8);
+        fail("Not deleted");
+    }
     #endif //_MIOSIX_GCC_PATCH_MAJOR
     
     pass();
@@ -3869,6 +3888,8 @@ C++ threads API
  condition_variable
  call_once
  yield
+ this_thread::sleep_for
+ this_thread::sleep_until
 */
 
 Thread *t25_v1=nullptr;
@@ -4049,6 +4070,24 @@ static void test_25()
         this_thread::yield();
         if(flag==false) fail("this_thread::yield");
         thr.join();
+    }
+    //
+    // Testing system_clock/this_thread::sleep_for
+    //
+    {
+        auto a=chrono::system_clock::now().time_since_epoch().count();
+        this_thread::sleep_for(chrono::milliseconds(100));
+        auto b=chrono::system_clock::now().time_since_epoch().count();
+        if(llabs(b-a-100000000)>5000000) fail("sleep_for");
+    }
+    //
+    // Testing steady_clock/this_thread::sleep_until
+    //
+    {
+        auto a=chrono::steady_clock::now().time_since_epoch().count();
+        this_thread::sleep_until(chrono::steady_clock::now()+chrono::milliseconds(100));
+        auto b=chrono::steady_clock::now().time_since_epoch().count();
+        if(llabs(b-a-100000000)>5000000) fail("sleep_until");
     }
     pass();
     Thread::setPriority(0);
