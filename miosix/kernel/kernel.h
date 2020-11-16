@@ -33,7 +33,6 @@
 #include "config/miosix_settings.h"
 #include "interfaces/portability.h"
 #include "kernel/scheduler/sched_types.h"
-#include "stdlib_integration/libc_integration.h"
 #include "stdlib_integration/libstdcpp_integration.h"
 #include <cstdlib>
 #include <new>
@@ -528,6 +527,7 @@ public:
      * \return a pointer to the current thread.
      *
      * Can be called when the kernel is paused.
+     * Returns a valid pointer also if called before the kernel is started.
      */
     static Thread *getCurrentThread();
 
@@ -633,7 +633,7 @@ public:
 
     /**
      * Same as get_current_thread(), but meant to be used insida an IRQ, when
-     *interrupts are disabled or when the kernel is paused.
+     * interrupts are disabled or when the kernel is paused.
      */
     static Thread *IRQgetCurrentThread();
 
@@ -837,7 +837,6 @@ private:
         
         /**
          * \return true if the thread is running unprivileged inside a process.
-         * Only threads with proc!=null can run in userspace 
          */
         bool isInUserspace() const { return flags & USERSPACE; }
 
@@ -943,6 +942,20 @@ private:
      * \param argv argument passed to the entry point
      */
     static void threadLauncher(void *(*threadfunc)(void*), void *argv);
+    
+    /**
+     * Allocates the idle thread and makes cur point to it
+     * Can only be called before the kernel is started, is called exactly once
+     * so that getCurrentThread() always returns a pointer to a valid thread or
+     * by startKernel to create the idle thread, whichever comes first.
+     * \return the newly allocated idle thread
+     */
+    static Thread *allocateIdleThread();
+    
+    /**
+     * \return the C reentrancy structure of the currently running thread
+     */
+    static struct _reent *getCReent();
 
     //Thread data
     SchedulerData schedData; ///< Scheduler data, only used by class Scheduler
@@ -969,13 +982,13 @@ private:
         void *result;          ///<Result returned by entry point
     } joinData;
     /// Per-thread instance of data to make the C and C++ libraries thread safe.
-    CReentrancyData  cReent;
-    CppReentrancyData cppReent;
+    struct _reent *cReentrancyData;
+    CppReentrancyData cppReentrancyData;
     #ifdef WITH_PROCESSES
     ///Process to which this thread belongs. Null if it is a kernel thread.
     ProcessBase *proc;
     ///Pointer to the set of saved registers for when the thread is running in
-    ///user mode. For kernel threads (i.e, threads where proc==null) this
+    ///user mode. For kernel threads (i.e, threads where proc==kernel) this
     ///pointer is null
     unsigned int *userCtxsave;
     #endif //WITH_PROCESSES
@@ -1010,8 +1023,6 @@ private:
     friend int ::pthread_cond_signal(pthread_cond_t *cond);
     //Needs access to flags
     friend int ::pthread_cond_broadcast(pthread_cond_t *cond);
-    //Needs access to cReent
-    friend class CReentrancyAccessor;
     //Needs access to cppReent
     friend class CppReentrancyAccessor;
     #ifdef WITH_PROCESSES

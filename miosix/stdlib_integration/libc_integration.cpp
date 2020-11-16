@@ -66,14 +66,26 @@ unsigned int getMaxHeap()
     return maxHeapEnd;
 }
 
-class CReentrancyAccessor
-{
-public:
-    static struct _reent *getReent()
-    {
-        return miosix::Thread::getCurrentThread()->cReent.getReent();
-    }
-};
+/**
+ * \return the global C reentrancy structure
+ */
+static struct _reent *kernelNotStartedGetReent() { return _GLOBAL_REENT; }
+
+/**
+ * Pointer to a function that retrieves the correct reentrancy structure.
+ * When the C reentrancy structure is requested before the kernel is started,
+ * the default reentrancy structure shall be returned, while after the kernel
+ * is started, the per-thread reentrancy structure needs to be returned to
+ * avoid race conditions between threads.
+ * The function pointer is needed to switch between the two behaviors as the
+ * per-thread code would cause a circular dependency if called before the
+ * kernel is started (getCurrentThread needs to allocate a thread with malloc
+ * if called before the kernel istarted, and malloc needs the reentrancy
+ * structure).
+ */
+static struct _reent *(*getReent)()=kernelNotStartedGetReent;
+
+void setCReentrancyCallback(struct _reent *(*callback)()) { getReent=callback; }
 
 } //namespace miosix
 
@@ -185,7 +197,7 @@ void *_sbrk_r(struct _reent *ptr, ptrdiff_t incr)
 
 void *sbrk(ptrdiff_t incr)
 {
-    return _sbrk_r(miosix::CReentrancyAccessor::getReent(),incr);
+    return _sbrk_r(miosix::getReent(),incr);
 }
 
 /**
@@ -221,7 +233,7 @@ void __malloc_unlock()
  */
 struct _reent *__getreent()
 {
-    return miosix::CReentrancyAccessor::getReent();
+    return miosix::getReent();
 }
 
 
@@ -265,7 +277,7 @@ int open(const char *name, int flags, ...)
         mode=va_arg(arg,int);
         va_end(arg);
     }
-    return _open_r(miosix::CReentrancyAccessor::getReent(),name,flags,mode);
+    return _open_r(miosix::getReent(),name,flags,mode);
 }
 
 /**
@@ -298,7 +310,7 @@ int _close_r(struct _reent *ptr, int fd)
 
 int close(int fd)
 {
-    return _close_r(miosix::CReentrancyAccessor::getReent(),fd);
+    return _close_r(miosix::getReent(),fd);
 }
 
 /**
@@ -339,7 +351,7 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 
 int write(int fd, const void *buf, size_t cnt)
 {
-    return _write_r(miosix::CReentrancyAccessor::getReent(),fd,buf,cnt);
+    return _write_r(miosix::getReent(),fd,buf,cnt);
 }
 
 /**
@@ -380,7 +392,7 @@ int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 
 int read(int fd, void *buf, size_t cnt)
 {
-    return _read_r(miosix::CReentrancyAccessor::getReent(),fd,buf,cnt);
+    return _read_r(miosix::getReent(),fd,buf,cnt);
 }
 
 /**
@@ -413,7 +425,7 @@ off_t _lseek_r(struct _reent *ptr, int fd, off_t pos, int whence)
 
 off_t lseek(int fd, off_t pos, int whence)
 {
-    return _lseek_r(miosix::CReentrancyAccessor::getReent(),fd,pos,whence);
+    return _lseek_r(miosix::getReent(),fd,pos,whence);
 }
 
 /**
@@ -457,7 +469,7 @@ int _fstat_r(struct _reent *ptr, int fd, struct stat *pstat)
 
 int fstat(int fd, struct stat *pstat)
 {
-    return _fstat_r(miosix::CReentrancyAccessor::getReent(),fd,pstat);
+    return _fstat_r(miosix::getReent(),fd,pstat);
 }
 
 /**
@@ -490,7 +502,7 @@ int _stat_r(struct _reent *ptr, const char *file, struct stat *pstat)
 
 int stat(const char *file, struct stat *pstat)
 {
-    return _stat_r(miosix::CReentrancyAccessor::getReent(),file,pstat);
+    return _stat_r(miosix::getReent(),file,pstat);
 }
 
 /**
@@ -530,7 +542,7 @@ int _isatty_r(struct _reent *ptr, int fd)
 
 int isatty(int fd)
 {
-    return _isatty_r(miosix::CReentrancyAccessor::getReent(),fd);
+    return _isatty_r(miosix::getReent(),fd);
 }
 
 /**
@@ -565,7 +577,7 @@ int fcntl(int fd, int cmd, ...)
 {
     va_list arg;
     int result;
-    struct _reent *r=miosix::CReentrancyAccessor::getReent();
+    struct _reent *r=miosix::getReent();
     switch(cmd)
     {
         case F_DUPFD:
@@ -618,7 +630,7 @@ int _ioctl_r(struct _reent *ptr, int fd, int cmd, void *arg)
 
 int ioctl(int fd, int cmd, void *arg)
 {
-    return _ioctl_r(miosix::CReentrancyAccessor::getReent(),fd,cmd,arg);
+    return _ioctl_r(miosix::getReent(),fd,cmd,arg);
 }
 
 /**
@@ -651,7 +663,7 @@ char *_getcwd_r(struct _reent *ptr, char *buf, size_t size)
 
 char *getcwd(char *buf, size_t size)
 {
-    return _getcwd_r(miosix::CReentrancyAccessor::getReent(),buf,size);
+    return _getcwd_r(miosix::getReent(),buf,size);
 }
 
 /**
@@ -684,7 +696,7 @@ int _chdir_r(struct _reent *ptr, const char *path)
 
 int chdir(const char *path)
 {
-    return _chdir_r(miosix::CReentrancyAccessor::getReent(),path);
+    return _chdir_r(miosix::getReent(),path);
 }
 
 /**
@@ -717,7 +729,7 @@ int _mkdir_r(struct _reent *ptr, const char *path, int mode)
 
 int mkdir(const char *path, mode_t mode)
 {
-    return _mkdir_r(miosix::CReentrancyAccessor::getReent(),path,mode);
+    return _mkdir_r(miosix::getReent(),path,mode);
 }
 
 /**
@@ -750,7 +762,7 @@ int _rmdir_r(struct _reent *ptr, const char *path)
 
 int rmdir(const char *path)
 {
-    return _rmdir_r(miosix::CReentrancyAccessor::getReent(),path);
+    return _rmdir_r(miosix::getReent(),path);
 }
 
 /**
@@ -765,7 +777,7 @@ int _link_r(struct _reent *ptr, const char *f_old, const char *f_new)
 
 int link(const char *f_old, const char *f_new)
 {
-    return _link_r(miosix::CReentrancyAccessor::getReent(),f_old,f_new);
+    return _link_r(miosix::getReent(),f_old,f_new);
 }
 
 /**
@@ -798,7 +810,7 @@ int _unlink_r(struct _reent *ptr, const char *file)
 
 int unlink(const char *file)
 {
-    return _unlink_r(miosix::CReentrancyAccessor::getReent(),file);
+    return _unlink_r(miosix::getReent(),file);
 }
 
 /**
@@ -831,7 +843,7 @@ int _rename_r(struct _reent *ptr, const char *f_old, const char *f_new)
 
 int rename(const char *f_old, const char *f_new)
 {
-    return _rename_r(miosix::CReentrancyAccessor::getReent(),f_old,f_new);
+    return _rename_r(miosix::getReent(),f_old,f_new);
 }
 
 /**
@@ -847,17 +859,17 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
     #endif //__NO_EXCEPTIONS
         int result=miosix::getFileDescriptorTable().getdents(fd,dirp,count);
         if(result>=0) return result;
-        miosix::CReentrancyAccessor::getReent()->_errno=-result;
+        miosix::getReent()->_errno=-result;
         return -1;
     #ifndef __NO_EXCEPTIONS
     } catch(exception& e) {
-        miosix::CReentrancyAccessor::getReent()->_errno=ENOMEM;
+        miosix::getReent()->_errno=ENOMEM;
         return -1;
     }
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    miosix::CReentrancyAccessor::getReent()->_errno=ENOENT;
+    miosix::getReent()->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
 }
@@ -982,7 +994,7 @@ clock_t _times_r(struct _reent *ptr, struct tms *tim)
 
 clock_t times(struct tms *tim)
 {
-    return _times_r(miosix::CReentrancyAccessor::getReent(),tim);
+    return _times_r(miosix::getReent(),tim);
 }
 
 int _gettimeofday_r(struct _reent *ptr, struct timeval *tv, void *tz)
@@ -997,7 +1009,7 @@ int _gettimeofday_r(struct _reent *ptr, struct timeval *tv, void *tz)
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-    return _gettimeofday_r(miosix::CReentrancyAccessor::getReent(),tv,tz);
+    return _gettimeofday_r(miosix::getReent(),tv,tz);
 }
 
 
@@ -1022,7 +1034,7 @@ int _kill_r(struct _reent* ptr, int pid, int sig)
 
 int kill(int pid, int sig)
 {
-    return _kill_r(miosix::CReentrancyAccessor::getReent(),pid,sig);
+    return _kill_r(miosix::getReent(),pid,sig);
 }
 
 /**
@@ -1040,7 +1052,7 @@ int _getpid_r(struct _reent* ptr)
  */
 int getpid()
 {
-    return _getpid_r(miosix::CReentrancyAccessor::getReent());
+    return _getpid_r(miosix::getReent());
 }
 
 /**
@@ -1054,7 +1066,7 @@ int _wait_r(struct _reent *ptr, int *status)
 
 int wait(int *status)
 {
-    return _wait_r(miosix::CReentrancyAccessor::getReent(),status);
+    return _wait_r(miosix::getReent(),status);
 }
 
 /**
@@ -1069,7 +1081,7 @@ int _execve_r(struct _reent *ptr, const char *path, char *const argv[],
 
 int execve(const char *path, char *const argv[], char *const env[])
 {
-    return _execve_r(miosix::CReentrancyAccessor::getReent(),path,argv,env);
+    return _execve_r(miosix::getReent(),path,argv,env);
 }
 
 /**
@@ -1084,7 +1096,7 @@ pid_t _forkexecve_r(struct _reent *ptr, const char *path, char *const argv[],
 
 pid_t forkexecve(const char *path, char *const argv[], char *const env[])
 {
-    return _forkexecve_r(miosix::CReentrancyAccessor::getReent(),path,argv,env);
+    return _forkexecve_r(miosix::getReent(),path,argv,env);
 }
 
 #ifdef __cplusplus
