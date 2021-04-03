@@ -46,6 +46,7 @@
 #OPT_BOARD := stm32f407vg_thermal_test_chip
 #OPT_BOARD := stm32f205_generic
 #OPT_BOARD := stm32f103cx_generic
+OPT_BOARD := stm32f103cb_skyward_strain_board
 #OPT_BOARD := stm32f072rb_stm32f0discovery
 #OPT_BOARD := stm32f429zi_skyward_death_stack
 #OPT_BOARD := stm32f429zi_skyward_death_stack_x
@@ -614,6 +615,26 @@ ifeq ($(OPT_BOARD),stm32f103cx_generic)
     #CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
 
 endif
+
+##---------------------------------------------------------------------------
+## stm32f103cb_skyward_strain_board
+##
+
+ifeq ($(OPT_BOARD),stm32f103cb_skyward_strain_board)
+
+    LINKER_SCRIPT_PATH := arch/cortexM3_stm32/stm32f103cb_skyward_strain_board/
+    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_128k+20k_rom.ld
+
+    ## Select clock frequency
+    CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI
+    #CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_36MHz=36000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_48MHz=48000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_56MHz=56000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
+
+endif
+
 ##---------------------------------------------------------------------------
 ## stm32f072rb_stm32f0discovery
 ##
@@ -842,6 +863,8 @@ else ifeq ($(OPT_BOARD),stm32f407vg_thermal_test_chip)
 else ifeq ($(OPT_BOARD),stm32f205_generic)
     ARCH := cortexM3_stm32f2
 else ifeq ($(OPT_BOARD),stm32f103cx_generic)
+    ARCH := cortexM3_stm32
+else ifeq ($(OPT_BOARD),stm32f103cb_skyward_strain_board)
     ARCH := cortexM3_stm32
 else ifeq ($(OPT_BOARD),stm32f072rb_stm32f0discovery)
     ARCH := cortexM0_stm32f0
@@ -1367,6 +1390,37 @@ else ifeq ($(ARCH),cortexM3_stm32)
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F103CX_GENERIC -DSTM32F10X_MD
         CXXFLAGS_BASE += -D_BOARD_STM32F103CX_GENERIC -DSTM32F10X_MD
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROGRAM_CMDLINE := stm32flash -w main.hex -v /dev/ttyUSB0
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f103cb_skyward_strain_board
+    ##
+    else ifeq ($(OPT_BOARD),stm32f103cb_skyward_strain_board)
+
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM3_stm32/stm32f103cb_skyward_strain_board
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
+        #LINKER_SCRIPT := already selected in board options
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp         \
+        arch/common/drivers/stm32_rtc.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32F103CB_SKYWARD_STRAIN_BOARD -DSTM32F10X_MD
+        CXXFLAGS_BASE += -D_BOARD_STM32F103CB_SKYWARD_STRAIN_BOARD -DSTM32F10X_MD
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
