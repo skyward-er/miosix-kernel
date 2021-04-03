@@ -46,7 +46,7 @@
 #OPT_BOARD := stm32f407vg_thermal_test_chip
 #OPT_BOARD := stm32f205_generic
 #OPT_BOARD := stm32f103cx_generic
-OPT_BOARD := stm32f103cb_skyward_strain_board
+#OPT_BOARD := stm32f103cb_skyward_strain_board
 #OPT_BOARD := stm32f072rb_stm32f0discovery
 #OPT_BOARD := stm32f429zi_skyward_death_stack
 #OPT_BOARD := stm32f429zi_skyward_death_stack_x
