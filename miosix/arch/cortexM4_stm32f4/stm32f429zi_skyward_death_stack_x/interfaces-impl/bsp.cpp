@@ -321,6 +321,13 @@ void IRQbspInit()
     RCC_SYNC();
     #endif //__ENABLE_XRAM
 
+    // enable spi1, spi2 and can1
+    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+    RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+    RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+
+    RCC_SYNC();
+
     using namespace interfaces;
     spi1::sck::mode(Mode::ALTERNATE);
     spi1::sck::alternateFunction(5);
@@ -361,11 +368,11 @@ void IRQbspInit()
     bmx160::cs::high();
     bmx160::intr::mode(Mode::INPUT);
 
-    lsm9ds1::cs_a_g::mode(Mode::OUTPUT);
+    /*lsm9ds1::cs_a_g::mode(Mode::OUTPUT);
     lsm9ds1::cs_a_g::high();
     lsm9ds1::cs_m::mode(Mode::OUTPUT);
     lsm9ds1::cs_m::high();
-    lsm9ds1::intr_a_g::mode(Mode::INPUT);
+    lsm9ds1::intr_a_g::mode(Mode::INPUT);*/
 
     lis3mdl::cs::mode(Mode::OUTPUT);
     lis3mdl::cs::high();
@@ -392,7 +399,7 @@ void IRQbspInit()
     nosecone::thCut2::csens::mode(Mode::INPUT_ANALOG);
 
     nosecone::nc_servo_pwm::mode(Mode::ALTERNATE);
-    nosecone::nc_servo_pwm::alternateFunction(3);
+    nosecone::nc_servo_pwm::alternateFunction(2);
 
     airbrakes::airbrakes_servo_pwm::mode(Mode::ALTERNATE);
     airbrakes::airbrakes_servo_pwm::alternateFunction(3);
@@ -404,19 +411,22 @@ void IRQbspInit()
     xbee::reset::mode(Mode::OPEN_DRAIN);
     xbee::reset::high();
 
-    // Led blink
     using namespace leds;
     led_red1::mode(Mode::OUTPUT);
     led_red2::mode(Mode::OUTPUT);
     led_blue1::mode(Mode::OUTPUT);
 
-    led_blue1::high();
-    delayMs(100);
-    led_blue1::low();
-
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
+        new STM32Serial(defaultSerial, defaultSerialSpeed,
         defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+
+    for(uint8_t i = 0; i < 3; i++)
+    {
+        ledOn();
+        delayMs(100);
+        ledOff();
+        delayMs(100);
+    }
 }
 
 void bspInit2()
