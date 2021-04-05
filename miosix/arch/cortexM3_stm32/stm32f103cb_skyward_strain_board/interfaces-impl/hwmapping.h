@@ -30,7 +30,6 @@ namespace sensors {
 
 namespace ads1118 {
 using cs = Gpio<GPIOA_BASE, 4>;
-const SPI_TypeDef* spi = SPI1;
 }
 
 }
