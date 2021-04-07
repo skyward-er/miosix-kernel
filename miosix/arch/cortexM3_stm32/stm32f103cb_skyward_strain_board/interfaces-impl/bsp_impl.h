@@ -33,6 +33,8 @@
 #ifndef BSP_IMPL_H
 #define BSP_IMPL_H
 
+#include "hwmapping.h"
+
 namespace miosix {
 
 /**
@@ -40,8 +42,12 @@ namespace miosix {
 \{
 */
 
-inline void ledOn() {}
-inline void ledOff() {}
+inline void ledOn() {
+    leds::led1::high();
+}
+inline void ledOff() {
+    leds::led1::low();
+}
 
 /**
  * Polls the SD card sense GPIO

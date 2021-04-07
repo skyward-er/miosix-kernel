@@ -26,6 +26,13 @@ using rx = Gpio<GPIOA_BASE, 11>;
 
 }
 
+namespace leds
+{
+    using led1 = Gpio<GPIOB_BASE, 12>;
+    using led2 = Gpio<GPIOB_BASE, 13>;
+    using led3 = Gpio<GPIOB_BASE, 14>;
+}
+
 namespace sensors {
 
 namespace ads1118 {

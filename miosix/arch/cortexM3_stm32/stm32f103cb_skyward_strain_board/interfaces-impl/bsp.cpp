@@ -68,14 +68,24 @@ void IRQbspInit()
     spi1::miso::mode(Mode::INPUT);
     spi1::mosi::mode(Mode::ALTERNATE);
 
-    usart3::tx::mode(Mode::ALTERNATE);
-    usart3::rx::mode(Mode::INPUT);
-
     can::tx::mode(Mode::ALTERNATE);
     can::rx::mode(Mode::INPUT);
 
     using namespace sensors;
-    ads1118::cs::mode(Mode::OUTPUT);
+    ads1118::cs::mode(Mode::ALTERNATE);
+
+    using namespace leds;
+    led1::mode(Mode::OUTPUT);
+    led2::mode(Mode::OUTPUT);
+    led3::mode(Mode::OUTPUT);
+
+    for (uint8_t i = 0; i < 5; i++)
+    {
+        ledOn();
+        delayMs(100);
+        ledOff();
+        delayMs(100);
+    }
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
