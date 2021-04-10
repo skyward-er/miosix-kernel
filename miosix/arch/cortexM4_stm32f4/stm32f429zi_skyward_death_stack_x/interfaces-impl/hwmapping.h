@@ -90,12 +90,12 @@ using cs   = Gpio<GPIOA_BASE, 8>;
 using intr = Gpio<GPIOE_BASE, 5>;
 }  // namespace bmx160
 
-namespace lsm9ds1
+/*namespace lsm9ds1
 {
 using cs_a_g   = Gpio<GPIOC_BASE, 1>;
 using cs_m     = Gpio<GPIOC_BASE, 3>;
 using intr_a_g = Gpio<GPIOB_BASE, 12>;
-}  // namespace lsm9ds1
+}  // namespace lsm9ds1 */
 
 namespace lis3mdl
 {

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2014 by Terraneo Federico                               *
+ *   Copyright (C) 2018 by Terraneo Federico                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -44,13 +44,10 @@ namespace miosix {
  */
 
 /// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB) but the
-/// STM32F407VG only has 192KB of RAM so there is room for a big 4K stack.
-const unsigned int MAIN_STACK_SIZE=16*1024;
+/// The C standard library is stack-heavy (iprintf requires 1KB)
+const unsigned int MAIN_STACK_SIZE=2048;
 
-/// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
-/// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
-/// tick and the minimun Thread::sleep value is 1ms
+/// Frequency of tick (in Hz)
 /// For the priority scheduler this is also the context switch frequency
 const unsigned int TICK_FREQ=1000;
 
@@ -63,22 +60,10 @@ const unsigned int AUX_TIMER_CLOCK=100000;
 const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
 
 /// Serial port
-const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=115200;
+const unsigned int defaultSerial=3;
+const unsigned int defaultSerialSpeed=19200;
 const bool defaultSerialFlowctrl=false;
-#define SERIAL_1_DMA
-//#define SERIAL_2_DMA //Serial 2 can't be used (GPIO conflict), so no DMA
-//#define SERIAL_3_DMA //Serial 3 can't be used (GPIO conflict), so no DMA
-
-//#define I2C_WITH_DMA
-
-//SD card driver
-static const unsigned char sdVoltage=30; //Board powered @ 3.0V
-#ifdef __ENABLE_XRAM
-//Reduce SD clock to ~4.8MHz
-#define OVERRIDE_SD_CLOCK_DIVIDER_MAX 8
-#endif //__ENABLE_XRAM
-//#define SD_ONE_BIT_DATABUS //This board supports 4 bit databus to SD card
+#define SERIAL_3_DMA
 
 /**
  * \}
