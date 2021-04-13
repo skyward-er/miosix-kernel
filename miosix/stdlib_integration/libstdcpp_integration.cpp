@@ -29,6 +29,9 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <cxxabi.h>
+#if _MIOSIX_GCC_PATCH_MAJOR > 2
+#include <thread>
+#endif
 //// Settings
 #include "config/miosix_settings.h"
 //// Console
@@ -106,6 +109,16 @@ extern "C" void __cxxabiv1::__cxa_deleted_virtual(void)
 namespace std {
 void terminate()  noexcept { _exit(1); } //Since GCC 9.2.0
 void unexpected() noexcept { _exit(1); } //Since GCC 9.2.0
+/*
+ * This one comes from thread.cc, the need to call the class destructor makes it
+ * call __cxa_end_cleanup which pulls in exception code.
+ */
+extern "C" void* execute_native_thread_routine(void* __p)
+{
+    thread::_State_ptr __t{ static_cast<thread::_State*>(__p) };
+    __t->_M_run();
+    return nullptr;
+}
 } //namespace std
 #endif
 
@@ -128,7 +141,9 @@ void __throw_runtime_error(const char*) { _exit(1); }
 void __throw_range_error(const char*) { _exit(1); }
 void __throw_overflow_error(const char*) { _exit(1); }
 void __throw_underflow_error(const char*) { _exit(1); }
+#if !defined(_MIOSIX_GCC_PATCH_MAJOR) || _MIOSIX_GCC_PATCH_MAJOR <= 2
 void __throw_ios_failure(const char*) { _exit(1); } //Unused since GCC 9.2.0
+#endif
 void __throw_system_error(int) { _exit(1); }
 void __throw_future_error(int) { _exit(1); }
 void __throw_bad_function_call() { _exit(1); }
@@ -150,18 +165,18 @@ class CppReentrancyAccessor
 public:
     static __cxxabiv1::__cxa_eh_globals *getEhGlobals()
     {
-        return &miosix::Thread::getCurrentThread()->cppReent.eh_globals;
+        return &miosix::Thread::getCurrentThread()->cppReentrancyData.eh_globals;
     }
 
     #ifndef __ARM_EABI__
     static void *getSjljPtr()
     {
-        return miosix::Thread::getCurrentThread()->cppReent.sjlj_ptr;
+        return miosix::Thread::getCurrentThread()->cppReentrancyData.sjlj_ptr;
     }
 
     static void setSjljPtr(void *ptr)
     {
-        miosix::Thread::getCurrentThread()->cppReent.sjlj_ptr=ptr;
+        miosix::Thread::getCurrentThread()->cppReentrancyData.sjlj_ptr=ptr;
     }
     #endif //__ARM_EABI__
 };

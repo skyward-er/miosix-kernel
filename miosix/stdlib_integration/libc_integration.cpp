@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <reent.h>
+#include <sys/time.h>
 #include <sys/times.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
@@ -65,14 +66,26 @@ unsigned int getMaxHeap()
     return maxHeapEnd;
 }
 
-class CReentrancyAccessor
-{
-public:
-    static struct _reent *getReent()
-    {
-        return miosix::Thread::getCurrentThread()->cReent.getReent();
-    }
-};
+/**
+ * \return the global C reentrancy structure
+ */
+static struct _reent *kernelNotStartedGetReent() { return _GLOBAL_REENT; }
+
+/**
+ * Pointer to a function that retrieves the correct reentrancy structure.
+ * When the C reentrancy structure is requested before the kernel is started,
+ * the default reentrancy structure shall be returned, while after the kernel
+ * is started, the per-thread reentrancy structure needs to be returned to
+ * avoid race conditions between threads.
+ * The function pointer is needed to switch between the two behaviors as the
+ * per-thread code would cause a circular dependency if called before the
+ * kernel is started (getCurrentThread needs to allocate a thread with malloc
+ * if called before the kernel istarted, and malloc needs the reentrancy
+ * structure).
+ */
+static struct _reent *(*getReent)()=kernelNotStartedGetReent;
+
+void setCReentrancyCallback(struct _reent *(*callback)()) { getReent=callback; }
 
 } //namespace miosix
 
@@ -184,7 +197,7 @@ void *_sbrk_r(struct _reent *ptr, ptrdiff_t incr)
 
 void *sbrk(ptrdiff_t incr)
 {
-    return _sbrk_r(miosix::CReentrancyAccessor::getReent(),incr);
+    return _sbrk_r(miosix::getReent(),incr);
 }
 
 /**
@@ -220,7 +233,7 @@ void __malloc_unlock()
  */
 struct _reent *__getreent()
 {
-    return miosix::CReentrancyAccessor::getReent();
+    return miosix::getReent();
 }
 
 
@@ -264,7 +277,7 @@ int open(const char *name, int flags, ...)
         mode=va_arg(arg,int);
         va_end(arg);
     }
-    return _open_r(miosix::CReentrancyAccessor::getReent(),name,flags,mode);
+    return _open_r(miosix::getReent(),name,flags,mode);
 }
 
 /**
@@ -297,7 +310,7 @@ int _close_r(struct _reent *ptr, int fd)
 
 int close(int fd)
 {
-    return _close_r(miosix::CReentrancyAccessor::getReent(),fd);
+    return _close_r(miosix::getReent(),fd);
 }
 
 /**
@@ -338,7 +351,7 @@ int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 
 int write(int fd, const void *buf, size_t cnt)
 {
-    return _write_r(miosix::CReentrancyAccessor::getReent(),fd,buf,cnt);
+    return _write_r(miosix::getReent(),fd,buf,cnt);
 }
 
 /**
@@ -379,7 +392,7 @@ int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 
 int read(int fd, void *buf, size_t cnt)
 {
-    return _read_r(miosix::CReentrancyAccessor::getReent(),fd,buf,cnt);
+    return _read_r(miosix::getReent(),fd,buf,cnt);
 }
 
 /**
@@ -412,7 +425,7 @@ off_t _lseek_r(struct _reent *ptr, int fd, off_t pos, int whence)
 
 off_t lseek(int fd, off_t pos, int whence)
 {
-    return _lseek_r(miosix::CReentrancyAccessor::getReent(),fd,pos,whence);
+    return _lseek_r(miosix::getReent(),fd,pos,whence);
 }
 
 /**
@@ -456,7 +469,7 @@ int _fstat_r(struct _reent *ptr, int fd, struct stat *pstat)
 
 int fstat(int fd, struct stat *pstat)
 {
-    return _fstat_r(miosix::CReentrancyAccessor::getReent(),fd,pstat);
+    return _fstat_r(miosix::getReent(),fd,pstat);
 }
 
 /**
@@ -489,7 +502,7 @@ int _stat_r(struct _reent *ptr, const char *file, struct stat *pstat)
 
 int stat(const char *file, struct stat *pstat)
 {
-    return _stat_r(miosix::CReentrancyAccessor::getReent(),file,pstat);
+    return _stat_r(miosix::getReent(),file,pstat);
 }
 
 /**
@@ -529,7 +542,7 @@ int _isatty_r(struct _reent *ptr, int fd)
 
 int isatty(int fd)
 {
-    return _isatty_r(miosix::CReentrancyAccessor::getReent(),fd);
+    return _isatty_r(miosix::getReent(),fd);
 }
 
 /**
@@ -564,7 +577,7 @@ int fcntl(int fd, int cmd, ...)
 {
     va_list arg;
     int result;
-    struct _reent *r=miosix::CReentrancyAccessor::getReent();
+    struct _reent *r=miosix::getReent();
     switch(cmd)
     {
         case F_DUPFD:
@@ -617,7 +630,7 @@ int _ioctl_r(struct _reent *ptr, int fd, int cmd, void *arg)
 
 int ioctl(int fd, int cmd, void *arg)
 {
-    return _ioctl_r(miosix::CReentrancyAccessor::getReent(),fd,cmd,arg);
+    return _ioctl_r(miosix::getReent(),fd,cmd,arg);
 }
 
 /**
@@ -650,7 +663,7 @@ char *_getcwd_r(struct _reent *ptr, char *buf, size_t size)
 
 char *getcwd(char *buf, size_t size)
 {
-    return _getcwd_r(miosix::CReentrancyAccessor::getReent(),buf,size);
+    return _getcwd_r(miosix::getReent(),buf,size);
 }
 
 /**
@@ -683,7 +696,7 @@ int _chdir_r(struct _reent *ptr, const char *path)
 
 int chdir(const char *path)
 {
-    return _chdir_r(miosix::CReentrancyAccessor::getReent(),path);
+    return _chdir_r(miosix::getReent(),path);
 }
 
 /**
@@ -716,7 +729,7 @@ int _mkdir_r(struct _reent *ptr, const char *path, int mode)
 
 int mkdir(const char *path, mode_t mode)
 {
-    return _mkdir_r(miosix::CReentrancyAccessor::getReent(),path,mode);
+    return _mkdir_r(miosix::getReent(),path,mode);
 }
 
 /**
@@ -749,7 +762,7 @@ int _rmdir_r(struct _reent *ptr, const char *path)
 
 int rmdir(const char *path)
 {
-    return _rmdir_r(miosix::CReentrancyAccessor::getReent(),path);
+    return _rmdir_r(miosix::getReent(),path);
 }
 
 /**
@@ -764,7 +777,7 @@ int _link_r(struct _reent *ptr, const char *f_old, const char *f_new)
 
 int link(const char *f_old, const char *f_new)
 {
-    return _link_r(miosix::CReentrancyAccessor::getReent(),f_old,f_new);
+    return _link_r(miosix::getReent(),f_old,f_new);
 }
 
 /**
@@ -797,7 +810,7 @@ int _unlink_r(struct _reent *ptr, const char *file)
 
 int unlink(const char *file)
 {
-    return _unlink_r(miosix::CReentrancyAccessor::getReent(),file);
+    return _unlink_r(miosix::getReent(),file);
 }
 
 /**
@@ -830,7 +843,7 @@ int _rename_r(struct _reent *ptr, const char *f_old, const char *f_new)
 
 int rename(const char *f_old, const char *f_new)
 {
-    return _rename_r(miosix::CReentrancyAccessor::getReent(),f_old,f_new);
+    return _rename_r(miosix::getReent(),f_old,f_new);
 }
 
 /**
@@ -846,22 +859,127 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
     #endif //__NO_EXCEPTIONS
         int result=miosix::getFileDescriptorTable().getdents(fd,dirp,count);
         if(result>=0) return result;
-        miosix::CReentrancyAccessor::getReent()->_errno=-result;
+        miosix::getReent()->_errno=-result;
         return -1;
     #ifndef __NO_EXCEPTIONS
     } catch(exception& e) {
-        miosix::CReentrancyAccessor::getReent()->_errno=ENOMEM;
+        miosix::getReent()->_errno=ENOMEM;
         return -1;
     }
     #endif //__NO_EXCEPTIONS
     
     #else //WITH_FILESYSTEM
-    miosix::CReentrancyAccessor::getReent()->_errno=ENOENT;
+    miosix::getReent()->_errno=ENOENT;
     return -1;
     #endif //WITH_FILESYSTEM
 }
 
 
+
+
+/*
+ * Time API in Miosix
+ * ==================
+ *
+ * CORE
+ * - clock_gettime
+ * - clock_nanosleep
+ * - clock_settime
+ * - clock_getres
+ *
+ * DERIVED, preferred
+ * - C++11 chrono system|steady_clock -> clock_gettime
+ * - C++11 sleep_for|until            -> clock_nanosleep
+ *
+ * DERIVED, for compatibility (replace with core functions when possible)
+ * - sleep|usleep -> nanosleep        -> clock_nanosleep
+ * - clock        -> times            -> clock_gettime
+ * - time         -> gettimeofday     -> clock_gettime
+ *
+ * UNSUPPORTED
+ * - timer_create -> ? 
+ */
+
+#ifndef _MIOSIX_GCC_PATCH_MAJOR //Before GCC 9.2.0
+#define CLOCK_MONOTONIC 4
+#endif
+
+/// Conversion factor from ticks to nanoseconds
+/// TICK_FREQ in Miosix is either 1000 or (on older chips) 200, so a simple
+/// multiplication/division factor does not cause rounding errors
+static constexpr long tickNsFactor=1000000000/miosix::TICK_FREQ;
+
+/**
+ * Convert from timespec to the Miosix representation of time
+ * \param tp input timespec, must not be nullptr and be a valid pointer
+ * \return Miosix ticks
+ */
+inline long long timespec2ll(const struct timespec *tp)
+{
+    //NOTE: the cast is required to prevent overflow with older versions
+    //of the Miosix compiler where tv_sec is int and not long long
+    return static_cast<long long>(tp->tv_sec)*miosix::TICK_FREQ
+           + tp->tv_nsec/tickNsFactor;
+}
+
+/**
+ * Convert from he Miosix representation of time to a timespec
+ * \param tick input Miosix ticks
+ * \param tp output timespec, must not be nullptr and be a valid pointer
+ */
+inline void ll2timespec(long long tick, struct timespec *tp)
+{
+    #ifdef __ARM_EABI__
+    // Despite there being a single intrinsic, __aeabi_ldivmod, that computes
+    // both the result of the / and % operator, GCC 9.2.0 isn't smart enough and
+    // calls the intrinsic twice. This asm implementation saves ~115 cycles
+    // by calling it once. Sadly, I had to use asm as the calling conventions
+    // of the intrinsic appear to be nonstandard.
+    // NOTE: actually a and b, by being 64 bit numbers, occupy register pairs
+    register long long a asm("r0") = tick;
+    register long long b asm("r2") = miosix::TICK_FREQ;
+    // NOTE: clobbering lr to mark function not leaf due to the bl
+    asm volatile("bl	__aeabi_ldivmod" : "+r"(a), "+r"(b) :: "lr");
+    tp->tv_sec = a;
+    tp->tv_nsec = static_cast<long>(b) * tickNsFactor;
+    #else //__ARM_EABI__
+    tp->tv_sec = tick / miosix::TICK_FREQ;
+    tp->tv_nsec = static_cast<long>(tick % miosix::TICK_FREQ) * tickNsFactor;
+    #endif //__ARM_EABI__
+}
+
+int clock_gettime(clockid_t clock_id, struct timespec *tp)
+{
+    if(tp==nullptr) return -1;
+    //TODO: support CLOCK_REALTIME
+    ll2timespec(miosix::getTick(),tp);
+    return 0;
+}
+
+int clock_settime(clockid_t clock_id, const struct timespec *tp)
+{
+    //TODO: support CLOCK_REALTIME
+    return -1;
+}
+
+int clock_getres(clockid_t clock_id, struct timespec *res)
+{
+    if(res==nullptr) return -1;
+    res->tv_sec=0;
+    res->tv_nsec=tickNsFactor;
+    return 0;
+}
+
+int clock_nanosleep(clockid_t clock_id, int flags,
+                    const struct timespec *req, struct timespec *rem)
+{
+    if(req==nullptr) return -1;
+    //TODO: support CLOCK_REALTIME
+    long long timeTick=timespec2ll(req);
+    if(flags!=TIMER_ABSTIME) timeTick+=miosix::getTick();
+    miosix::Thread::sleepUntil(timeTick);
+    return 0;
+}
 
 /**
  * \internal
@@ -869,53 +987,50 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
  */
 clock_t _times_r(struct _reent *ptr, struct tms *tim)
 {
-    long long t=miosix::getTick();
-    t*=CLOCKS_PER_SEC;
-    t/=miosix::TICK_FREQ;
-    t&=0xffffffffull;
-    tim->tms_utime=t;
-    tim->tms_stime=0;  //Miosix doesn't separate user/system time
-    tim->tms_cutime=0; //child processes simply don't exist
-    tim->tms_cstime=0;
+    struct timespec tp;
+    //No CLOCK_PROCESS_CPUTIME_ID support, use CLOCK_MONOTONIC
+    if(clock_gettime(CLOCK_MONOTONIC,&tp)) return static_cast<clock_t>(-1);
+    constexpr int divFactor=1000000000/CLOCKS_PER_SEC;
+    clock_t utime=tp.tv_sec*CLOCKS_PER_SEC + tp.tv_nsec/divFactor;
+    
     //Actually, we should return tim.utime or -1 on failure, but clock_t is
     //unsigned, so if we return tim.utime and someone calls _times_r in an
     //unlucky moment where tim.utime is 0xffffffff it would be interpreted as -1
     //IMHO, the specifications are wrong since returning an unsigned leaves
-    //no value left to return in case of errors, so I return zero, period.
+    //no value left to return in case of errors. Thus 0 is returned if a valid
+    //pointer is passed, and tim.utime if the pointer is null
+    if(tim==nullptr) return utime;
+    tim->tms_utime=utime;
+    tim->tms_stime=0;
+    tim->tms_cutime=0;
+    tim->tms_cstime=0;
     return 0;
 }
 
 clock_t times(struct tms *tim)
 {
-    return _times_r(miosix::CReentrancyAccessor::getReent(),tim);
+    return _times_r(miosix::getReent(),tim);
 }
 
-/**
- * \internal
- * _gettimeofday_r, unimplemented
- */
 int _gettimeofday_r(struct _reent *ptr, struct timeval *tv, void *tz)
 {
-    return -1;
+    if(tv==nullptr || tz!=nullptr) return -1;
+    struct timespec tp;
+    if(clock_gettime(CLOCK_REALTIME,&tp)) return -1;
+    tv->tv_sec=tp.tv_sec;
+    tv->tv_usec=tp.tv_nsec/1000;
+    return 0;
 }
 
 int gettimeofday(struct timeval *tv, void *tz)
 {
-    return _gettimeofday_r(miosix::CReentrancyAccessor::getReent(),tv,tz);
+    return _gettimeofday_r(miosix::getReent(),tv,tz);
 }
 
-/**
- * \internal
- * nanosleep, high resolution sleep
- */
+
 int nanosleep(const struct timespec *req, struct timespec *rem)
 {
-    if(req->tv_sec) miosix::Thread::sleep(req->tv_sec*1000);
-    unsigned int microseconds=req->tv_nsec/1000; //No sub-microsecond support yet
-    if(microseconds>=1000) miosix::Thread::sleep(microseconds/1000);
-    microseconds %= 1000;
-    if(microseconds) miosix::delayUs(microseconds);
-    return 0;
+    return clock_nanosleep(CLOCK_MONOTONIC,0,req,rem);
 }
 
 
@@ -934,7 +1049,7 @@ int _kill_r(struct _reent* ptr, int pid, int sig)
 
 int kill(int pid, int sig)
 {
-    return _kill_r(miosix::CReentrancyAccessor::getReent(),pid,sig);
+    return _kill_r(miosix::getReent(),pid,sig);
 }
 
 /**
@@ -952,7 +1067,7 @@ int _getpid_r(struct _reent* ptr)
  */
 int getpid()
 {
-    return _getpid_r(miosix::CReentrancyAccessor::getReent());
+    return _getpid_r(miosix::getReent());
 }
 
 /**
@@ -966,7 +1081,7 @@ int _wait_r(struct _reent *ptr, int *status)
 
 int wait(int *status)
 {
-    return _wait_r(miosix::CReentrancyAccessor::getReent(),status);
+    return _wait_r(miosix::getReent(),status);
 }
 
 /**
@@ -981,7 +1096,7 @@ int _execve_r(struct _reent *ptr, const char *path, char *const argv[],
 
 int execve(const char *path, char *const argv[], char *const env[])
 {
-    return _execve_r(miosix::CReentrancyAccessor::getReent(),path,argv,env);
+    return _execve_r(miosix::getReent(),path,argv,env);
 }
 
 /**
@@ -996,7 +1111,7 @@ pid_t _forkexecve_r(struct _reent *ptr, const char *path, char *const argv[],
 
 pid_t forkexecve(const char *path, char *const argv[], char *const env[])
 {
-    return _forkexecve_r(miosix::CReentrancyAccessor::getReent(),path,argv,env);
+    return _forkexecve_r(miosix::getReent(),path,argv,env);
 }
 
 #ifdef __cplusplus

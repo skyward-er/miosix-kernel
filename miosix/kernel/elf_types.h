@@ -80,8 +80,10 @@ const Elf32_Word EV_CURRENT = 1;
 const Elf32_Half EM_ARM  = 0x28;
 
 // Values for e_flags
-const Elf32_Word EF_ARM_EABI_MASK = 0x05000000;
-const Elf32_Word EF_HAS_ENTRY_POINT = 2;
+const Elf32_Word EF_ARM_EABIMASK   = 0xff000000;
+const Elf32_Word EF_ARM_EABI_VER5  = 0x05000000;
+const Elf32_Word EF_ARM_VFP_FLOAT  = 0x400;
+const Elf32_Word EF_ARM_SOFT_FLOAT = 0x200;
 
 /*
  * Elf program header
@@ -152,6 +154,7 @@ const int DT_MX_RAMSIZE   = 0x10000000; //Miosix specific, RAM size
 const int DT_MX_STACKSIZE = 0x10000001; //Miosix specific, STACK size
 const int DT_MX_ABI       = 0x736f694d; //Miosix specific, ABI version
 const unsigned int DV_MX_ABI_V0 = 0x00007869; //Miosix specific, ABI version 0
+const unsigned int DV_MX_ABI_V1 = 0x01007869; //Miosix specific, ABI version 1
 
 /*
  * Relocation entries

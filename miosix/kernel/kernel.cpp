@@ -36,9 +36,11 @@
 #include "stage_2_boot.h"
 #include "process.h"
 #include "kernel/scheduler/scheduler.h"
+#include "stdlib_integration/libc_integration.h"
 #include <stdexcept>
 #include <algorithm>
 #include <string.h>
+#include <reent.h>
 
 /*
 Used by assembler context switch macros
@@ -79,7 +81,7 @@ static unsigned char interruptDisableNesting=0;
 #ifdef WITH_PROCESSES
 
 /// The proc field of the Thread class for kernel threads points to this object
-static ProcessBase *kernel=0;
+static ProcessBase *kernel=nullptr;
 
 #endif //WITH_PROCESSES
 
@@ -166,36 +168,39 @@ void startKernel()
         kernel=new ProcessBase;
     } catch(...) {
         errorHandler(OUT_OF_MEMORY);
-        return;
     }
+    #endif //WITH_PROCESSES
+    
+    // As a side effect this function allocates the idle thread and makes cur
+    // point to it. It's probably been called many times during boot by the time
+    // we get here, but we can't be sure
+    auto *idle=Thread::IRQgetCurrentThread();
+    
+    #ifdef WITH_PROCESSES
+    // If the idle thread was allocated before startKernel(), then its proc
+    // is nullptr. We can't move kernel=new ProcessBase; earlier than this
+    // function, though
+    idle->proc=kernel;
     #endif //WITH_PROCESSES
 
     // Create the idle and main thread
-    Thread *idle, *main;
-    idle=Thread::doCreate(idleThread,STACK_IDLE,NULL,Thread::DEFAULT,true);
-    main=Thread::doCreate(mainLoader,MAIN_STACK_SIZE,NULL,Thread::DEFAULT,true);
-    if(idle==NULL || main==NULL)
-    {
-        errorHandler(OUT_OF_MEMORY);
-        return;
-    }
+    Thread *main;
+    main=Thread::doCreate(mainLoader,MAIN_STACK_SIZE,nullptr,Thread::DEFAULT,true);
+    if(main==nullptr) errorHandler(OUT_OF_MEMORY);
     
     // Add them to the scheduler
-    if(Scheduler::PKaddThread(main,MAIN_PRIORITY)==false)
-    {
-        errorHandler(UNEXPECTED);
-        return;
-    }
+    if(Scheduler::PKaddThread(main,MAIN_PRIORITY)==false) errorHandler(UNEXPECTED);
+
     // Idle thread needs to be set after main (see control_scheduler.cpp)
     Scheduler::IRQsetIdleThread(idle);
     
-    //Now kernel is started
-    kernel_started=true;
-
-    // cur must point to a valid thread, so we make it point to the the idle one
-    cur=idle;
+    // Make the C standard library use per-thread reeentrancy structure
+    setCReentrancyCallback(Thread::getCReent);
     
-    //Dispatch the task to the architecture-specific function
+    // Now kernel is started
+    kernel_started=true;
+    
+    // Dispatch the task to the architecture-specific function
     miosix_private::IRQportableStartKernel();
 }
 
@@ -378,7 +383,11 @@ void Thread::sleepUntil(long long absoluteTime)
 Thread *Thread::getCurrentThread()
 {
     Thread *result=const_cast<Thread*>(cur);
-    return result;
+    if(result) return result;
+    //This function must always return a pointer to a valid thread. The first
+    //time this is called before the kernel is started, however, cur is nullptr.
+    //thus we allocate the idle thread and return a pointer to that.
+    return allocateIdleThread();
 }
 
 bool Thread::exists(Thread *p)
@@ -536,7 +545,11 @@ Thread *Thread::IRQgetCurrentThread()
     //Implementation is the same as getCurrentThread, but to keep a consistent
     //interface this method is duplicated
     Thread *result=const_cast<Thread*>(cur);
-    return result;
+    if(result) return result;
+    //This function must always return a pointer to a valid thread. The first
+    //time this is called before the kernel is started, however, cur is nullptr.
+    //thus we allocate the idle thread and return a pointer to that.
+    return allocateIdleThread();
 }
 
 Priority Thread::IRQgetPriority()
@@ -564,12 +577,12 @@ bool Thread::IRQexists(Thread* p)
 
 const unsigned int *Thread::getStackBottom()
 {
-    return cur->watermark+(WATERMARK_LEN/sizeof(unsigned int));
+    return getCurrentThread()->watermark+(WATERMARK_LEN/sizeof(unsigned int));
 }
 
 int Thread::getStackSize()
 {
-    return cur->stacksize;
+    return getCurrentThread()->stacksize;
 }
 
 Thread *Thread::doCreate(void*(*startfunc)(void*) , unsigned int stacksize,
@@ -591,8 +604,7 @@ Thread *Thread::doCreate(void*(*startfunc)(void*) , unsigned int stacksize,
     void *threadClass=base+(fullStackSize/sizeof(unsigned int));
     Thread *thread=new (threadClass) Thread(base,stacksize,defaultReent);
     
-    if(thread->cReent.isInitialized()==false ||
-       thread->cppReent.isInitialized()==false)
+    if(thread->cReentrancyData==nullptr)
     {
          thread->~Thread();
          free(base); //Delete ALL thread memory
@@ -688,6 +700,25 @@ void Thread::threadLauncher(void *(*threadfunc)(void*), void *argv)
     errorHandler(UNEXPECTED);
 }
 
+Thread *Thread::allocateIdleThread()
+{
+    //NOTE: this function is only called once before the kernel is started, so
+    //there are no concurrency issues, not even with interrupts
+    
+    // Create the idle and main thread
+    auto *idle=Thread::doCreate(idleThread,STACK_IDLE,NULL,Thread::DEFAULT,true);
+    if(idle==nullptr) errorHandler(OUT_OF_MEMORY);
+    
+    // cur must point to a valid thread, so we make it point to the the idle one
+    cur=idle;
+    return idle;
+}
+
+struct _reent *Thread::getCReent()
+{
+    return getCurrentThread()->cReentrancyData;
+}
+
 #ifdef WITH_PROCESSES
 
 miosix_private::SyscallParameters Thread::switchToUserspace()
@@ -746,17 +777,27 @@ void Thread::setupUserspaceContext(unsigned int entry, unsigned int *gotBase,
 Thread::Thread(unsigned int *watermark, unsigned int stacksize,
                bool defaultReent) : schedData(), flags(), savedPriority(0),
                mutexLocked(0), mutexWaiting(0), watermark(watermark),
-               ctxsave(), stacksize(stacksize), cReent(defaultReent), cppReent()
+               ctxsave(), stacksize(stacksize)
 {
     joinData.waitingForJoin=NULL;
+    if(defaultReent) cReentrancyData=_GLOBAL_REENT;
+    else {
+        cReentrancyData=new _reent;
+        if(cReentrancyData) _REENT_INIT_PTR(cReentrancyData);
+    }
     #ifdef WITH_PROCESSES
     proc=kernel;
-    userCtxsave=0;
+    userCtxsave=nullptr;
     #endif //WITH_PROCESSES
 }
 
 Thread::~Thread()
 {
+    if(cReentrancyData && cReentrancyData!=_GLOBAL_REENT)
+    {
+        _reclaim_reent(cReentrancyData);
+        delete cReentrancyData;
+    }
     #ifdef WITH_PROCESSES
     if(userCtxsave) delete[] userCtxsave;
     #endif //WITH_PROCESSES

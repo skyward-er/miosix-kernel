@@ -1,7 +1,7 @@
 ##
 ## Makefile for Miosix embedded OS
 ##
-MAKEFILE_VERSION := 1.07S
+MAKEFILE_VERSION := 1.09S
 GCCMAJOR := $(shell arm-miosix-eabi-gcc --version | \
                     perl -e '$$_=<>;/\(GCC\) (\d+)/;print "$$1"')
 

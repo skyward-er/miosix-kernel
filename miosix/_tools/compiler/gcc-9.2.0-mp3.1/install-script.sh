@@ -23,11 +23,11 @@
 #### Configuration tunables -- begin ####
 
 # Uncomment if installing globally on the system
-# INSTALL_DIR=/opt
-# SUDO=sudo
+INSTALL_DIR=/opt/arm-miosix-eabi
+SUDO=sudo
 # Uncomment if installing locally, sudo isn't necessary
-INSTALL_DIR=`pwd`/gcc
-SUDO=
+#INSTALL_DIR=`pwd`/gcc/arm-miosix-eabi
+#SUDO=
 
 # Uncomment if targeting a local install (linux only). This will use
 # -march= -mtune= flags to optimize for your processor, but the code
@@ -35,9 +35,9 @@ SUDO=
 HOST=
 # Uncomment if targeting linux 64 bit (distributable)
 #HOST=x86_64-linux-gnu
-# Uncomment if targeting windows (distributable)
+# Uncomment if targeting windows 64 bit (distributable)
 # you have to run this script from Linux anyway (see canadian cross compiling)
-#HOST=i686-w64-mingw32
+#HOST=x86_64-w64-mingw32
 
 #### Configuration tunables -- end ####
 
@@ -48,13 +48,14 @@ LIB_DIR=`pwd`/lib
 BINUTILS=binutils-2.32
 GCC=gcc-9.2.0
 NEWLIB=newlib-3.1.0
-GDB=gdb-8.3
+GDB=gdb-9.1
 GMP=gmp-6.1.2
 MPFR=mpfr-4.0.2
 MPC=mpc-1.1.0
-# NCURSES=ncurses-5.9
-# MAKE=make-4.0
-# MAKESELF=makeself-2.1.5
+NCURSES=ncurses-6.1
+MAKE=make-4.2.1
+MAKESELF=makeself-2.4.0
+EXPAT=expat-2.2.9
 
 quit() {
 	echo $1
@@ -75,58 +76,35 @@ if [[ $HOST ]]; then
 	# Please note that since the already installed version of
 	# arm-miosix-eabi-gcc is used to build the standard libraries, it
 	# MUST BE THE EXACT SAME VERSION, including miosix-specific patches
-	# TODO: check miosix patch version too
-	__GCCVER=`arm-miosix-eabi-gcc --version | perl -e \
-		'while(<>) { next unless(/(\d+\.\d+.\d+)/); print "gcc-$1\n"; }'`;
-	if [[ $__GCCVER != $GCC ]]; then
-		quit ":: Error must first install $GCC system-wide"
+	__GCCVER=`arm-miosix-eabi-gcc --version | perl -ne \
+		'next unless(/(\d+\.\d+.\d+)/); print "gcc-$1\n";'`;
+	__GCCPAT=`arm-miosix-eabi-gcc -dM -E - < /dev/null | perl -e \
+		'my $M, my $m;
+		 while(<>) {
+		 	$M=$1 if(/_MIOSIX_GCC_PATCH_MAJOR (\d+)/);
+		 	$m=$1 if(/_MIOSIX_GCC_PATCH_MINOR (\d+)/);
+		 }
+		 print "mp$M.$m";'`;
+    __GCCPATCUR='mp3.1'; # Can't autodetect this one easily from gcc.patch
+	if [[ ($__GCCVER != $GCC) || ($__GCCPAT != $__GCCPATCUR) ]]; then
+		quit ":: Error must first install $GCC$__GCCPATCUR system-wide (or . ./env.sh it)"
 	fi
+
+	# Canadian cross compiling requires the windows compiler to build
+	# arm-miosix-eabi-gcc.exe, ...
+	which "$HOST-gcc" > /dev/null || quit ":: Error must have host cross compiler"
 
 	HOSTCC="$HOST-gcc"
 	HOSTSTRIP="$HOST-strip"
 	if [[ $HOST == *mingw* ]]; then
-		# Canadian cross compiling requires the windows compiler to build
-		# arm-miosix-eabi-gcc.exe, ...
-		which "$HOST-gcc" > /dev/null || quit ":: Error must have host cross compiler"
-
 		HOSTCXX="$HOST-g++ -static -s" # For windows not to depend on libstdc++.dll
 		EXT=".exe"
 	else
-		# Crosscompiling linux 2 linux to achieve a redistributable build is
-		# really a pain. Even worse than doing a redistributable windows
-		# version. The reason is that we need to set --host=i686-linux-gnu
-		# but there isn't actually a compiler named i686-linux-gnu-gcc.
-		# You might be thinking that autotools are smart enough to call
-		# the regular gcc with '-m32 -march=i686', but they aren't. I've
-		# tried messing with CFLAGS but gone nowhere, since some scripts
-		# insist for calling tools such as i686-linux-gnu-ar without
-		# first checking for their existence, so here's my "quick fix":
-		# make a directory with shell scripts named i686-linux-gnu-gcc, ...
-		# that just contain 'gcc -m32 -march=i686 $@' and add it to PATH.
-		# It isn't pretty, but it works.
-		# Also, these scripts work around gdb needing libncurses and
-		# totally ignoring the --with-sysroot flag by adding `pwd`/lib
-		# to the compiler search path.
-
-		# FIXME: candidate for removal, do we still need this now that we're targeting linux 64 bit?
-		# Maybe yes, check the --with-sysroot issue in gdb
-		mkdir quickfix
-		cd quickfix
-		echo "gcc -m32 -march=i686 -I$LIB_DIR/include -L$LIB_DIR/lib "'"$@"' > "$HOST-gcc"
-		echo "g++ -m32 -march=i686 -I$LIB_DIR/include -L$LIB_DIR/lib "'"$@"' > "$HOST-g++"
-		echo "ld -m32 -march=i686 -L$LIB_DIR/lib "'"$@"' > "$HOST-ld"
-		echo "ar "'"$@"' > "$HOST-ar"
-		echo "ranlib "'"$@"' > "$HOST-ranlib"
-		echo "strip "'"$@"' > "$HOST-strip"
-		chmod +x *
-		export PATH=$PATH:`pwd`
-		cd ..
-
 		HOSTCXX="$HOST-g++"
 		EXT=
 	fi
 else
-	export PATH=$INSTALL_DIR/arm-miosix-eabi/bin:$PATH
+	export PATH=$INSTALL_DIR/bin:$PATH
 
 	HOSTCC=gcc
 	HOSTCXX=g++
@@ -145,32 +123,34 @@ fi
 #
 
 echo "Extracting files, please wait..."
-tar -xf  downloaded/$BINUTILS.tar.xz		|| quit ":: Error extracting binutils"
-tar -xf  downloaded/$GCC.tar.xz				|| quit ":: Error extracting gcc"
-tar -xf  downloaded/$NEWLIB.tar.gz			|| quit ":: Error extracting newlib"
-tar -xf  downloaded/$GDB.tar.xz				|| quit ":: Error extracing gdb"
-tar -xf  downloaded/$GMP.tar.xz				|| quit ":: Error extracting gmp"
-tar -xf  downloaded/$MPFR.tar.xz			|| quit ":: Error extracting mpfr"
-tar -xf  downloaded/$MPC.tar.gz				|| quit ":: Error extracting mpc"
+tar -xf downloaded/$BINUTILS.tar.xz			|| quit ":: Error extracting binutils"
+tar -xf downloaded/$GCC.tar.xz				|| quit ":: Error extracting gcc"
+tar -xf downloaded/$NEWLIB.tar.gz			|| quit ":: Error extracting newlib"
+tar -xf downloaded/$GDB.tar.xz				|| quit ":: Error extracing gdb"
+tar -xf downloaded/$GMP.tar.xz				|| quit ":: Error extracting gmp"
+tar -xf downloaded/$MPFR.tar.xz				|| quit ":: Error extracting mpfr"
+tar -xf downloaded/$MPC.tar.gz				|| quit ":: Error extracting mpc"
 
 if [[ $HOST == *mingw* ]]; then
-	tar -xf  $MAKE.tar.bz2			|| quit ":: Error extracting make"
+	tar -xf downloaded/$MAKE.tar.gz			|| quit ":: Error extracting make"
 fi
 if [[ $HOST == *linux* ]]; then
-	tar -xf  $NCURSES.tar.gz		|| quit ":: Error extracting ncurses"
+	tar -xf downloaded/$NCURSES.tar.gz		|| quit ":: Error extracting ncurses"
+fi
+if [[ $HOST ]]; then
+	tar -xf downloaded/$EXPAT.tar.xz		|| quit ":: Error extracting expat"
 fi
 
-unzip lpc21isp_148_src.zip			|| quit ":: Error extracting lpc21isp"
+unzip lpc21isp_148_src.zip					|| quit ":: Error extracting lpc21isp"
 mkdir log
 
 #
 # Part 2: applying patches
 #
 
-patch -p0 < patches/gcc.patch		|| quit ":: Failed patching gcc 1"
-patch -p0 < patches/force-got.patch	|| quit ":: Failed patching gcc 2"
+patch -p0 < patches/binutils.patch	|| quit ":: Failed patching binutils"
+patch -p0 < patches/gcc.patch		|| quit ":: Failed patching gcc"
 patch -p0 < patches/newlib.patch	|| quit ":: Failed patching newlib"
-#patch -p0 < ../fixme-reducecompiletime.patch || quit ":: Failed fixme patch"
 
 #
 # Part 3: compile libraries
@@ -188,7 +168,7 @@ cd $GMP
 make all $PARALLEL 2>../log/z.gmp.b.txt		|| quit ":: Error compiling gmp"
 
 if [[ $HOST != *mingw* ]]; then
-	# FIXME: test fails (t-scanf.exe)
+	# Don't check if cross-compiling for windows
 	make check $PARALLEL 2> ../log/z.gmp.c.txt	|| quit ":: Error testing gmp"
 fi
 
@@ -209,8 +189,7 @@ cd $MPFR
 make all $PARALLEL 2>../log/z.mpfr.b.txt	|| quit ":: Error compiling mpfr"
 
 if [[ $HOST != *mingw* ]]; then
-	# printf/scanf tests fail due to wine unimplemented features, this is known
-	# http://readlist.com/lists/gcc.gnu.org/gcc/10/53348.html
+	# Don't check if cross-compiling for windows
 	make check $PARALLEL 2> ../log/z.mpfr.c.txt	|| quit ":: Error testing mpfr"
 fi
 
@@ -231,7 +210,10 @@ cd $MPC
 
 make all $PARALLEL 2>../log/z.mpc.b.txt		|| quit ":: Error compiling mpc"
 
-make check $PARALLEL 2> ../log/z.mpc.c.txt	|| quit ":: Error testing mpc"
+if [[ $HOST != *mingw* ]]; then
+	# Don't check if cross-compiling for windows
+	make check $PARALLEL 2> ../log/z.mpc.c.txt	|| quit ":: Error testing mpc"
+fi
 
 make install 2>../log/z.mpc.d.txt			|| quit ":: Error installing mpc"
 
@@ -241,16 +223,13 @@ cd ..
 # Part 4: compile and install binutils
 #
 
-#To enable gold (currently does not work) instead of ld, add
-#	--enable-gold=yes \
-#	--enable-ld=no \
 cd $BINUTILS
 
 ./configure \
 	--build=`./config.guess` \
 	--host=$HOST \
 	--target=arm-miosix-eabi \
-	--prefix=$INSTALL_DIR/arm-miosix-eabi \
+	--prefix=$INSTALL_DIR \
 	--enable-interwork \
 	--enable-multilib \
 	--enable-lto \
@@ -277,13 +256,14 @@ $SUDO ../$GCC/configure \
 	--with-mpfr=$LIB_DIR \
 	--with-mpc=$LIB_DIR \
 	MAKEINFO=missing \
-	--prefix=$INSTALL_DIR/arm-miosix-eabi \
+	--prefix=$INSTALL_DIR \
 	--disable-shared \
-	--disable-libmudflap \
 	--disable-libssp \
 	--disable-nls \
 	--disable-libgomp \
 	--disable-libstdcxx-pch \
+	--disable-libstdcxx-dual-abi \
+	--disable-libstdcxx-filesystem-ts \
 	--enable-threads=miosix \
 	--enable-languages="c,c++" \
 	--enable-lto \
@@ -296,7 +276,6 @@ $SUDO make all-gcc $PARALLEL 2>../log/e.txt	|| quit ":: Error compiling gcc-star
 
 $SUDO make install-gcc 2>../log/f.txt		|| quit ":: Error installing gcc-start"
 
-# FIXME: do we still need this? reevaluate
 # Remove the sys-include directory
 # There are two reasons why to remove it: first because it is unnecessary,
 # second because it is harmful. Apparently GCC needs the C headers of the target
@@ -311,13 +290,15 @@ $SUDO make install-gcc 2>../log/f.txt		|| quit ":: Error installing gcc-start"
 # This causes troubles because newlib.h contains the _WANT_REENT_SMALL used to
 # select the appropriate _Reent struct. This error is visible to user code since
 # GCC seems to take the wrong newlib.h and user code gets the wrong _Reent struct
-$SUDO rm -rf $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/sys-include
+$SUDO rm -rf $INSTALL_DIR/arm-miosix-eabi/sys-include
 
-# FIXME: do we still need this? reevaluate
 # Another fix, looks like export PATH isn't enough for newlib, it fails
 # running arm-miosix-eabi-ranlib when installing
 if [[ $SUDO ]]; then
-	$SUDO ln -s $INSTALL_DIR/arm-miosix-eabi/bin/* /usr/bin
+	# This is actually done also later, but we don't want to add a symlink too
+	$SUDO rm $INSTALL_DIR/bin/arm-miosix-eabi-$GCC$EXT
+
+	$SUDO ln -s $INSTALL_DIR/bin/* /usr/bin
 fi
 
 cd ..
@@ -333,7 +314,7 @@ cd newlib-obj
 	--build=`../$GCC/config.guess` \
 	--host=$HOST \
 	--target=arm-miosix-eabi \
-	--prefix=$INSTALL_DIR/arm-miosix-eabi \
+	--prefix=$INSTALL_DIR \
 	--enable-multilib \
 	--enable-newlib-reent-small \
 	--enable-newlib-multithread \
@@ -382,6 +363,9 @@ check_multilibs() {
 	if [[ ! -f $1/libg.a ]]; then
 		quit "::Error, $1/libg.a not installed"
 	fi
+	if [[ ! -f $1/libatomic.a ]]; then
+		quit "::Error, $1/libatomic.a not installed"
+	fi
 	if [[ ! -f $1/libstdc++.a ]]; then
 		quit "::Error, $1/libstdc++.a not installed"
 	fi
@@ -390,22 +374,43 @@ check_multilibs() {
 	fi 
 }
 
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm0
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm3
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm4/hardfp/fpv4sp
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm7/hardfp/fpv5
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm3/pie/single-pic-base
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm4/hardfp/fpv4sp/pie/single-pic-base
-check_multilibs $INSTALL_DIR/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm7/hardfp/fpv5/pie/single-pic-base
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib/thumb/cm0
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib/thumb/cm3
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib/thumb/cm4/hardfp/fpv4sp
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib/thumb/cm7/hardfp/fpv5
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib/thumb/cm3/pie/single-pic-base
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib/thumb/cm4/hardfp/fpv4sp/pie/single-pic-base
+check_multilibs $INSTALL_DIR/arm-miosix-eabi/lib/thumb/cm7/hardfp/fpv5/pie/single-pic-base
 echo "::All multilibs have been built. OK"
 
 #
 # Part 9: compile and install gdb
 #
 
+# GDB on linux/windows needs expat
+if [[ $HOST ]]; then
+	cd $EXPAT
+
+	./configure \
+		--host=$HOST \
+		--prefix=$LIB_DIR \
+		--enable-static=yes \
+		--enable-shared=no \
+		2> ../log/z.expat.a.txt					|| quit ":: Error configuring expat"
+
+	make all $PARALLEL 2>../log/z.expat.b.txt	|| quit ":: Error compiling expat"
+
+	make install 2>../log/z.expat.d.txt			|| quit ":: Error installing expat"
+
+	cd ..
+fi
+
 # GDB on linux requires ncurses, and not to depend on them when doing a
 # redistributable linux build we build a static version
+# Based on previous gdb that when run with --tui reported as error
+# "Error opening terminal: xterm-256color" we now build this terminal as
+# fallback within ncurses itself.
 if [[ $HOST == *linux* ]]; then
 	cd $NCURSES
 
@@ -413,25 +418,33 @@ if [[ $HOST == *linux* ]]; then
 		--build=`./config.guess` \
 		--host=$HOST \
 		--prefix=$LIB_DIR \
-		--enable-static --disable-shared \
-		--without-cxx-binding --without-ada \
-		--without-progs --without-tests \
+		--with-normal --without-shared \
+		--without-ada --without-cxx-binding --without-debug \
+		--with-fallbacks='xterm-256color' \
+		--without-manpages --without-progs --without-tests \
 		2> ../log/z.ncurses.a.txt				|| quit ":: Error configuring ncurses"
 
 	make all $PARALLEL 2>../log/z.ncurses.b.txt	|| quit ":: Error compiling ncurses"
 
-	make install 2>../log/z.ncursesp.d.txt		|| quit ":: Error installing ncurses"
+	make install 2>../log/z.ncurses.d.txt		|| quit ":: Error installing ncurses"
 
 	cd ..
 fi
 
-cd $GDB
+mkdir gdb-obj
+cd gdb-obj
 
-./configure \
-	--build=`../$GCC/config.guess` \
+# CXX=$HOSTCXX to avoid having to distribute libstdc++.dll on windows
+CXX=$HOSTCXX ../$GDB/configure \
+	--build=`../$GDB/config.guess` \
 	--host=$HOST \
 	--target=arm-miosix-eabi \
-	--prefix=$INSTALL_DIR/arm-miosix-eabi \
+	--prefix=$INSTALL_DIR \
+	--with-libmpfr-prefix=$LIB_DIR \
+	--with-expat-prefix=$LIB_DIR \
+	--with-system-zlib=no \
+	--with-lzma=no \
+	--with-python=no \
 	--enable-interwork \
 	--enable-multilib \
 	--disable-werror 2>../log/l.txt			|| quit ":: Error configuring gdb"
@@ -448,7 +461,7 @@ cd ..
 cd mx-postlinker
 make CXX="$HOSTCXX" SUFFIX=$EXT				|| quit ":: Error compiling mx-postlinker"
 $SUDO make install CXX="$HOSTCXX" SUFFIX=$EXT \
-	INSTALL_DIR=$INSTALL_DIR/arm-miosix-eabi/bin \
+	INSTALL_DIR=$INSTALL_DIR/bin \
 											|| quit ":: Error installing mx-postlinker"
 make CXX="$HOSTCXX" SUFFIX=$EXT clean
 cd ..
@@ -459,7 +472,7 @@ cd ..
 
 $HOSTCC -o lpc21isp$EXT lpc21isp.c						|| quit ":: Error compiling lpc21isp"
 
-$SUDO mv lpc21isp$EXT $INSTALL_DIR/arm-miosix-eabi/bin	|| quit ":: Error installing lpc21isp"
+$SUDO mv lpc21isp$EXT $INSTALL_DIR/bin					|| quit ":: Error installing lpc21isp"
 
 #
 # Part 12: install GNU make and rm (windows release only)
@@ -471,7 +484,7 @@ if [[ $HOST == *mingw* ]]; then
 
 	./configure \
 	--host=$HOST \
-	--prefix=$INSTALL_DIR/arm-miosix-eabi 2> z.make.a.txt	|| quit ":: Error configuring make"
+	--prefix=$INSTALL_DIR 2> z.make.a.txt					|| quit ":: Error configuring make"
 
 	make all $PARALLEL 2>../log/z.make.b.txt				|| quit ":: Error compiling make"
 
@@ -480,11 +493,11 @@ if [[ $HOST == *mingw* ]]; then
 	cd ..
 
 	# FIXME get a better rm to distribute for windows
-	$HOSTCC -o rm$EXT -O2 windows-installer/rm.c			|| quit ":: Error compiling rm"
+	$HOSTCC -o rm$EXT -O2 installers/windows/rm.c			|| quit ":: Error compiling rm"
 
-	mv rm$EXT $INSTALL_DIR/arm-miosix-eabi/bin				|| quit ":: Error installing rm"
+	mv rm$EXT $INSTALL_DIR/bin								|| quit ":: Error installing rm"
 
-	cp qstlink2.exe $INSTALL_DIR/arm-miosix-eabi/bin		|| quit ":: Error installing qstlink2"
+	cp downloaded/qstlink2.exe $INSTALL_DIR/bin				|| quit ":: Error installing qstlink2"
 fi
 
 #
@@ -492,37 +505,44 @@ fi
 #
 
 # Remove this since its name is not arm-miosix-eabi-
-$SUDO rm $INSTALL_DIR/arm-miosix-eabi/bin/arm-miosix-eabi-$GCC$EXT
+$SUDO rm $INSTALL_DIR/bin/arm-miosix-eabi-$GCC$EXT
 
 # Strip stuff that is very large when having debug symbols to save disk space
-# This simple thing can easily save 100+MB
-find $INSTALL_DIR -name cc1$EXT | xargs $HOSTSTRIP
-find $INSTALL_DIR -name cc1plus$EXT | xargs $HOSTSTRIP
-find $INSTALL_DIR -name lto1$EXT | xargs $HOSTSTRIP
-strip $INSTALL_DIR/arm-miosix-eabi/bin/*
+# This simple thing can easily save 500+MB
+find $INSTALL_DIR -name cc1$EXT     | $SUDO xargs $HOSTSTRIP
+find $INSTALL_DIR -name cc1plus$EXT | $SUDO xargs $HOSTSTRIP
+find $INSTALL_DIR -name lto1$EXT    | $SUDO xargs $HOSTSTRIP
+$SUDO strip $INSTALL_DIR/bin/*
+
+
 
 # Installers, env variables and other stuff
 if [[ $HOST ]]; then
 	if [[ $HOST == *mingw* ]]; then
-		cd windows-installer
-		wine "C:\Program Files\Inno Setup 5\Compil32.exe" /cc MiosixInstaller.iss
-		cd ..
+		cd installers/windows
+		wine "C:\Program Files (x86)\Inno Setup 6\Compil32.exe" /cc MiosixInstaller.iss
+		cd ../..
 	else
-		chmod +x linux-installer/installer.sh uninstall.sh
+		chmod +x installers/linux/installer.sh uninstall.sh
 		# Distribute the installer and uninstaller too
-		cp linux-installer/installer.sh uninstall.sh $INSTALL_DIR/arm-miosix-eabi
-		sh $MAKESELF.run
-		./$MAKESELF/makeself.sh --bzip2 \
-			$INSTALL_DIR/arm-miosix-eabi \
-			MiosixToolchainInstaller.run \
-			"Miosix toolchain for Linux" \
+		cp installers/linux/installer.sh uninstall.sh $INSTALL_DIR
+		sh downloaded/$MAKESELF.run
+		# NOTE: --keep-umask otherwise the installer extracts files setting to 0
+		# permissions to group and other, resulting in an unusable installation
+		./$MAKESELF/makeself.sh --xz --keep-umask          \
+			$INSTALL_DIR                                   \
+			MiosixToolchainInstaller9.2.0mp3.1.run         \
+			"Miosix toolchain for Linux (GCC 9.2.0-mp3.1)" \
 			"./installer.sh"
 	fi
 else
+	# Install the uninstaller too
+	chmod +x uninstall.sh
+	$SUDO cp uninstall.sh $INSTALL_DIR
 	# If sudo not an empty variable, make symlinks to /usr/bin
 	# else make a script to override PATH
 	if [[ $SUDO ]]; then
-		$SUDO ln -s $INSTALL_DIR/arm-miosix-eabi/bin/* /usr/bin
+		$SUDO ln -s $INSTALL_DIR/bin/* /usr/bin
 	else
 		echo '# Used when installing the compiler locally to test it' > env.sh
 		echo '# usage: $ . ./env.sh' >> env.sh
