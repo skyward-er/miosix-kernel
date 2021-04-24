@@ -72,12 +72,16 @@ void IRQbspInit()
     can::rx::mode(Mode::INPUT);
 
     using namespace sensors;
-    ads1118::cs::mode(Mode::ALTERNATE);
+    ads1118::cs::mode(Mode::OUTPUT);
+    ads1118::cs::high();
 
     using namespace leds;
     led1::mode(Mode::OUTPUT);
+    led1::low();
     led2::mode(Mode::OUTPUT);
+    led2::low();
     led3::mode(Mode::OUTPUT);
+    led3::low();
 
     for (uint8_t i = 0; i < 5; i++)
     {
