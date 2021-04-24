@@ -125,17 +125,17 @@ namespace nosecone
 using nc_servo_pwm = Gpio<GPIOD_BASE, 12>;  // Pwm expulsion servo, TIM4_CH1
 using th_cut_pwm   = Gpio<GPIOE_BASE, 6>;   // Pwm thermal cutters, TIM9_CH2
 
-namespace thCut2
-{
-using ena   = Gpio<GPIOD_BASE, 11>;
-using csens = Gpio<GPIOF_BASE, 8>;
-}  // namespace thCut2
-
 namespace thCut1
 {
 using ena   = Gpio<GPIOG_BASE, 2>;
-using csens = Gpio<GPIOF_BASE, 6>;
+using csens = Gpio<GPIOF_BASE, 6>;  // ADC3 CH4
 }  // namespace thCut1
+
+namespace thCut2
+{
+using ena   = Gpio<GPIOD_BASE, 11>;
+using csens = Gpio<GPIOF_BASE, 8>;  // ADC3 CH6
+}  // namespace thCut2
 }  // namespace nosecone
 
 namespace airbrakes
