@@ -473,6 +473,8 @@ public:
             //and in this case it is forbidden to lock mutexes
             fileTables.push_back(fdt);
         }
+        #else
+        (void)fdt;
         #endif //WITH_PROCESSES
     }
     
@@ -486,6 +488,8 @@ public:
         #ifdef WITH_PROCESSES
         Lock<FastMutex> l(mutex);
         fileTables.remove(fdt);
+        #else
+        (void)fdt;
         #endif //WITH_PROCESSES
     }
     
