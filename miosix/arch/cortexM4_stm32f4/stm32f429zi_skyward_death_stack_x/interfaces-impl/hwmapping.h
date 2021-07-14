@@ -112,8 +112,8 @@ using cs = Gpio<GPIOD_BASE, 7>;
 namespace inputs
 {
 using vbat         = Gpio<GPIOF_BASE, 7>;
-using lp_dtch      = Gpio<GPIOC_BASE, 14>; // launchpad detach
-using nc_dtch      = Gpio<GPIOE_BASE, 4>;  // nosecone detach
+using lp_dtch      = Gpio<GPIOE_BASE, 4>;  // launchpad detach
+using nc_dtch      = Gpio<GPIOC_BASE, 14>; // nosecone detach
 using expulsion_in = Gpio<GPIOB_BASE, 7>;  // expulsion sensor
 }  // namespace inputs
 
