@@ -366,7 +366,7 @@ void IRQbspInit()
 
     bmx160::cs::mode(Mode::OUTPUT);
     bmx160::cs::high();
-    bmx160::intr::mode(Mode::INPUT);
+    bmx160::intr::mode(Mode::INPUT_PULL_UP);
 
     /*lsm9ds1::cs_a_g::mode(Mode::OUTPUT);
     lsm9ds1::cs_a_g::high();
