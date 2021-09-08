@@ -387,8 +387,9 @@ void IRQbspInit()
     expulsion_in::mode(Mode::INPUT);
 
     using namespace actuators;
-    nosecone::th_cut_pwm::mode(Mode::ALTERNATE);
-    nosecone::th_cut_pwm::alternateFunction(3);
+    //nosecone::th_cut_pwm::mode(Mode::ALTERNATE);
+    //nosecone::th_cut_pwm::alternateFunction(3);
+    nosecone::th_cut_input::mode(Mode::OUTPUT);
 
     nosecone::thCut1::ena::mode(Mode::OUTPUT);
     nosecone::thCut1::ena::low();
