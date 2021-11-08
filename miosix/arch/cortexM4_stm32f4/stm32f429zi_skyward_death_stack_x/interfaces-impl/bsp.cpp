@@ -321,10 +321,12 @@ void IRQbspInit()
     RCC_SYNC();
     #endif //__ENABLE_XRAM
 
-    // enable spi1, spi2 and can1
+    // enable spi1, spi2
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
     RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
-    RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+
+    // enable can1
+    //RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
     RCC_SYNC();
 
@@ -344,20 +346,20 @@ void IRQbspInit()
     spi2::mosi::alternateFunction(5);
 
     // Software I2C
-    i2c::scl::high();
-    i2c::scl::mode(Mode::OPEN_DRAIN);
-    i2c::sda::high();
-    i2c::sda::mode(Mode::OPEN_DRAIN);
+    // i2c::scl::high();
+    // i2c::scl::mode(Mode::OPEN_DRAIN);
+    // i2c::sda::high();
+    // i2c::sda::mode(Mode::OPEN_DRAIN);
 
     uart2::rx::mode(Mode::ALTERNATE);
     uart2::rx::alternateFunction(7);
     uart2::tx::mode(Mode::ALTERNATE);
     uart2::tx::alternateFunction(7);
 
-    can::rx::mode(Mode::ALTERNATE);
-    can::rx::alternateFunction(9);
-    can::tx::mode(Mode::ALTERNATE);
-    can::tx::alternateFunction(9);
+    // can::rx::mode(Mode::ALTERNATE);
+    // can::rx::alternateFunction(9);
+    // can::tx::mode(Mode::ALTERNATE);
+    // can::tx::alternateFunction(9);
 
     using namespace sensors;
 
@@ -366,13 +368,13 @@ void IRQbspInit()
 
     bmx160::cs::mode(Mode::OUTPUT);
     bmx160::cs::high();
-    bmx160::intr::mode(Mode::INPUT);
+    bmx160::intr::mode(Mode::INPUT_PULL_UP);
 
-    /*lsm9ds1::cs_a_g::mode(Mode::OUTPUT);
-    lsm9ds1::cs_a_g::high();
-    lsm9ds1::cs_m::mode(Mode::OUTPUT);
-    lsm9ds1::cs_m::high();
-    lsm9ds1::intr_a_g::mode(Mode::INPUT);*/
+    // lsm9ds1::cs_a_g::mode(Mode::OUTPUT);
+    // lsm9ds1::cs_a_g::high();
+    // lsm9ds1::cs_m::mode(Mode::OUTPUT);
+    // lsm9ds1::cs_m::high();
+    // lsm9ds1::intr_a_g::mode(Mode::INPUT);
 
     lis3mdl::cs::mode(Mode::OUTPUT);
     lis3mdl::cs::high();
@@ -387,8 +389,9 @@ void IRQbspInit()
     expulsion_in::mode(Mode::INPUT);
 
     using namespace actuators;
-    nosecone::th_cut_pwm::mode(Mode::ALTERNATE);
-    nosecone::th_cut_pwm::alternateFunction(3);
+    //nosecone::th_cut_pwm::mode(Mode::ALTERNATE);
+    //nosecone::th_cut_pwm::alternateFunction(3);
+    nosecone::th_cut_input::mode(Mode::OUTPUT);
 
     nosecone::thCut1::ena::mode(Mode::OUTPUT);
     nosecone::thCut1::ena::low();
@@ -423,9 +426,9 @@ void IRQbspInit()
     for(uint8_t i = 0; i < 3; i++)
     {
         ledOn();
-        delayMs(100);
+        delayMs(10);
         ledOff();
-        delayMs(100);
+        delayMs(10);
     }
 }
 

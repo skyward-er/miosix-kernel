@@ -33,60 +33,78 @@
 namespace miosix {
 
 namespace interfaces {
+    namespace spi1 {
+    using sck   = Gpio<GPIOA_BASE, 5>;
+    using miso  = Gpio<GPIOA_BASE, 6>;
+    using mosi  = Gpio<GPIOA_BASE, 7>;
+    }
 
-namespace spi1 {
-using sck   = Gpio<GPIOA_BASE, 5>;
-using miso  = Gpio<GPIOA_BASE, 6>;
-using mosi  = Gpio<GPIOA_BASE, 7>;
-} //namespace spi1
-
-namespace spi2 {
-using sck   = Gpio<GPIOB_BASE, 13>;
-using miso  = Gpio<GPIOB_BASE, 14>;
-using mosi  = Gpio<GPIOB_BASE, 15>;
-} //namespace spi2
-
-
-} //namespace interfaces
+    namespace spi2 {
+    using sck   = Gpio<GPIOB_BASE, 13>;
+    using miso  = Gpio<GPIOB_BASE, 14>;
+    using mosi  = Gpio<GPIOB_BASE, 15>;
+    }
+}
 
 namespace sensors {
+    // External ADC
+    namespace ads1118 {
+    using cd    = Gpio<GPIOE_BASE, 6>;
+    }
 
-namespace ms5803 {
-using cs    = Gpio<GPIOD_BASE, 7>;
-} //namespace ms5803
+    // Digital Pressure
+    namespace ms5803 {
+    using cs    = Gpio<GPIOE_BASE, 13>;
+    }
 
-namespace lsm9ds1 {
-using cs_ag     = Gpio<GPIOE_BASE, 7>;
-using cs_mag    = Gpio<GPIOE_BASE, 9>;
-using int1_ag   = Gpio<GPIOC_BASE, 13>;
-using drdy_mag  = Gpio<GPIOC_BASE, 15>;
+    // IMU magneto
+    namespace lsm9ds1 {
+    using cs_ag     = Gpio<GPIOE_BASE, 7>;  // chip select acc
+    using cs_mag    = Gpio<GPIOE_BASE, 9>;  // chip select magn
+    using int_ag    = Gpio<GPIOC_BASE, 13>; // interrupt accelerometro
+    using drdy_mag  = Gpio<GPIOC_BASE, 15>; // data ready magnetometro
+    }
+
+    // Dpl mecahnism sensors
+    using finecorsa = Gpio<GPIOC_BASE, 1>;
+    using slitta    = Gpio<GPIOC_BASE, 3>;
+
+    // Detach pins
+    using nosecone_dtch  = Gpio<GPIOE_BASE, 10>;
+    using launchpad_dtch = Gpio<GPIOE_BASE, 12>;
 }
-
-} //namespace sensors
 
 namespace actuators {
+    // Backup expulsion system
+    namespace hbridge {
+    using is    = Gpio<GPIOC_BASE, 0>; // current sensor
+    using in    = Gpio<GPIOB_BASE, 5>; // input
+    using inh   = Gpio<GPIOB_BASE, 7>; // inhibit
+    }
 
-using tcPwm = Gpio<GPIOC_BASE, 2>;  //TODO: check
-
-namespace hbridge {
-    // TODO: check
+    // Servomotor for primary expulsion system
+    namespace servo {
+    using in = Gpio<GPIOC_BASE, 6>;
+    }
 }
 
-} //namespace actuators
-
 namespace misc {
+    //using button = Gpio<GPIOA_BASE, 0>;
+    using aux    = Gpio<GPIOC_BASE, 5>;
 
-using aux1  = Gpio<GPIOC_BASE, 1>;
-using aux2  = Gpio<GPIOC_BASE, 3>;
-using aux3  = Gpio<GPIOC_BASE, 5>;
-
+    namespace leds {
+    using green  = Gpio<GPIOD_BASE, 12>;
+    using orange = Gpio<GPIOD_BASE, 13>;
+    using red    = Gpio<GPIOD_BASE, 14>;
+    using blue   = Gpio<GPIOD_BASE, 15>;
+    }
 }
 
 namespace xbee {
-using cs    = Gpio<GPIOE_BASE, 4>;
-using attn  = Gpio<GPIOE_BASE, 6>;
-using reset  = Gpio<GPIOE_BASE, 5>;
-} //namespace xbee
+    using attn   = Gpio<GPIOE_BASE, 2>;
+    using cs     = Gpio<GPIOE_BASE, 4>;
+    using reset  = Gpio<GPIOE_BASE, 5>;
+}
 
 } //namespace miosix
 

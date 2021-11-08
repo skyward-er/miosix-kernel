@@ -112,9 +112,9 @@ using cs = Gpio<GPIOD_BASE, 7>;
 namespace inputs
 {
 using vbat         = Gpio<GPIOF_BASE, 7>;
-using lp_dtch      = Gpio<GPIOC_BASE, 6>;  // launchpad detach
-using nc_dtch      = Gpio<GPIOE_BASE, 4>;  // nosecone detach
-using expulsion_in = Gpio<GPIOB_BASE, 7>;  // expulsion sensor
+using lp_dtch      = Gpio<GPIOE_BASE, 4>;   // launchpad detach
+using nc_dtch      = Gpio<GPIOC_BASE, 14>;  // nosecone detach
+using expulsion_in = Gpio<GPIOB_BASE, 7>;   // expulsion sensor
 }  // namespace inputs
 
 namespace actuators
@@ -123,19 +123,20 @@ namespace actuators
 namespace nosecone
 {
 using nc_servo_pwm = Gpio<GPIOD_BASE, 12>;  // Pwm expulsion servo, TIM4_CH1
-using th_cut_pwm   = Gpio<GPIOE_BASE, 6>;   // Pwm thermal cutters, TIM9_CH2
-
-namespace thCut2
-{
-using ena   = Gpio<GPIOD_BASE, 11>;
-using csens = Gpio<GPIOF_BASE, 8>;
-}  // namespace thCut2
+// using th_cut_pwm   = Gpio<GPIOE_BASE, 6>;   // Pwm thermal cutters, TIM9_CH2
+using th_cut_input = Gpio<GPIOE_BASE, 6>;  // Input thermal cutters
 
 namespace thCut1
 {
 using ena   = Gpio<GPIOG_BASE, 2>;
-using csens = Gpio<GPIOF_BASE, 6>;
+using csens = Gpio<GPIOF_BASE, 6>;  // ADC3 CH4
 }  // namespace thCut1
+
+namespace thCut2
+{
+using ena   = Gpio<GPIOD_BASE, 11>;
+using csens = Gpio<GPIOF_BASE, 8>;  // ADC3 CH6
+}  // namespace thCut2
 }  // namespace nosecone
 
 namespace airbrakes
