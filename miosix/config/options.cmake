@@ -83,13 +83,13 @@ set(OPT_OPTIMIZATION -O2)
 ## implicitly uses it) uncomment this option.
 ## the -D__NO_EXCEPTIONS is used by Miosix to know if exceptions are used.
 ##
-#set(OPT_EXCEPT "-fno-exceptions -fno-rtti -D__NO_EXCEPTIONS")
+#set(OPT_EXCEPT -fno-exceptions -fno-rtti -D__NO_EXCEPTIONS)
 
 #############################################################################
 ## Board specific options
 #############################################################################
 
-if ("${OPT_BOARD}" STREQUAL "")
+if(NOT OPT_BOARD)
     message(FATAL_ERROR "No board selected")
 endif()
 
@@ -133,7 +133,7 @@ if (${OPT_BOARD} STREQUAL stm32f103ze_stm3210e-eval)
     ## selected above)
 
     #set(XRAM -D__ENABLE_XRAM)
-    set(XRAM "-D__ENABLE_XRAM -D__CODE_IN_XRAM")
+    set(XRAM -D__ENABLE_XRAM -D__CODE_IN_XRAM)
 
     ## Select clock frequency
     ## Not defining any of these results in the internal 8MHz clock to be used
@@ -197,9 +197,9 @@ if (${OPT_BOARD} STREQUAL stm32f407vg_stm32f4discovery)
 
     ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
 
-    set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000")
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000")
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000")
+    set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000)
 
 endif()
 
@@ -240,7 +240,7 @@ if (${OPT_BOARD} STREQUAL stm32f207ig_stm3220g-eval)
     ## selected above)
 
     #set(XRAM -D__ENABLE_XRAM)
-    set(XRAM "-D__ENABLE_XRAM -D__CODE_IN_XRAM")
+    set(XRAM -D__ENABLE_XRAM -D__CODE_IN_XRAM)
 
 endif()
 
@@ -314,9 +314,9 @@ if (${OPT_BOARD} STREQUAL stm32f429zi_stm32f4discovery)
     ## running the core at 180MHz. If 180MHz is chosen the USB peripheral will
     ## NOT WORK and the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
 
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000")
-    set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000")
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000")
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000)
+    set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
 
 endif()
 
@@ -362,8 +362,8 @@ if (${OPT_BOARD} STREQUAL stm32f429zi_oledboard2)
     ## running the core at 180MHz. If 180MHz is chosen the USB peripheral will
     ## NOT WORK and the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
 
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000")
-    set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000")
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
+    set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000)
 
 endif()
 
@@ -380,8 +380,8 @@ if (${OPT_BOARD} STREQUAL stm32f411re_nucleo)
 
     # Select clock frequency
 
-    set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000")
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000")
+    set(CLOCK_FREQ-DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000)
 
 endif()
 
@@ -411,8 +411,8 @@ if (${OPT_BOARD} STREQUAL stm32f429zi_skyward_anakin)
     ## a precise 48MHz output when running the core at 180MHz. If 180MHz is
     ## chosen the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
 
-    set(CLOCK_FREQ "-DHSE_VALUE=25000000 -DSYSCLK_FREQ_180MHz=180000000")
-    #set(CLOCK_FREQ "-DHSE_VALUE=25000000 -DSYSCLK_FREQ_168MHz=168000000")
+    set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_180MHz=180000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_168MHz=168000000)
 
 endif()
 
@@ -478,9 +478,9 @@ if (${OPT_BOARD} STREQUAL stm32f469ni_stm32f469i-disco)
     ## running the core at 180MHz. If 180MHz is chosen the USB peripheral will
     ## NOT WORK and the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
 
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000")
-    set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000")
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000")
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000)
+    set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
 
 endif()
 
@@ -510,9 +510,9 @@ if (${OPT_BOARD} STREQUAL stm32f429zi_skyward_homeone)
     ## running the core at 180MHz. If 180MHz is chosen the USB peripheral will
     ## NOT WORK and the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
 
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000")
-    set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000")
-    #set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000")
+    #set(CLOCK_FREQ-DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000)
+    set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
 
 endif()
 
@@ -641,8 +641,8 @@ endif()
 ## Then, initialize C/C++ flags
 ##
 
-set(CFLAGS_BASE "-D_MIOSIX_BOARDNAME=\\\"${OPT_BOARD}\\\" -ffunction-sections -Wno-unused-but-set-variable -Wall -g")
-set(CXXFLAGS_BASE "-D_MIOSIX_BOARDNAME=\\\"${OPT_BOARD}\\\" -ffunction-sections -Wno-unused-but-set-variable -Wall -g")
+set(CFLAGS_BASE "-D_MIOSIX_BOARDNAME=\"${OPT_BOARD}\"" -ffunction-sections -Wno-unused-but-set-variable -Wall -g)
+set(CXXFLAGS_BASE "-D_MIOSIX_BOARDNAME=\"${OPT_BOARD}\"" -ffunction-sections -Wno-unused-but-set-variable -Wall -g)
 
 ##
 ## Now two big switch-like constructs nested. The first lists all possible
@@ -682,8 +682,8 @@ if (${ARCH} STREQUAL arm7_lpc2000)
         )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_MIOSIX_BOARD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_MIOSIX_BOARD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_MIOSIX_BOARD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_MIOSIX_BOARD)
 
     ##-------------------------------------------------------------------------
     ## End of board list
@@ -707,9 +707,9 @@ if (${ARCH} STREQUAL arm7_lpc2000)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=arm7tdmi -mapcs-32 -mfloat-abi=soft)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_ARM7_LPC2000 -mcpu=arm7tdmi ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_ARM7_LPC2000 -mcpu=arm7tdmi ${OPT_OPTIMIZATION} ${OPT_EXCEPT} -c")
-    set(LFLAGS_BASE "-mcpu=arm7tdmi -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_ARM7_LPC2000 -mcpu=arm7tdmi ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_ARM7_LPC2000 -mcpu=arm7tdmi ${OPT_OPTIMIZATION} ${OPT_EXCEPT} -c)
+    set(LFLAGS_BASE -mcpu=arm7tdmi -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -753,8 +753,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM3210E_EVAL -DSTM32F10X_HD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM3210E_EVAL -DSTM32F10X_HD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM3210E_EVAL -DSTM32F10X_HD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM3210E_EVAL -DSTM32F10X_HD)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -790,8 +790,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_MP3V2 -DSTM32F10X_HD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_MP3V2 -DSTM32F10X_HD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_MP3V2 -DSTM32F10X_HD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_MP3V2 -DSTM32F10X_HD)
 
         ## Clock frequency
         set(CLOCK_FREQ -DSYSCLK_FREQ_72MHz=72000000)
@@ -830,8 +830,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32VLDISCOVERY -DSTM32F10X_MD_VL")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32VLDISCOVERY -DSTM32F10X_MD_VL")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32VLDISCOVERY -DSTM32F10X_MD_VL)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32VLDISCOVERY -DSTM32F10X_MD_VL)
 
         ## Clock frequency
         set(CLOCK_FREQ -DSYSCLK_FREQ_24MHz=24000000)
@@ -867,8 +867,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_SOLERTEGIARD -DSTM32F10X_HD_VL")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_SOLERTEGIARD -DSTM32F10X_HD_VL")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_SOLERTEGIARD -DSTM32F10X_HD_VL)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_SOLERTEGIARD -DSTM32F10X_HD_VL)
 
         ## Clock frequency
         set(CLOCK_FREQ -DSYSCLK_FREQ_24MHz=24000000)
@@ -905,8 +905,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STRIVE_MINI -DSTM32F10X_HD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STRIVE_MINI -DSTM32F10X_HD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STRIVE_MINI -DSTM32F10X_HD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STRIVE_MINI -DSTM32F10X_HD)
 
         ## Clock frequency
         set(CLOCK_FREQ -DSYSCLK_FREQ_72MHz=72000000)
@@ -939,8 +939,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_REDBULL_V2 -DSTM32F10X_HD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_REDBULL_V2 -DSTM32F10X_HD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_REDBULL_V2 -DSTM32F10X_HD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_REDBULL_V2 -DSTM32F10X_HD)
 
         ## Clock frequency
         set(CLOCK_FREQ -DSYSCLK_FREQ_72MHz=72000000)
@@ -971,8 +971,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
         set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_ALS_MAINBOARD_REV2 -DSTM32F10X_MD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_ALS_MAINBOARD_REV2 -DSTM32F10X_MD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_ALS_MAINBOARD_REV2 -DSTM32F10X_MD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_ALS_MAINBOARD_REV2 -DSTM32F10X_MD)
 
         ## Clock frequency
         # Not defining anything results in HSI being used
@@ -1004,12 +1004,12 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
         set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_TEMPSENSOR -DSTM32F10X_MD_VL")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_TEMPSENSOR -DSTM32F10X_MD_VL")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_TEMPSENSOR -DSTM32F10X_MD_VL)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_TEMPSENSOR -DSTM32F10X_MD_VL)
 
         ## Clock frequency
         # Not defining anything results in HSI being used
-        set(CLOCK_FREQ "-DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI")
+        set(CLOCK_FREQ -DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1040,8 +1040,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F103C8_BREAKOUT -DSTM32F10X_MD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F103C8_BREAKOUT -DSTM32F10X_MD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F103C8_BREAKOUT -DSTM32F10X_MD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F103C8_BREAKOUT -DSTM32F10X_MD)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1073,12 +1073,12 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_MICROBOARD -DSTM32F10X_MD_VL")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_MICROBOARD -DSTM32F10X_MD_VL")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_MICROBOARD -DSTM32F10X_MD_VL)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_MICROBOARD -DSTM32F10X_MD_VL)
 
         ## Clock frequency
         # Not defining anything results in HSI being used
-        set(CLOCK_FREQ "-DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI")
+        set(CLOCK_FREQ -DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1109,9 +1109,9 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_CORTEXM3_STM32 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_STM32 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(LFLAGS_BASE "-mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM3_STM32 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_STM32 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE -mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -1155,8 +1155,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F4DISCOVERY")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F4DISCOVERY")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F4DISCOVERY)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F4DISCOVERY)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1188,11 +1188,11 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_BITSBOARD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_BITSBOARD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_BITSBOARD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_BITSBOARD)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-        set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000")
+        set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1225,8 +1225,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F429ZI_STM32F4DISCOVERY")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_STM32F4DISCOVERY")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F429ZI_STM32F4DISCOVERY)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_STM32F4DISCOVERY)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1258,8 +1258,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F429ZI_OLEDBOARD2")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_OLEDBOARD2")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F429ZI_OLEDBOARD2)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_OLEDBOARD2)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1288,8 +1288,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F411RE_NUCLEO")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F411RE_NUCLEO")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F411RE_NUCLEO)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F411RE_NUCLEO)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1324,8 +1324,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_ANAKIN")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_ANAKIN")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_ANAKIN)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_ANAKIN)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1357,11 +1357,11 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F401VC_STM32F4DISCOVERY")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F401VC_STM32F4DISCOVERY")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F401VC_STM32F4DISCOVERY)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F401VC_STM32F4DISCOVERY)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-        set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000")
+        set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1394,8 +1394,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F469NI_STM32F469I_DISCO")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F469NI_STM32F469I_DISCO")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F469NI_STM32F469I_DISCO)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F469NI_STM32F469I_DISCO)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1430,8 +1430,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_HOMEONE")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_HOMEONE")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_HOMEONE)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F429ZI_SKYWARD_HOMEONE)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1460,11 +1460,11 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F401RE_NUCLEO")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F401RE_NUCLEO")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F401RE_NUCLEO)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F401RE_NUCLEO)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-        set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000")
+        set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1493,11 +1493,11 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_THERMALTESTCHIP")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_THERMALTESTCHIP")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_THERMALTESTCHIP)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_THERMALTESTCHIP)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-        set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000")
+        set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1529,9 +1529,9 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_CORTEXM4_STM32F4 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_CORTEXM4_STM32F4 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c")
-    set(LFLAGS_BASE "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM4_STM32F4 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_CORTEXM4_STM32F4 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -1577,11 +1577,11 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                     )
 
             ## Add a #define to allow querying board name
-            set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM3220G_EVAL")
-            set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM3220G_EVAL")
+            set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM3220G_EVAL)
+            set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM3220G_EVAL)
 
             ## Clock frequency
-            set(CLOCK_FREQ "-DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000")
+            set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000)
 
             ## Select programmer command line
             ## This is the program that is invoked when the user types
@@ -1618,14 +1618,14 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                     )
 
             ## Add a #define to allow querying board name
-            set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_ETHBOARDV2")
-            set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_ETHBOARDV2")
+            set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_ETHBOARDV2)
+            set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_ETHBOARDV2)
 
             ## Clock frequency
-            set(CLOCK_FREQ "-DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000")
+            set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000)
 
             ## XRAM is always enabled in this board
-            set(XRAM "${XRAM} -D__ENABLE_XRAM")
+            set(XRAM ${XRAM} -D__ENABLE_XRAM)
 
             ## Select programmer command line
             ## This is the program that is invoked when the user types
@@ -1661,14 +1661,14 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                     )
 
             ## Add a #define to allow querying board name
-            set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_ALS_CAMBOARD")
-            set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_ALS_CAMBOARD")
+            set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_ALS_CAMBOARD)
+            set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_ALS_CAMBOARD)
 
             ## Clock frequency
-            set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_120MHz=120000000")
+            set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_120MHz=120000000)
 
             ## XRAM is always enabled in this board
-            set(XRAM "${XRAM} -D__ENABLE_XRAM")
+            set(XRAM ${XRAM} -D__ENABLE_XRAM)
 
             ## Select programmer command line
             ## This is the program that is invoked when the user types
@@ -1701,8 +1701,8 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                     )
 
             ## Add a #define to allow querying board name
-            set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_SONY_NEWMAN")
-            set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_SONY_NEWMAN")
+            set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_SONY_NEWMAN)
+            set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_SONY_NEWMAN)
 
             ## Clock frequency
             set(CLOCK_FREQ -DHSE_VALUE=26000000)
@@ -1741,11 +1741,11 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                     )
 
             ## Add a #define to allow querying board name
-            set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F205RC_SKYWARD_STORMTROOPER")
-            set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F205RC_SKYWARD_STORMTROOPER")
+            set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F205RC_SKYWARD_STORMTROOPER)
+            set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F205RC_SKYWARD_STORMTROOPER)
 
             ## Clock frequency
-            set(CLOCK_FREQ "-DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000")
+            set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000)
 
         ##-------------------------------------------------------------------------
         ## BOARD: stm32f205_generic
@@ -1771,11 +1771,11 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
                     )
 
             ## Add a #define to allow querying board name
-            set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F205_GENERIC")
-            set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F205_GENERIC")
+            set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F205_GENERIC)
+            set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F205_GENERIC)
 
             ## Clock frequency
-            set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_120MHz=120000000")
+            set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_120MHz=120000000)
 
             ## Select programmer command line
             ## This is the program that is invoked when the user types
@@ -1807,9 +1807,9 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_CORTEXM3_STM32F2 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_STM32F2 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(LFLAGS_BASE "-mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM3_STM32F2 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_STM32F2 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE -mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -1849,8 +1849,8 @@ elseif (${ARCH} STREQUAL cortexM3_stm32l1)
         set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_ALS_MAINBOARD")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_ALS_MAINBOARD")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_ALS_MAINBOARD)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_ALS_MAINBOARD)
 
         ## Clock frequency
         set(CLOCK_FREQ -DSYSCLK_FREQ_16MHz=16000000)
@@ -1885,9 +1885,9 @@ elseif (${ARCH} STREQUAL cortexM3_stm32l1)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_CORTEXM3_STM32L1 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_STM32L1 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(LFLAGS_BASE " -mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM3_STM32L1 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_STM32L1 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE -mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -1933,11 +1933,11 @@ elseif (${ARCH} STREQUAL cortexM3_efm32gg)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -DEFM32GG332F1024 -D_BOARD_WANDSTEM")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} ${CFLAGS_BASE}")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -DEFM32GG332F1024 -D_BOARD_WANDSTEM)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} ${CFLAGS_BASE})
 
         ## Clock frequency
-        set(CLOCK_FREQ "-DEFM32_HFXO_FREQ=48000000 -DEFM32_LFXO_FREQ=32768")
+        set(CLOCK_FREQ -DEFM32_HFXO_FREQ=48000000 -DEFM32_LFXO_FREQ=32768)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -1969,9 +1969,9 @@ elseif (${ARCH} STREQUAL cortexM3_efm32gg)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_CORTEXM3_EFM32GG ${CLOCK_FREQ} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_EFM32GG ${CLOCK_FREQ} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c")
-    set(LFLAGS_BASE "-mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM3_EFM32GG ${CLOCK_FREQ} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_CORTEXM3_EFM32GG ${CLOCK_FREQ} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE -mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -2013,11 +2013,11 @@ elseif (${ARCH} STREQUAL cortexM7_stm32f7)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32F746ZG_NUCLEO")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32F746ZG_NUCLEO")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32F746ZG_NUCLEO)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32F746ZG_NUCLEO)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-        set(CLOCK_FREQ "-DHSE_VALUE=8000000 -DSYSCLK_FREQ_216MHz=216000000")
+        set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_216MHz=216000000)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -2052,9 +2052,9 @@ elseif (${ARCH} STREQUAL cortexM7_stm32f7)
     ## For now we'll fallback to M4 which is compatible, but does not support
     ## double precision HW floating point
     set(AFLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c")
-    set(LFLAGS_BASE "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -2100,11 +2100,11 @@ elseif (${ARCH} STREQUAL cortexM7_stm32h7)
                 )
 
         ## Add a #define to allow querying board name
-        set(CFLAGS_BASE "${CFLAGS_BASE} -D_BOARD_STM32H753XI_EVAL")
-        set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_BOARD_STM32H753XI_EVAL")
+        set(CFLAGS_BASE ${CFLAGS_BASE} -D_BOARD_STM32H753XI_EVAL)
+        set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_BOARD_STM32H753XI_EVAL)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-        set(CLOCK_FREQ "-DHSE_VALUE=25000000 -DSYSCLK_FREQ_400MHz=400000000")
+        set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_400MHz=400000000)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -2139,9 +2139,9 @@ elseif (${ARCH} STREQUAL cortexM7_stm32h7)
     ## For now we'll fallback to M4 which is compatible, but does not support
     ## double precision HW floating point
     set(AFLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
-    set(CFLAGS_BASE "${CFLAGS_BASE} -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_OPTIMIZATION} -c")
-    set(CXXFLAGS_BASE "${CXXFLAGS_BASE} -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c")
-    set(LFLAGS_BASE "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib")
+    set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_OPTIMIZATION} -c)
+    set(CXXFLAGS_BASE ${CXXFLAGS_BASE} -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
