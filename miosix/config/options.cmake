@@ -1,5 +1,5 @@
 # Copyright (c) 2021 Skyward Experimental Rocketry
-# Authors: Michele Scuttari
+# Authors: Michele Scuttari, Damiano Amatruda
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -690,21 +690,6 @@ if (${ARCH} STREQUAL arm7_lpc2000)
     ##
     endif()
 
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
-
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=arm7tdmi -mapcs-32 -mfloat-abi=soft)
     set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_ARM7_LPC2000 -mcpu=arm7tdmi ${OPT_OPTIMIZATION} -c)
@@ -1092,20 +1077,6 @@ elseif (${ARCH} STREQUAL cortexM3_stm32)
     ## End of board list
     ##
     endif()
-
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
@@ -1513,20 +1484,6 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
         ##
     endif()
 
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
-
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
     set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM4_STM32F4 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT_OPTIMIZATION} -c)
@@ -1791,20 +1748,6 @@ elseif (${ARCH} STREQUAL cortexM4_stm32f4)
         ##
         endif()
 
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
-
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
     set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM3_STM32F2 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
@@ -1868,20 +1811,6 @@ elseif (${ARCH} STREQUAL cortexM3_stm32l1)
     ## End of board list
     ##
     endif()
-
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
@@ -1953,20 +1882,6 @@ elseif (${ARCH} STREQUAL cortexM3_efm32gg)
     ##
     endif()
 
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
-
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
     set(CFLAGS_BASE ${CFLAGS_BASE} -D_ARCH_CORTEXM3_EFM32GG ${CLOCK_FREQ} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
@@ -2032,20 +1947,6 @@ elseif (${ARCH} STREQUAL cortexM7_stm32f7)
     ## End of board list
     ##
     endif()
-
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     ## TODO: when upgrading compiler, add native cortex M7 support.
@@ -2119,20 +2020,6 @@ elseif (${ARCH} STREQUAL cortexM7_stm32h7)
     ## End of board list
     ##
     endif()
-
-    ## Select compiler
-    set(PREFIX ${TOOLCHAIN_PATH}/bin/arm-miosix-eabi-)
-
-    ## From compiler prefix form the name of the compiler and other tools
-    set(CMAKE_C_COMPILER_WORKS 1)
-    set(CMAKE_C_COMPILER ${PREFIX}gcc)
-    set(CMAKE_CXX_COMPILER_WORKS 1)
-    set(CMAKE_CXX_COMPILER ${PREFIX}g++)
-    set(CMAKE_AR ${PREFIX}ar)
-    set(CMAKE_ASM_COMPILER ${PREFIX}as)
-    set(CMAKE_OBJCOPY ${PREFIX}objcopy)
-    set(CMAKE_OBJDUMP ${PREFIX}objdump)
-    set(SIZE ${PREFIX}size)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     ## TODO: when upgrading compiler, add native cortex M7 support.
