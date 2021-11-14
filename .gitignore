@@ -2,6 +2,7 @@
 miosix/_doc/doxygen/html/*
 
 # Exclude temporary files
+build/
 main.elf
 main.bin
 main.hex
