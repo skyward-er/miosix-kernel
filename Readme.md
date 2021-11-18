@@ -24,6 +24,8 @@ endif
 
 2. `miosix/config/miosix`: The usual `error` is commented out and `JTAG` enabled by default
 
+3. `CMakeLists.txt`, `miosix/CMakeLists.txt`, `miosix/config/options.cmake` and `miosix/config/boards.cmake`: CMake is supported
+
 Note that these changes must be respected when pulling from the original repo
 
 
