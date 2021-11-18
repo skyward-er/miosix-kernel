@@ -71,7 +71,7 @@ foreach(OPT_BOARD ${BOARDS})
         util/lcd44780.cpp
         ${ARCH_SRC}
     )
-    add_library(miosix::${MIOSIX_LIBRARY} ALIAS ${MIOSIX_LIBRARY})
+    add_library(Miosix::Miosix-${OPT_BOARD} ALIAS ${MIOSIX_LIBRARY})
     target_sources(${MIOSIX_LIBRARY} INTERFACE ${BOOT_FILE})
     target_include_directories(${MIOSIX_LIBRARY} PUBLIC
         ${KPATH}/config
@@ -81,7 +81,7 @@ foreach(OPT_BOARD ${BOARDS})
         ${KPATH}/${ARCH_INC}
         ${KPATH}/${BOARD_INC}
     )
-    target_compile_definitions(${MIOSIX_LIBRARY} PUBLIC COMPILING_MIOSIX)
+    target_compile_definitions(${MIOSIX_LIBRARY} PUBLIC COMPILING_MIOSIX $<$<CONFIG:Debug>:DEBUG>)
     target_compile_features(${MIOSIX_LIBRARY} PUBLIC cxx_std_14)
     target_compile_options(${MIOSIX_LIBRARY} PUBLIC ${DFLAGS} $<$<COMPILE_LANGUAGE:C>:${CFLAGS_BASE}> $<$<COMPILE_LANGUAGE:CXX>:${CXXFLAGS_BASE}> $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>)
     set_property(TARGET ${MIOSIX_LIBRARY} PROPERTY INTERFACE_LINK_DEPENDS ${LINKER_SCRIPT})

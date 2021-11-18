@@ -934,7 +934,7 @@ if(${ARCH} STREQUAL arm7_lpc2000)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
-        set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
+        set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.s)
         set(LINKER_SCRIPT ${KPATH}/arch/arm7_lpc2000/lpc2138_miosix_board/miosix.ld)
 
         ## Select architecture specific files
