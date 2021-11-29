@@ -23,18 +23,16 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
 # Select compiler
-set(PREFIX /opt/arm-miosix-eabi/bin/arm-miosix-eabi-)
+set(PREFIX arm-miosix-eabi-)
 
 # From compiler prefix form the name of the compiler and other tools
-set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_C_COMPILER ${PREFIX}gcc)
-set(CMAKE_CXX_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER ${PREFIX}g++)
 set(CMAKE_AR ${PREFIX}ar)
 set(CMAKE_ASM_COMPILER ${PREFIX}as)
 set(CMAKE_OBJCOPY ${PREFIX}objcopy)
 set(CMAKE_OBJDUMP ${PREFIX}objdump)
-set(SIZE ${PREFIX}size)
+set(CMAKE_SIZE ${PREFIX}size)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
