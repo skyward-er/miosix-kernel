@@ -65,4 +65,5 @@ set(BOARDS
     stm32f100c8_vaisala_rs41
     stm32l476rg_nucleo
     atsam4lc2aa_generic
+    stm32f411ce_blackpill
 )

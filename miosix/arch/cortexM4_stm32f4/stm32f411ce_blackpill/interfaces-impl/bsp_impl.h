@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010, 2011, 2012, 2013, 2014 by Terraneo Federico       *
+ *   Copyright (C) 2015 by Terraneo Federico                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,52 +23,58 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/
+ ***************************************************************************/ 
+
+/***********************************************************************
+* bsp_impl.h Part of the Miosix Embedded OS.
+* Board support package, this file initializes hardware.
+************************************************************************/
+
+#ifndef BSP_IMPL_H
+#define BSP_IMPL_H
 
 #include "config/miosix_settings.h"
-#include "board_settings.h"
-
-// These two #if are here because version checking for config files in
-// out-of-git-tree projects has to be done somewhere.
-
-#if MIOSIX_SETTINGS_VERSION != 100
-#error You need to update miosix_settings.h to match the version in the kernel.
-#endif
-
-#if BOARD_SETTINGS_VERSION != 100
-#error You need to update board_settings.h to match the version in the kernel.
-#endif
+#include "interfaces/gpio.h"
 
 namespace miosix {
 
-#define tts(x) #x
-#define ts(x) tts(x)
+/**
+\addtogroup Hardware
+\{
+*/
 
-#ifdef __clang__ //clang also defines GNUC, so it has to go first
-#define CV ", clang " \
-    ts(__clang_major__) "." ts(__clang_minor__) "." ts(__clang_patchlevel__) \
-    "-mp" ts(_MIOSIX_CLANG_PATCH_VERSION)
-#define AU __attribute__((used))
-#elif defined(__GNUC__)
-#ifdef _MIOSIX_GCC_PATCH_MAJOR
-#define PV ts(_MIOSIX_GCC_PATCH_MAJOR) "." ts(_MIOSIX_GCC_PATCH_MINOR)
-#else
-#define PV ts(_MIOSIX_GCC_PATCH_VERSION)
-#endif
-#define CV ", gcc " \
-    ts(__GNUC__) "." ts(__GNUC_MINOR__) "." ts(__GNUC_PATCHLEVEL__) \
-    "-mp" PV
-#define AU __attribute__((used))
-#else
-#define CV
-#define AU
-#endif
+/**
+ * \internal
+ * used by the ledOn() and ledOff() implementation
+ */
+typedef Gpio<GPIOC_BASE,13> _led;
 
-const char AU ver[]="Miosix v2.22 (" _MIOSIX_BOARDNAME ", " __DATE__ " " __TIME__ CV ")";
-
-const char *getMiosixVersion()
+inline void ledOn()
 {
-    return ver;
+    _led::low();
 }
 
+inline void ledOff()
+{
+    _led::high();
+}
+
+/**
+ * Polls the SD card sense GPIO.
+ * 
+ * This board has no SD card whatsoever, but a card can be connected to the
+ * following GPIOs:
+ * TODO: never tested
+ * 
+ * \return true. As there's no SD card sense switch, let's pretend that
+ * the card is present.
+ */
+inline bool sdCardSense() { return true; }
+
+/**
+\}
+*/
+
 } //namespace miosix
+
+#endif //BSP_IMPL_H

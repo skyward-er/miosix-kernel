@@ -56,6 +56,7 @@
 #OPT_BOARD := stm32f100c8_vaisala_rs41
 #OPT_BOARD := stm32l476rg_nucleo
 #OPT_BOARD := atsam4lc2aa_generic
+#OPT_BOARD := stm32f411ce_blackpill
 
 ##
 ## Optimization flags, choose one.
@@ -739,7 +740,7 @@ endif
 ## stm32f100c8_vaisala_rs41
 ##
 
-ifeq ($(OPT_BOARD),stm32f100cx_generic)
+ifeq ($(OPT_BOARD),stm32f100c8_vaisala_rs41)
 
     ## Select clock frequency
     ## Not defining anything results in HSI being used
@@ -774,6 +775,10 @@ endif
 
 ##---------------------------------------------------------------------------
 ## atsam4lc2aa_generic
+##
+
+##---------------------------------------------------------------------------
+## stm32f411ce_blackpill
 ##
 
 # No options
@@ -883,6 +888,8 @@ else ifeq ($(OPT_BOARD),stm32l476rg_nucleo)
     ARCH := cortexM4_stm32l4
 else ifeq ($(OPT_BOARD),atsam4lc2aa_generic)
     ARCH := cortexM4_atsam4l
+else ifeq ($(OPT_BOARD),stm32f411ce_blackpill)
+    ARCH := cortexM4_stm32f4
 else
     $(info Error: no board specified in miosix/config/Makefile.inc)
     $(error Error)
@@ -1963,6 +1970,38 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
         PROGRAM_CMDLINE := qstlink2 -cqewV ./main.bin
 
     ##-------------------------------------------------------------------------
+    ## BOARD: stm32f411ce_blackpill
+    ##
+    else ifeq ($(OPT_BOARD),stm32f411ce_blackpill)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM4_stm32f4/stm32f411ce_blackpill
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_512k+128k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32F411CE_BLACKPILL
+        CXXFLAGS_BASE += -D_BOARD_STM32F411CE_BLACKPILL
+
+        ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
+        CLOCK_FREQ := -DHSE_VALUE=25000000 -DSYSCLK_FREQ_100MHz=100000000
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROGRAM_CMDLINE := qstlink2 -cqewV ./main.bin
+
+    ##-------------------------------------------------------------------------
     ## BOARD: stm32f429zi_skyward_death_stack
     ##
     else ifeq ($(OPT_BOARD),stm32f429zi_skyward_death_stack)
@@ -2513,6 +2552,11 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
     ## BOARD: stm32f746zg_nucleo
     ##
     ifeq ($(OPT_BOARD),stm32f746zg_nucleo)
+        ## Select appropriate compiler flags for both ASM/C/C++/linker
+        ## Not all stm32f7 have the double precision FPU. Those that only
+        ## support single precision are built as cortex m4
+        ARCHOPTS := -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+    
         ## Base directory with header files for this board
         BOARD_INC := arch/cortexM7_stm32f7/stm32f746zg_nucleo
 
@@ -2560,13 +2604,6 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
     OD  := $(PREFIX)objdump
     SZ  := $(PREFIX)size
 
-    ## Select appropriate compiler flags for both ASM/C/C++/linker
-    ifneq ($(GCCMAJOR),4)
-        ARCHOPTS := -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
-    else
-        ## Fallback to cortex M4 and single precision fp, which is compatible
-        ARCHOPTS := -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
-    endif
     AFLAGS_BASE   := $(ARCHOPTS)
     CFLAGS_BASE   += -D_ARCH_CORTEXM7_STM32F7 $(CLOCK_FREQ) $(XRAM) $(SRAM_BOOT)\
                      $(ARCHOPTS) $(OPT_OPTIMIZATION) -c
@@ -2926,7 +2963,7 @@ else ifeq ($(ARCH),cortexM4_atsam4l)
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
         BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
-        LINKER_SCRIPT := $(BOARD_INC)/atsam_112k+20k_rom.ld
+        LINKER_SCRIPT := $(BOARD_INC)/atsam_112k+32k_rom.ld
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>

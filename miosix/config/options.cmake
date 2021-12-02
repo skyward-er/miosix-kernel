@@ -29,56 +29,6 @@
 ##
 
 ##
-## Target board, choose one. This also implicitly select the target
-## architecture
-##
-#set(OPT_BOARD lpc2138_miosix_board)
-#set(OPT_BOARD stm32f103ze_stm3210e-eval)
-#set(OPT_BOARD stm32f103ve_mp3v2)
-#set(OPT_BOARD stm32f100rb_stm32vldiscovery)
-#set(OPT_BOARD stm32f103ve_strive_mini)
-#set(OPT_BOARD stm32f103ze_redbull_v2)
-#set(OPT_BOARD stm32f407vg_stm32f4discovery)
-#set(OPT_BOARD stm32f207ig_stm3220g-eval)
-#set(OPT_BOARD stm32f207zg_ethboard_v2)
-#set(OPT_BOARD stm32f207ze_als_camboard)
-#set(OPT_BOARD stm32l151_als_mainboard)
-#set(OPT_BOARD stm32f407vg_bitsboard)
-#set(OPT_BOARD stm32f205rg_sony-newman)
-#set(OPT_BOARD stm32f429zi_stm32f4discovery)
-#set(OPT_BOARD stm32f103cb_als_mainboard_rev2)
-#set(OPT_BOARD stm32f100cb_tempsensor)
-#set(OPT_BOARD stm32f429zi_oledboard2)
-#set(OPT_BOARD efm32gg332f1024_wandstem)
-#set(OPT_BOARD stm32f411re_nucleo)
-#set(OPT_BOARD stm32f429zi_skyward_anakin)
-#set(OPT_BOARD stm32f100rc_solertegiard)
-#set(OPT_BOARD stm32f205rc_skyward_stormtrooper)
-#set(OPT_BOARD stm32f401vc_stm32f4discovery)
-#set(OPT_BOARD stm32f103c8_breakout)
-#set(OPT_BOARD stm32f100c8_microboard)
-#set(OPT_BOARD stm32f469ni_stm32f469i-disco)
-#set(OPT_BOARD stm32f429zi_skyward_homeone)
-#set(OPT_BOARD stm32f429zi_skyward_rogallina)
-#set(OPT_BOARD stm32f103c8_skyward_alderaan)
-#set(OPT_BOARD stm32f401re_nucleo)
-#set(OPT_BOARD stm32f746zg_nucleo)
-#set(OPT_BOARD stm32h753xi_eval)
-#set(OPT_BOARD stm32f407vg_thermal_test_chip)
-#set(OPT_BOARD stm32f205_generic)
-#set(OPT_BOARD stm32f103cx_generic)
-#set(OPT_BOARD stm32f103cb_skyward_strain_board)
-#set(OPT_BOARD stm32f072rb_stm32f0discovery)
-#set(OPT_BOARD stm32f429zi_skyward_death_stack)
-#set(OPT_BOARD stm32f429zi_skyward_death_stack_x)
-#set(OPT_BOARD stm32f100cx_generic)
-#set(OPT_BOARD stm32f407vg_skyward_tortellino)
-#set(OPT_BOARD stm32f303vc_stm32f3discovery)
-#set(OPT_BOARD stm32f100c8_vaisala_rs41)
-#set(OPT_BOARD stm32l476rg_nucleo)
-#set(OPT_BOARD atsam4lc2aa_generic)
-
-##
 ## Optimization flags, choose one.
 ## -O0 produces large and slow code, but is useful for in circuit debugging.
 ## -O2 is recomended otherwise, as it provides a good balance between code
@@ -775,7 +725,7 @@ endif()
 ## stm32l476rg_nucleo
 ##
 
-if(${OPT_BOARD},stm32l476rg_nucleo)
+if(${OPT_BOARD} STREQUAL stm32l476rg_nucleo)
 
     ## Select clock frequency
     ## Not defining any of these results in the internal 4MHz clock (MSI) to be used
@@ -796,6 +746,10 @@ endif()
 
 ##---------------------------------------------------------------------------
 ## atsam4lc2aa_generic
+##
+
+##---------------------------------------------------------------------------
+## stm32f411ce_blackpill
 ##
 
 # No options
@@ -899,6 +853,8 @@ elseif(${OPT_BOARD} STREQUAL stm32l476rg_nucleo)
     set(ARCH cortexM4_stm32l4)
 elseif(${OPT_BOARD} STREQUAL atsam4lc2aa_generic)
     set(ARCH cortexM4_atsam4l)
+elseif(${OPT_BOARD} STREQUAL stm32f411ce_blackpill)
+    set(ARCH cortexM4_stm32f4)
 else()
     message(FATAL_ERROR "no board specified in miosix/config/options.cmake")
 endif()
@@ -1955,6 +1911,38 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(PROGRAM_CMDLINE qstlink2 -cqewV ./main.bin)
 
     ##-------------------------------------------------------------------------
+    ## BOARD: stm32f411ce_blackpill
+    ##
+    elseif(${OPT_BOARD} STREQUAL stm32f411ce_blackpill)
+
+        ## Base directory with header files for this board
+        set(BOARD_INC arch/cortexM4_stm32f4/stm32f411ce_blackpill)
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_512k+128k_rom.ld)
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
+
+        ## Add a #define to allow querying board name
+        list(APPEND CFLAGS_BASE -D_BOARD_STM32F411CE_BLACKPILL)
+        list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F411CE_BLACKPILL)
+
+        ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
+        set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_100MHz=100000000)
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        set(PROGRAM_CMDLINE qstlink2 -cqewV ./main.bin)
+
+    ##-------------------------------------------------------------------------
     ## BOARD: stm32f429zi_skyward_death_stack
     ##
     elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_death_stack)
@@ -2451,6 +2439,10 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
     ## BOARD: stm32f746zg_nucleo
     ##
     if(${OPT_BOARD} STREQUAL stm32f746zg_nucleo)
+        ## Select appropriate compiler flags for both ASM/C/C++/linker
+        ## Not all stm32f7 have the double precision FPU. Those that only
+        ## support single precision are built as cortex m4
+        set(ARCHOPTS -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
         ## Base directory with header files for this board
         set(BOARD_INC arch/cortexM7_stm32f7/stm32f746zg_nucleo)
@@ -2487,11 +2479,10 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
     ##
     endif()
 
-    ## Select appropriate compiler flags for both ASM/C/C++/linker
-    set(AFLAGS_BASE -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16)
-    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 ${OPT_OPTIMIZATION} -c)
-    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
-    set(LFLAGS_BASE -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+    set(AFLAGS_BASE ${ARCHOPTS})
+    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${ARCHOPTS} ${OPT_OPTIMIZATION} -c)
+    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${ARCHOPTS} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE ${ARCHOPTS} -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -2556,10 +2547,11 @@ elseif(${ARCH} STREQUAL cortexM7_stm32h7)
     endif()
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
-    set(AFLAGS_BASE -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16)
-    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 ${OPT_OPTIMIZATION} -c)
-    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
-    set(LFLAGS_BASE -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16 -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+    set(ARCHOPTS -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16)
+    set(AFLAGS_BASE ${ARCHOPTS})
+    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${ARCHOPTS} ${OPT_OPTIMIZATION} -c)
+    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM7_STM32H7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${ARCHOPTS} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
+    set(LFLAGS_BASE ${ARCHOPTS} -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
@@ -2771,7 +2763,7 @@ elseif(${ARCH} STREQUAL cortexM4_atsam4l)
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
         set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
-        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/atsam_112k+20k_rom.ld)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/atsam_112k+32k_rom.ld)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
