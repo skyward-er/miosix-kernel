@@ -178,6 +178,7 @@ void FilesystemBase::fileCloseHook()
 {
     #ifdef WITH_ERRLOG
     int result=atomicAddExchange(&openFileCount,-1);
+    (void)result;
     assert(result>=0);
     #else //WITH_ERRLOG
     atomicAdd(&openFileCount,-1);
