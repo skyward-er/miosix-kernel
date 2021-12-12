@@ -66,4 +66,5 @@ set(BOARDS
     stm32l476rg_nucleo
     atsam4lc2aa_generic
     stm32f411ce_blackpill
+    stm32f429zi_hre_test_stand
 )
