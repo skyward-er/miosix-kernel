@@ -308,10 +308,21 @@ void bspInit2()
 //
 
 /**
- * For safety reasons, we never want the board to shutdown.
- * When requested to shutdown, we reboot instead.
+ * @brief This function disables filesystem and serial port.
  */
-void shutdown() { reboot(); }
+void shutdown()
+{
+    ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
+
+#ifdef WITH_FILESYSTEM
+    FilesystemManager::instance().umountAll();
+#endif  // WITH_FILESYSTEM
+
+    disableInterrupts();
+
+    while (true)
+        ;
+}
 
 void reboot()
 {
