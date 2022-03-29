@@ -62,6 +62,7 @@ typedef Gpio<GPIOB_BASE,14> u3rts;
 /// Pointer to serial port classes to let interrupts access the classes
 static STM32Serial *ports[numPorts]={0};
 
+#ifndef USART1_SKYWARD
 /**
  * \internal interrupt routine for usart1 actual implementation
  */
@@ -79,9 +80,10 @@ void __attribute__((naked)) USART1_IRQHandler()
     asm volatile("bl _Z13usart1irqImplv");
     restoreContext();
 }
+#endif //USART1_SKYWARD
 
 #if !defined(STM32_NO_SERIAL_2_3)
-
+#ifndef USART2_SKYWARD
 /**
  * \internal interrupt routine for usart2 actual implementation
  */
@@ -99,8 +101,10 @@ void __attribute__((naked)) USART2_IRQHandler()
     asm volatile("bl _Z13usart2irqImplv");
     restoreContext();
 }
+#endif //USART2_SKYWARD
 
 #if !defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
+#ifndef USART3_SKYWARD
 /**
  * \internal interrupt routine for usart3 actual implementation
  */
@@ -127,11 +131,12 @@ void __attribute__((naked)) USART3_4_IRQHandler()
     restoreContext();
 }
 #endif //!defined(STM32F072xB)
+#endif //USART3_SKYWARD
 #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
 #endif //!defined(STM32_NO_SERIAL_2_3)
 
 #ifdef SERIAL_1_DMA
-
+#ifndef USART1_SKYWARD
 /**
  * \internal USART1 DMA tx actual implementation
  */
@@ -157,6 +162,7 @@ void __attribute__((noinline)) usart1rxDmaImpl()
 {
     if(ports[0]) ports[0]->IRQhandleDMArx();
 }
+
 
 #if defined(_ARCH_CORTEXM3_STM32) || defined (_ARCH_CORTEXM4_STM32F3) \
  || defined(_ARCH_CORTEXM4_STM32L4)
@@ -202,10 +208,12 @@ void __attribute__((naked)) DMA2_Stream5_IRQHandler()
     restoreContext();
 }
 #endif
+
+#endif // USART1_SKYWARD
 #endif //SERIAL_1_DMA
 
 #if defined(SERIAL_2_DMA) && !defined(STM32_NO_SERIAL_2_3)
-
+#ifndef USART2_SKYWARD
 /**
  * \internal USART2 DMA tx actual implementation
  */
@@ -276,10 +284,11 @@ void __attribute__((naked)) DMA1_Stream5_IRQHandler()
     restoreContext();
 }
 #endif
+#endif //USART2_SKYWARD
 #endif //SERIAL_2_DMA
 
 #if defined(SERIAL_3_DMA) && !defined(STM32_NO_SERIAL_2_3)
-
+#ifndef USART3_SKYWARD
 /**
  * \internal USART3 DMA tx actual implementation
  */
@@ -350,6 +359,7 @@ void __attribute__((naked)) DMA1_Stream1_IRQHandler()
     restoreContext();
 }
 #endif
+#endif //USART3_SKYWARD
 #endif //SERIAL_3_DMA
 
 namespace miosix {
