@@ -60,77 +60,77 @@ typedef Gpio<GPIOB_BASE,13> u3cts;
 typedef Gpio<GPIOB_BASE,14> u3rts;
 
 /// Pointer to serial port classes to let interrupts access the classes
-static STM32Serial *ports[numPorts]={0};
+miosix::STM32Serial *miosix::STM32Serial::ports[3];
 
 #ifndef USART1_SKYWARD
-/**
- * \internal interrupt routine for usart1 actual implementation
- */
-void __attribute__((noinline)) usart1irqImpl()
-{
-   if(ports[0]) ports[0]->IRQhandleInterrupt();
-}
+// /**
+ // * \internal interrupt routine for usart1 actual implementation
+ // */
+// void __attribute__((noinline)) usart1irqImpl()
+// {
+   // if(miosix::STM32Serial::ports[0]) miosix::STM32Serial::ports[0]->IRQhandleInterrupt();
+// }
 
-/**
- * \internal interrupt routine for usart1
- */
-void __attribute__((naked)) USART1_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z13usart1irqImplv");
-    restoreContext();
-}
+// /**
+ // * \internal interrupt routine for usart1
+ // */
+// void __attribute__((naked)) USART1_IRQHandler()
+// {
+    // saveContext();
+    // asm volatile("bl _Z13usart1irqImplv");
+    // restoreContext();
+// }
 #endif //USART1_SKYWARD
 
 #if !defined(STM32_NO_SERIAL_2_3)
 #ifndef USART2_SKYWARD
-/**
- * \internal interrupt routine for usart2 actual implementation
- */
-void __attribute__((noinline)) usart2irqImpl()
-{
-   if(ports[1]) ports[1]->IRQhandleInterrupt();
-}
+// /**
+ // * \internal interrupt routine for usart2 actual implementation
+ // */
+// void __attribute__((noinline)) usart2irqImpl()
+// {
+   // if(miosix::STM32Serial::ports[1]) miosix::STM32Serial::ports[1]->IRQhandleInterrupt();
+// }
 
-/**
- * \internal interrupt routine for usart2
- */
-void __attribute__((naked)) USART2_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z13usart2irqImplv");
-    restoreContext();
-}
+// /**
+ // * \internal interrupt routine for usart2
+ // */
+// void __attribute__((naked)) USART2_IRQHandler()
+// {
+    // saveContext();
+    // asm volatile("bl _Z13usart2irqImplv");
+    // restoreContext();
+// }
 #endif //USART2_SKYWARD
 
 #if !defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
 #ifndef USART3_SKYWARD
-/**
- * \internal interrupt routine for usart3 actual implementation
- */
-void __attribute__((noinline)) usart3irqImpl()
-{
-   if(ports[2]) ports[2]->IRQhandleInterrupt();
-}
+// /**
+ // * \internal interrupt routine for usart3 actual implementation
+ // */
+// void __attribute__((noinline)) usart3irqImpl()
+// {
+   // if(miosix::STM32Serial::ports[2]) miosix::STM32Serial::ports[2]->IRQhandleInterrupt();
+// }
 
-/**
- * \internal interrupt routine for usart3
- */
-#if !defined(STM32F072xB)
-void __attribute__((naked)) USART3_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z13usart3irqImplv");
-    restoreContext();
-}
-#else  //!defined(STM32F072xB)
-void __attribute__((naked)) USART3_4_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z13usart3irqImplv");
-    restoreContext();
-}
-#endif //!defined(STM32F072xB)
+// /**
+ // * \internal interrupt routine for usart3
+ // */
+// #if !defined(STM32F072xB)
+// void __attribute__((naked)) USART3_IRQHandler()
+// {
+    // saveContext();
+    // asm volatile("bl _Z13usart3irqImplv");
+    // restoreContext();
+// }
+// #else  //!defined(STM32F072xB)
+// void __attribute__((naked)) USART3_4_IRQHandler()
+// {
+    // saveContext();
+    // asm volatile("bl _Z13usart3irqImplv");
+    // restoreContext();
+// }
+// #endif //!defined(STM32F072xB)
 #endif //USART3_SKYWARD
 #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
 #endif //!defined(STM32_NO_SERIAL_2_3)
@@ -152,7 +152,7 @@ void __attribute__((noinline)) usart1txDmaImpl()
               | DMA_HIFCR_CDMEIF7
               | DMA_HIFCR_CFEIF7;
     #endif
-    if(ports[0]) ports[0]->IRQhandleDMAtx();
+    if(miosix::STM32Serial::ports[0]) miosix::STM32Serial::ports[0]->IRQhandleDMAtx();
 }
 
 /**
@@ -160,7 +160,7 @@ void __attribute__((noinline)) usart1txDmaImpl()
  */
 void __attribute__((noinline)) usart1rxDmaImpl()
 {
-    if(ports[0]) ports[0]->IRQhandleDMArx();
+    if(miosix::STM32Serial::ports[0]) miosix::STM32Serial::ports[0]->IRQhandleDMArx();
 }
 
 
@@ -229,7 +229,7 @@ void __attribute__((noinline)) usart2txDmaImpl()
               | DMA_HIFCR_CDMEIF6
               | DMA_HIFCR_CFEIF6;
     #endif
-    if(ports[1]) ports[1]->IRQhandleDMAtx();
+    if(miosix::STM32Serial::ports[1]) miosix::STM32Serial::ports[1]->IRQhandleDMAtx();
 }
 
 /**
@@ -237,7 +237,7 @@ void __attribute__((noinline)) usart2txDmaImpl()
  */
 void __attribute__((noinline)) usart2rxDmaImpl()
 {
-    if(ports[1]) ports[1]->IRQhandleDMArx();
+    if(miosix::STM32Serial::ports[1]) miosix::STM32Serial::ports[1]->IRQhandleDMArx();
 }
 
 #if defined(_ARCH_CORTEXM3_STM32) || defined (_ARCH_CORTEXM4_STM32F3) \
@@ -304,7 +304,7 @@ void __attribute__((noinline)) usart3txDmaImpl()
               | DMA_LIFCR_CDMEIF3
               | DMA_LIFCR_CFEIF3;
     #endif
-    if(ports[2]) ports[2]->IRQhandleDMAtx();
+    if(miosix::STM32Serial::ports[2]) miosix::STM32Serial::ports[2]->IRQhandleDMAtx();
 }
 
 /**
@@ -312,7 +312,7 @@ void __attribute__((noinline)) usart3txDmaImpl()
  */
 void __attribute__((noinline)) usart3rxDmaImpl()
 {
-    if(ports[2]) ports[2]->IRQhandleDMArx();
+    if(miosix::STM32Serial::ports[2]) miosix::STM32Serial::ports[2]->IRQhandleDMArx();
 }
 
 #if defined(_ARCH_CORTEXM3_STM32) || defined (_ARCH_CORTEXM4_STM32F3) \
@@ -503,8 +503,8 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     dmaTxInProgress=false;
     #endif //SERIAL_DMA
     InterruptDisableLock dLock;
-    if(id<1|| id>numPorts || ports[id-1]!=0) errorHandler(UNEXPECTED);
-    ports[id-1]=this;
+    if(id<1|| id>numPorts || miosix::STM32Serial::ports[id-1]!=0) errorHandler(UNEXPECTED);
+    miosix::STM32Serial::ports[id-1]=this;
     unsigned int freq=SystemCoreClock;
     //Quirk the position of the PPRE1 and PPRE2 bitfields in RCC->CFGR changes
     //STM32F0 does not have ppre1 and ppre2, in this case the variables are not
@@ -990,7 +990,7 @@ STM32Serial::~STM32Serial()
         InterruptDisableLock dLock;
         port->CR1=0;
         int id=getId();
-        ports[id-1]=0;
+        miosix::STM32Serial::ports[id-1]=0;
         switch(id)
         {
             case 1:

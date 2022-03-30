@@ -198,6 +198,10 @@ public:
      */
     int getId() const { return portId; }
     
+    static STM32Serial *ports[3];  ///< Pointer to serial port classes to
+                                   ///< let interrupts access the classes
+
+	
     /**
      * Destructor
      */
