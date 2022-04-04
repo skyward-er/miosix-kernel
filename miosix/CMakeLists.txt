@@ -22,11 +22,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(Miosix C CXX ASM)
 
-set(KPATH ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "Path to kernel directory")
-file(GLOB KPATH ${KPATH})
-if(NOT KPATH)
-    message(FATAL_ERROR "Kernel directory not found")
-endif()
+set(KPATH ${CMAKE_CURRENT_LIST_DIR})
 
 include(${KPATH}/config/boards.cmake)
 
