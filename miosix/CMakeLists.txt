@@ -41,7 +41,14 @@ foreach(OPT_BOARD ${BOARDS})
         )
         target_compile_definitions(${TARGET} PUBLIC $<$<CONFIG:Debug>:DEBUG> PRIVATE COMPILING_MIOSIX)
         target_compile_features(${TARGET} PUBLIC cxx_std_14)
-        target_compile_options(${TARGET} PUBLIC ${DFLAGS} $<$<COMPILE_LANGUAGE:C>:${CFLAGS_BASE}> $<$<COMPILE_LANGUAGE:CXX>:${CXXFLAGS_BASE}> $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>)
+        target_compile_options(${TARGET} PUBLIC
+            ${DFLAGS}
+            $<$<CONFIG:Debug>:-Og>
+            $<$<CONFIG:Release>:-O3>
+            $<$<COMPILE_LANGUAGE:C>:${CFLAGS_BASE}>
+            $<$<COMPILE_LANGUAGE:CXX>:${CXXFLAGS_BASE}>
+            $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>
+        )
         set_property(TARGET ${TARGET} PROPERTY INTERFACE_LINK_DEPENDS ${LINKER_SCRIPT})
         target_link_options(${TARGET} INTERFACE ${LFLAGS_BASE})
         target_link_libraries(${TARGET} INTERFACE stdc++ c m gcc atomic)
