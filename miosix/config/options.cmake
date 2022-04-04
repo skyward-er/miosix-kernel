@@ -35,7 +35,7 @@
 ## size and speed
 ##
 #set(OPT_OPTIMIZATION -O0)
-set(OPT_OPTIMIZATION -O2)
+#set(OPT_OPTIMIZATION -O2)
 #set(OPT_OPTIMIZATION -O3)
 #set(OPT_OPTIMIZATION -Os)
 
