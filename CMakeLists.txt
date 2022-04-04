@@ -30,7 +30,7 @@ endif()
 add_subdirectory(miosix EXCLUDE_FROM_ALL)
 
 add_executable(main main.cpp)
-target_link_libraries(main Miosix::Miosix-${OPT_BOARD})
+target_link_libraries(main PRIVATE Miosix::Miosix::${OPT_BOARD})
 add_custom_command(
     TARGET main POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O ihex main main.hex

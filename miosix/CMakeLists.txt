@@ -67,7 +67,7 @@ foreach(OPT_BOARD ${BOARDS})
         util/lcd44780.cpp
         ${ARCH_SRC}
     )
-    add_library(Miosix::Miosix-${OPT_BOARD} ALIAS ${MIOSIX_LIBRARY})
+    add_library(Miosix::Miosix::${OPT_BOARD} ALIAS ${MIOSIX_LIBRARY})
     target_sources(${MIOSIX_LIBRARY} INTERFACE ${BOOT_FILE})
     target_include_directories(${MIOSIX_LIBRARY} PUBLIC
         ${KPATH}/config
