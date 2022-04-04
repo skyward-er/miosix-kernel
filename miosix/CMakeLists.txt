@@ -90,3 +90,5 @@ foreach(OPT_BOARD ${BOARDS})
         COMMAND_EXPAND_LISTS
     )
 endforeach()
+
+add_subdirectory(_tools/testsuite EXCLUDE_FROM_ALL)
