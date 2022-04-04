@@ -576,7 +576,7 @@ if(${OPT_BOARD} STREQUAL stm32f103cx_generic)
     # stm32f103c8 has 64K, stm32f103cb has 128K
     set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32/stm32f103cx_generic/)
     #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_64k+20k_rom.ld)
-    set(LINKER_SCRIPT $(LINKER_SCRIPT_PATH)stm32_128k+20k_rom.ld)
+    set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_128k+20k_rom.ld)
 
     ## Select clock frequency
     set(CLOCK_FREQ -DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI)
