@@ -99,6 +99,10 @@ void shutdown();
  */
 void reboot();
 
+void __attribute__((weak)) ledOn();
+
+void __attribute__((weak)) ledOff();
+
 /**
  * \}
  */

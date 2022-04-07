@@ -21,6 +21,39 @@
 
 add_custom_target(miosix-testsuite)
 
+# Use only the board where the testsuite has a chance to compile
+set(BOARDS
+    stm32f103ze_stm3210e-eval
+    stm32f103ve_mp3v2
+    stm32f103ve_strive_mini
+    stm32f103ze_redbull_v2
+    stm32f407vg_stm32f4discovery
+    stm32f207zg_ethboard_v2
+    stm32f205rg_sony-newman
+    stm32f407vg_bitsboard
+    stm32f429zi_stm32f4discovery
+    stm32f429zi_oledboard2
+    efm32gg332f1024_wandstem
+    stm32f411re_nucleo
+    stm32f429zi_skyward_anakin
+    stm32f100rc_solertegiard
+    stm32f205rc_skyward_stormtrooper
+    stm32f401vc_stm32f4discovery
+    stm32f469ni_stm32f469i-disco
+    stm32f429zi_skyward_homeone
+    stm32f429zi_skyward_rogallina
+    stm32f401re_nucleo
+    stm32f746zg_nucleo
+    stm32h753xi_eval
+    stm32f407vg_thermal_test_chip
+    stm32f205_generic
+    stm32f429zi_skyward_death_stack
+    stm32f429zi_skyward_death_stack_x
+    stm32f407vg_skyward_tortellino
+    stm32f411ce_blackpill
+    stm32f429zi_hre_test_stand
+)
+
 foreach(OPT_BOARD ${BOARDS})
     set(KERNEL_TESTSUITE miosix-testsuite-${OPT_BOARD})
     add_executable(${KERNEL_TESTSUITE} ${KPATH}/_tools/testsuite/testsuite.cpp)
