@@ -44,7 +44,7 @@ foreach(OPT_BOARD ${BOARDS})
         target_compile_options(${TARGET} PUBLIC
             ${DFLAGS}
             $<$<CONFIG:Debug>:-Og>
-            $<$<CONFIG:Release>:-O3>
+            $<$<CONFIG:Release>:-O2>
             $<$<COMPILE_LANGUAGE:C>:${CFLAGS_BASE}>
             $<$<COMPILE_LANGUAGE:CXX>:${CXXFLAGS_BASE}>
             $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>
