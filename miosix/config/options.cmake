@@ -29,7 +29,23 @@
 ##
 
 ##
-## Optimization flags, choose one.
+## Optimization flags:
+## -O  same as -O1
+## -O0 do no optimization, the default if no optimization level is specified
+## -O1 optimize minimally
+## -O2 optimize more
+## -O3 optimize even more
+## -Ofast optimize very aggressively to the point of breaking the standard
+## -Og Optimize debugging experience. -Og enables optimizations that do not
+## interfere with debugging.
+## -Os Optimize for size. -Os enables all -O2 optimizations that do not
+## typically increase code size. It also performs further optimizations
+## designed to reduce code size. -Os disables the following optimization flags:
+## -falign-functions -falign-jumps -falign-loops -falign-labels
+## -freorder-blocks -freorder-blocks-and-partition -fprefetch-loop-arrays
+## -ftree-vect-loop-version)
+##
+## Suggested:
 ## -O0 produces large and slow code, but is useful for in circuit debugging.
 ## -O2 is recomended otherwise, as it provides a good balance between code
 ## size and speed
@@ -38,6 +54,10 @@
 #set(OPT_OPTIMIZATION -O2)
 #set(OPT_OPTIMIZATION -O3)
 #set(OPT_OPTIMIZATION -Os)
+set(OPT_OPTIMIZATION
+    $<$<CONFIG:Debug>:-Og>
+    $<$<CONFIG:Release>:-O2>
+)
 
 ##
 ## C++ Exception/rtti support disable flags.
