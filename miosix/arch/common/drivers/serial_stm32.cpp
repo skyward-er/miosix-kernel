@@ -62,7 +62,7 @@ typedef Gpio<GPIOB_BASE,13> u3cts;
 typedef Gpio<GPIOB_BASE,14> u3rts;
 
 /// Pointer to serial port classes to let interrupts access the classes
-miosix::STM32Serial *miosix::STM32Serial::ports[3];
+miosix::STM32Serial *miosix::STM32Serial::ports[MAX_SERIAL_PORTS];
 
 /**
  * \internal interrupt routine for usart1 actual implementation
