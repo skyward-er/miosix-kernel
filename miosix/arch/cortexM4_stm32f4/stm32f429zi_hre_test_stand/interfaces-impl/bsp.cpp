@@ -259,9 +259,6 @@ void IRQbspInit()
     ads131m04::cs::mode(Mode::OUTPUT);
     ads131m04::cs::high();
 
-    hx711::cs::mode(Mode::OUTPUT);
-    hx711::cs::high();
-
     max31855::cs1::mode(Mode::OUTPUT);
     max31855::cs1::high();
     max31855::cs2::mode(Mode::OUTPUT);
@@ -275,12 +272,15 @@ void IRQbspInit()
     max31855::cs6::mode(Mode::OUTPUT);
     max31855::cs6::high();
 
+    // Set the Discovery's gyroscope CS to not interfere with the thermocouples
+    using csGyro = Gpio<GPIOC_BASE, 1>;
+    csGyro::mode(Mode::OUTPUT);
+    csGyro::high();
+
     using namespace ui;
 
-    button1::mode(Mode::OUTPUT);
-    button1::low();
-    button2::mode(Mode::OUTPUT);
-    button2::low();
+    button1::mode(Mode::INPUT);
+    button2::mode(Mode::INPUT);
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,

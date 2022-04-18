@@ -90,7 +90,6 @@ using mosi = interfaces::spi1::mosi;
 
 namespace hx711
 {
-using cs   = Gpio<GPIOE_BASE, 4>;
 using sck  = interfaces::spi4::sck;
 using miso = interfaces::spi4::miso;
 }  // namespace hx711
@@ -99,7 +98,7 @@ namespace max31855
 {
 using cs1  = Gpio<GPIOC_BASE, 13>;
 using cs2  = Gpio<GPIOC_BASE, 14>;
-using cs3  = Gpio<GPIOC_BASE, 15>;
+using cs3  = Gpio<GPIOA_BASE, 15>;
 using cs4  = Gpio<GPIOD_BASE, 11>;
 using cs5  = Gpio<GPIOD_BASE, 12>;
 using cs6  = Gpio<GPIOD_BASE, 13>;
