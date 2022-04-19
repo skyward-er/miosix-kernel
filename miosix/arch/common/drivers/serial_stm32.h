@@ -34,6 +34,8 @@
 #include "interfaces/gpio.h"
 #include "board_settings.h"
 
+#define MAX_SERIAL_PORTS 8
+
 #if defined(_ARCH_CORTEXM3_STM32) && defined(__ENABLE_XRAM)
 //Quirk: concurrent access to the FSMC from both core and DMA is broken in
 //the stm32f1, so disable DMA mode if XRAM is enabled.
@@ -198,6 +200,10 @@ public:
      */
     int getId() const { return portId; }
     
+    static STM32Serial *ports[MAX_SERIAL_PORTS];  ///< Pointer to serial port classes to
+                                   ///< let interrupts access the classes
+
+	
     /**
      * Destructor
      */
