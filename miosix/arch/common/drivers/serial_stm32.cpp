@@ -44,10 +44,8 @@ static const int numPorts=3; //Supporting only USART1, USART2, USART3
 //GPIOS in all families, stm32f1, f2, f4 and l1. Additionally, USART1 is
 //always connected to the APB2, while USART2 and USART3 are always on APB1
 //Unfortunately, this does not hold with DMA.
-// typedef Gpio<GPIOA_BASE,9>  u1tx;
-// typedef Gpio<GPIOA_BASE,10> u1rx;
-typedef Gpio<GPIOB_BASE, 6> u1tx;
-typedef Gpio<GPIOB_BASE, 7> u1rx;
+typedef Gpio<GPIOA_BASE,9>  u1tx;
+typedef Gpio<GPIOA_BASE,10> u1rx;
 typedef Gpio<GPIOA_BASE,11> u1cts;
 typedef Gpio<GPIOA_BASE,12> u1rts;
 
