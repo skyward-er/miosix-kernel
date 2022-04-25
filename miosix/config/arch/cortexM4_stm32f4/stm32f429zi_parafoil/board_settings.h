@@ -60,7 +60,7 @@ const unsigned int AUX_TIMER_MAX   = 0xffff;  ///<\internal Aux timer is 16 bits
 
 /// Serial port
 const unsigned int defaultSerial      = 1;
-const unsigned int defaultSerialSpeed = 9600;
+const unsigned int defaultSerialSpeed = 115200;
 const bool defaultSerialFlowctrl      = false;
 #define SERIAL_1_DMA
 //#define SERIAL_2_DMA
