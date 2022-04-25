@@ -797,6 +797,38 @@ if(${OPT_BOARD} STREQUAL stm32f429zi_hre_test_stand)
 endif()
 
 ##---------------------------------------------------------------------------
+## stm32f429zi_parafoil
+##
+if(${OPT_BOARD} STREQUAL stm32f429zi_parafoil)
+
+    ## Linker script type, there are three options
+    ## 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
+    ##    the most common choice, available for all microcontrollers
+    ## 2) Code in FLASH, stack + heap in external RAM (file *8m_xram.ld)
+    ##    You must uncomment -D__ENABLE_XRAM below in this case.
+    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM4_stm32f4/stm32f429zi_parafoil/)
+    #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+256k_rom.ld)
+    set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+8m_xram.ld)
+
+    ## Uncommenting __ENABLE_XRAM enables the initialization of the external
+    ## 8MB SDRAM memory. Do not uncomment this even if you don't use a linker
+    ## script that requires it, as it is used for the LCD framebuffer.
+    set(XRAM -D__ENABLE_XRAM)
+
+    ## Select clock frequency. 
+    ## Warning: the default clock frequency for
+    ## this board is 168MHz and not 180MHz because, due to a limitation in
+    ## the PLL, it is not possible to generate a precise 48MHz output when
+    ## running the core at 180MHz. If 180MHz is chosen the USB peripheral will
+    ## NOT WORK and the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
+    ## Define USE_INTERNAL_CLOCK to bypass the external oscillator
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000)
+    set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
+    #set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
+
+endif()
+
+##---------------------------------------------------------------------------
 ## atsam4lc2aa_generic
 ##
 
@@ -908,6 +940,8 @@ elseif(${OPT_BOARD} STREQUAL atsam4lc2aa_generic)
 elseif(${OPT_BOARD} STREQUAL stm32f411ce_blackpill)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_hre_test_stand)
+    set(ARCH cortexM4_stm32f4)
+elseif(${OPT_BOARD} STREQUAL stm32f429zi_parafoil)
     set(ARCH cortexM4_stm32f4)
 else()
     message(FATAL_ERROR "no board specified in miosix/config/options.cmake")
@@ -2092,6 +2126,31 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         ## Add a #define to allow querying board name
         list(APPEND CFLAGS_BASE -D_BOARD_STM32F429ZI_HRE_TEST_STAND)
         list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F429ZI_HRE_TEST_STAND)
+    
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f429zi_parafoil
+    ##
+    elseif(${OPT_BOARD} STREQUAL stm32f429zi_parafoil)
+
+    ## Base directory with header files for this board
+    set(BOARD_INC arch/cortexM4_stm32f4/stm32f429zi_parafoil)
+
+    ## Select linker script and boot file
+    ## Their path must be relative to the miosix directory.
+    set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
+    #set(LINKER_SCRIPT already selected in board options)
+
+    ## Select architecture specific files
+    ## These are the files in arch/<arch name>/<board name>
+    set(ARCH_SRC
+        ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
+        ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
+        ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
+    )
+
+    ## Add a #define to allow querying board name
+    list(APPEND CFLAGS_BASE -D_BOARD_STM32F429ZI_PARAFOIL)
+    list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F429ZI_PARAFOIL)
 
     ##-------------------------------------------------------------------------
     ## End of board list
