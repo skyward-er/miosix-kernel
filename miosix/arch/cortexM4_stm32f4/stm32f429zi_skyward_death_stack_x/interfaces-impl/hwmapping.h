@@ -50,23 +50,31 @@ using miso = Gpio<GPIOB_BASE, 14>;
 using mosi = Gpio<GPIOB_BASE, 15>;
 }  // namespace spi2
 
-namespace i2c
+// USB UART
+namespace uart1
 {
-using scl = Gpio<GPIOB_BASE, 8>;
-using sda = Gpio<GPIOB_BASE, 9>;
-}  // namespace i2c
+using tx = Gpio<GPIOA_BASE, 9>;
+using rx = Gpio<GPIOA_BASE, 10>;
+}  // namespace uart1
 
+// GPS UART
 namespace uart2
-{  // GPS UART
+{
 using tx = Gpio<GPIOA_BASE, 2>;
 using rx = Gpio<GPIOA_BASE, 3>;
 }  // namespace uart2
 
-namespace uart1
-{  // USB UART
-using tx = Gpio<GPIOA_BASE, 9>;
-using rx = Gpio<GPIOA_BASE, 10>;
-}  // namespace uart1
+namespace uart3
+{
+using tx = Gpio<GPIOB_BASE, 10>;
+using rx = Gpio<GPIOB_BASE, 11>;
+}  // namespace uart3
+
+namespace uart4
+{
+using tx = Gpio<GPIOA_BASE, 0>;
+using rx = Gpio<GPIOA_BASE, 1>;
+}  // namespace uart4
 
 namespace can
 {  // CAN1
@@ -90,12 +98,12 @@ using cs   = Gpio<GPIOA_BASE, 8>;
 using intr = Gpio<GPIOE_BASE, 5>;
 }  // namespace bmx160
 
-/*namespace lsm9ds1
+namespace lsm9ds1
 {
 using cs_a_g   = Gpio<GPIOC_BASE, 1>;
 using cs_m     = Gpio<GPIOC_BASE, 3>;
 using intr_a_g = Gpio<GPIOB_BASE, 12>;
-}  // namespace lsm9ds1 */
+}  // namespace lsm9ds1
 
 namespace lis3mdl
 {
@@ -111,10 +119,10 @@ using cs = Gpio<GPIOD_BASE, 7>;
 
 namespace inputs
 {
-using vbat         = Gpio<GPIOF_BASE, 7>;
-using lp_dtch      = Gpio<GPIOE_BASE, 4>;   // launchpad detach
-using nc_dtch      = Gpio<GPIOC_BASE, 14>;  // nosecone detach
-using expulsion_in = Gpio<GPIOB_BASE, 7>;   // expulsion sensor
+using vbat            = Gpio<GPIOF_BASE, 7>;
+using launchpad       = Gpio<GPIOE_BASE, 4>;   // launchpad detach
+using nosecone_detach = Gpio<GPIOC_BASE, 14>;  // nosecone detach
+using expulsion       = Gpio<GPIOB_BASE, 7>;   // expulsion sensor
 }  // namespace inputs
 
 namespace actuators
@@ -122,38 +130,37 @@ namespace actuators
 
 namespace nosecone
 {
-using nc_servo_pwm = Gpio<GPIOD_BASE, 12>;  // Pwm expulsion servo, TIM4_CH1
-// using th_cut_pwm   = Gpio<GPIOE_BASE, 6>;   // Pwm thermal cutters, TIM9_CH2
-using th_cut_input = Gpio<GPIOE_BASE, 6>;  // Input thermal cutters
+using servo        = Gpio<GPIOD_BASE, 12>;  // Pwm expulsion servo, TIM4_CH1
+using th_cut_input = Gpio<GPIOE_BASE, 6>;   // Input thermal cutters
 
-namespace thCut1
+namespace thermal_cutter_1
 {
-using ena   = Gpio<GPIOG_BASE, 2>;
-using csens = Gpio<GPIOF_BASE, 6>;  // ADC3 CH4
-}  // namespace thCut1
+using enable      = Gpio<GPIOG_BASE, 2>;
+using cutter_sens = Gpio<GPIOF_BASE, 6>;  // ADC3 CH4
+}  // namespace thermal_cutter_1
 
-namespace thCut2
+namespace thermal_cutter_2
 {
-using ena   = Gpio<GPIOD_BASE, 11>;
-using csens = Gpio<GPIOF_BASE, 8>;  // ADC3 CH6
-}  // namespace thCut2
+using enable      = Gpio<GPIOD_BASE, 11>;
+using cutter_sens = Gpio<GPIOF_BASE, 8>;  // ADC3 CH6
+}  // namespace thermal_cutter_2
+
 }  // namespace nosecone
 
 namespace airbrakes
 {
-using airbrakes_servo_pwm =
-    Gpio<GPIOC_BASE, 7>;  // Pwm airbrakes actuation servo, TIM8_CH2
+using servo = Gpio<GPIOC_BASE, 7>;  // Airbrakes PWM, TIM8_CH2
 }  // namespace airbrakes
 
 }  // namespace actuators
 
-namespace misc
+namespace aux
 {
-using aux1        = Gpio<GPIOE_BASE, 2>;
-using aux2        = Gpio<GPIOE_BASE, 3>;
+using sense_aux_1 = Gpio<GPIOE_BASE, 2>;
+using sense_aux_2 = Gpio<GPIOE_BASE, 3>;
 using aux_pd_pu   = Gpio<GPIOC_BASE, 5>;
 using aux_spi1_cs = Gpio<GPIOG_BASE, 7>;
-}  // namespace misc
+}  // namespace aux
 
 namespace leds
 {
@@ -161,9 +168,9 @@ using led_red1  = Gpio<GPIOG_BASE, 7>;
 using led_red2  = Gpio<GPIOG_BASE, 10>;
 using led_blue1 = Gpio<GPIOG_BASE, 14>;
 
-/* NOTE:
- * These are conencted to the enable pin of the thermal
- * cutters and the cs of the lis3mdl magnetometer
+/**
+ * These are conencted to the enable pin of the thermal cutters and the cs of
+ * the lis3mdl magnetometer.
  */
 using led_blue2  = Gpio<GPIOG_BASE, 2>;
 using led_green1 = Gpio<GPIOG_BASE, 6>;

@@ -56,14 +56,16 @@ using miso = Gpio<GPIOF_BASE, 8>;
 using mosi = Gpio<GPIOF_BASE, 9>;
 }  // namespace spi5
 
+// USB UART
 namespace uart1
-{  // USB UART
+{
 using tx = Gpio<GPIOA_BASE, 9>;
 using rx = Gpio<GPIOA_BASE, 10>;
 }  // namespace uart1
 
+// GPS UART
 namespace uart3
-{  // GPS UART
+{
 using tx = Gpio<GPIOB_BASE, 10>;
 using rx = Gpio<GPIOB_BASE, 11>;
 }  // namespace uart3
