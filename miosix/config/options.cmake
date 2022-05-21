@@ -55,7 +55,7 @@
 #set(OPT_OPTIMIZATION -O3)
 #set(OPT_OPTIMIZATION -Os)
 set(OPT_OPTIMIZATION
-    $<$<CONFIG:Debug>:-Og>
+    $<$<CONFIG:Debug>:-O2>
     $<$<CONFIG:Release>:-O2>
 )
 
