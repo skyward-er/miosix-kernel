@@ -250,8 +250,8 @@ void IRQbspInit()
     mpu9250::cs::mode(Mode::OUTPUT);
     mpu9250::cs::high();
 
-    bmp280::cs::mode(Mode::OUTPUT);
-    bmp280::cs::high();
+    bme280::cs::mode(Mode::OUTPUT);
+    bme280::cs::high();
 
     adc::battery::mode(Mode::INPUT_ANALOG);
 

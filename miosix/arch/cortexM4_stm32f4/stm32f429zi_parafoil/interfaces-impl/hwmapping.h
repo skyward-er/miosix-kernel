@@ -82,13 +82,13 @@ using miso = interfaces::spi1::miso;
 using mosi = interfaces::spi1::mosi;
 }  // namespace mpu9250
 
-namespace bmp280
+namespace bme280
 {
 using cs   = Gpio<GPIOC_BASE, 11>;
 using sck  = interfaces::spi1::sck;
 using miso = interfaces::spi1::miso;
 using mosi = interfaces::spi1::mosi;
-}  // namespace bmp280
+}  // namespace bme280
 
 namespace gps
 {
