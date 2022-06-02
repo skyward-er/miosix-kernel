@@ -282,6 +282,15 @@ void IRQbspInit()
     button1::mode(Mode::INPUT);
     button2::mode(Mode::INPUT);
 
+    using namespace relays;
+
+    relay1::mode(Mode::OUTPUT);
+    relay1::high();
+    relay2::mode(Mode::OUTPUT);
+    relay2::high();
+    relay3::mode(Mode::OUTPUT);
+    relay3::high();
+
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,
                         defaultSerialFlowctrl ? STM32Serial::RTSCTS

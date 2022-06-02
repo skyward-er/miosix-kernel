@@ -123,4 +123,11 @@ using button1 = Gpio<GPIOG_BASE, 10>;  // Calibration button
 using button2 = Gpio<GPIOG_BASE, 9>;   // Record switch
 }  // namespace ui
 
+namespace relays
+{
+using relay1 = Gpio<GPIOC_BASE, 11>;
+using relay2 = Gpio<GPIOB_BASE, 4>;
+using relay3 = Gpio<GPIOC_BASE, 3>;
+}  // namespace relays
+
 }  // namespace miosix
