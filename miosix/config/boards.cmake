@@ -59,6 +59,7 @@ set(BOARDS
     stm32f072rb_stm32f0discovery
     stm32f429zi_skyward_death_stack
     stm32f429zi_skyward_death_stack_x
+    stm32f429zi_skyward_death_stack_v3
     stm32f100cx_generic
     stm32f407vg_skyward_tortellino
     stm32f303vc_stm32f3discovery
