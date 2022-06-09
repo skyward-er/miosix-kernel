@@ -34,8 +34,6 @@
 namespace miosix
 {
 
-using compatibilityPin = Gpio<GPIOI_BASE, 0>;
-
 namespace interfaces
 {
 
@@ -223,7 +221,6 @@ namespace actuators
 namespace nosecone
 {
 using servo        = Gpio<GPIOB_BASE, 7>;  // Pwm expulsion servo, TIM4_CH2
-using th_cut_input = compatibilityPin;
 
 namespace thermal_cutter_1
 {
@@ -259,24 +256,14 @@ namespace aux
 using sense_aux_1 = Gpio<GPIOG_BASE, 6>;
 using sense_aux_2 = Gpio<GPIOG_BASE, 7>;
 using servo       = Gpio<GPIOB_BASE, 9>;  // TIM11_CH1
-using aux_pd_pu   = compatibilityPin;
-using aux_spi1_cs = compatibilityPin;
 }  // namespace aux
 
 namespace leds
 {
-using led1 = Gpio<GPIOC_BASE, 4>;
-using led2 = Gpio<GPIOC_BASE, 5>;
-using led3 = Gpio<GPIOD_BASE, 12>;
-using led4 = Gpio<GPIOD_BASE, 13>;
-
-// TODO: Introduced only for compatibility
-using led_red1   = compatibilityPin;
-using led_red2   = compatibilityPin;
-using led_blue1  = compatibilityPin;
-using led_blue2  = compatibilityPin;
-using led_green1 = compatibilityPin;
-using led_green2 = compatibilityPin;
+using led_green1 = Gpio<GPIOC_BASE, 5>;
+using led_red = Gpio<GPIOC_BASE, 4>;
+using led_blue = Gpio<GPIOD_BASE, 13>;
+using led_green2 = Gpio<GPIOD_BASE, 12>;
 }  // namespace leds
 
 namespace buzzer
@@ -294,54 +281,6 @@ using sdio_d2  = Gpio<GPIOC_BASE, 10>;
 using sdio_d3  = Gpio<GPIOC_BASE, 11>;
 }  // namespace black_box
 
-// compatibility
-namespace uart1
-{
-using tx = compatibilityPin;
-using rx = compatibilityPin;
-}  // namespace uart1
-
-namespace uart2
-{
-using tx = compatibilityPin;
-using rx = compatibilityPin;
-}  // namespace uart2
-
-namespace uart3
-{
-using tx = compatibilityPin;
-using rx = compatibilityPin;
-}  // namespace uart3
-
-namespace can
-{
-using tx = compatibilityPin;
-using rx = compatibilityPin;
-}  // namespace can
-
-namespace ads1118
-{
-using cs = compatibilityPin;
-}  // namespace ads1118
-
-namespace lsm9ds1
-{
-using cs_a_g   = compatibilityPin;
-using cs_m     = compatibilityPin;
-using intr_a_g = compatibilityPin;
-}  // namespace lsm9ds1
-
-namespace lis3mdl
-{
-using cs = compatibilityPin;
-}  // namespace lis3mdl
-
-namespace xbee
-{
-using cs    = compatibilityPin;
-using attn  = compatibilityPin;
-using reset = compatibilityPin;
-}  // namespace xbee
 }  // namespace miosix
 
 #endif  // HWMAPPING_H

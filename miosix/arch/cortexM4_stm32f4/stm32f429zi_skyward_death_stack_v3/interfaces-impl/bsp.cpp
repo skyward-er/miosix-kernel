@@ -356,12 +356,12 @@ void IRQbspInit()
     spi2::mosi::mode(Mode::ALTERNATE);
     spi2::mosi::alternateFunction(5);
 
-    spi3::sck::mode(Mode::ALTERNATE);
-    spi3::sck::alternateFunction(6);
-    spi3::miso::mode(Mode::ALTERNATE);
-    spi3::miso::alternateFunction(6);
-    spi3::mosi::mode(Mode::ALTERNATE);
-    spi3::mosi::alternateFunction(6);
+    // spi3::sck::mode(Mode::ALTERNATE);
+    // spi3::sck::alternateFunction(6);
+    // spi3::miso::mode(Mode::ALTERNATE);
+    // spi3::miso::alternateFunction(6);
+    // spi3::mosi::mode(Mode::ALTERNATE);
+    // spi3::mosi::alternateFunction(6);
 
     spi4::sck::mode(Mode::ALTERNATE);
     spi4::sck::alternateFunction(5);
@@ -384,55 +384,55 @@ void IRQbspInit()
     spi6::mosi::mode(Mode::ALTERNATE);
     spi6::mosi::alternateFunction(5);
 
-    uart1::rx::mode(Mode::ALTERNATE);
-    uart1::rx::alternateFunction(7);
-    uart1::tx::mode(Mode::ALTERNATE);
-    uart1::tx::alternateFunction(7);
+    usart1::rx::mode(Mode::ALTERNATE);
+    usart1::rx::alternateFunction(7);
+    usart1::tx::mode(Mode::ALTERNATE);
+    usart1::tx::alternateFunction(7);
 
-    uart2::rx::mode(Mode::ALTERNATE);
-    uart2::rx::alternateFunction(7);
-    uart2::tx::mode(Mode::ALTERNATE);
-    uart2::tx::alternateFunction(7);
+    usart2::rx::mode(Mode::ALTERNATE);
+    usart2::rx::alternateFunction(7);
+    usart2::tx::mode(Mode::ALTERNATE);
+    usart2::tx::alternateFunction(7);
 
-    uart3::rx::mode(Mode::ALTERNATE);
-    uart3::rx::alternateFunction(7);
-    uart3::tx::mode(Mode::ALTERNATE);
-    uart3::tx::alternateFunction(7);
+    usart3::rx::mode(Mode::ALTERNATE);
+    usart3::rx::alternateFunction(7);
+    usart3::tx::mode(Mode::ALTERNATE);
+    usart3::tx::alternateFunction(7);
 
     uart4::rx::mode(Mode::ALTERNATE);
     uart4::rx::alternateFunction(8);
     uart4::tx::mode(Mode::ALTERNATE);
     uart4::tx::alternateFunction(8);
 
-    uart5::rx::mode(Mode::ALTERNATE);
-    uart5::rx::alternateFunction(8);
-    uart5::tx::mode(Mode::ALTERNATE);
-    uart5::tx::alternateFunction(8);
+    // uart5::rx::mode(Mode::ALTERNATE);
+    // uart5::rx::alternateFunction(8);
+    // uart5::tx::mode(Mode::ALTERNATE);
+    // uart5::tx::alternateFunction(8);
 
-    usart6::rx::mode(Mode::ALTERNATE);
-    usart6::rx::alternateFunction(8);
-    usart6::tx::mode(Mode::ALTERNATE);
-    usart6::tx::alternateFunction(8);
+    // usart6::rx::mode(Mode::ALTERNATE);
+    // usart6::rx::alternateFunction(8);
+    // usart6::tx::mode(Mode::ALTERNATE);
+    // usart6::tx::alternateFunction(8);
 
-    uart7::rx::mode(Mode::ALTERNATE);
-    uart7::rx::alternateFunction(8);
-    uart7::tx::mode(Mode::ALTERNATE);
-    uart7::tx::alternateFunction(8);
+    // uart7::rx::mode(Mode::ALTERNATE);
+    // uart7::rx::alternateFunction(8);
+    // uart7::tx::mode(Mode::ALTERNATE);
+    // uart7::tx::alternateFunction(8);
 
-    uart8::rx::mode(Mode::ALTERNATE);
-    uart8::rx::alternateFunction(8);
-    uart8::tx::mode(Mode::ALTERNATE);
-    uart8::tx::alternateFunction(8);
+    // uart8::rx::mode(Mode::ALTERNATE);
+    // uart8::rx::alternateFunction(8);
+    // uart8::tx::mode(Mode::ALTERNATE);
+    // uart8::tx::alternateFunction(8);
 
     can1::rx::mode(Mode::ALTERNATE);
     can1::rx::alternateFunction(9);
     can1::tx::mode(Mode::ALTERNATE);
     can1::tx::alternateFunction(9);
 
-    can2::rx::mode(Mode::ALTERNATE);
-    can2::rx::alternateFunction(9);
-    can2::tx::mode(Mode::ALTERNATE);
-    can2::tx::alternateFunction(9);
+    // can2::rx::mode(Mode::ALTERNATE);
+    // can2::rx::alternateFunction(9);
+    // can2::tx::mode(Mode::ALTERNATE);
+    // can2::tx::alternateFunction(9);
 
     using namespace sensors;
 
@@ -477,7 +477,6 @@ void IRQbspInit()
 
     nosecone::servo::mode(Mode::ALTERNATE);
     nosecone::servo::alternateFunction(2);
-    nosecone::th_cut_input::mode(Mode::OUTPUT);
 
     nosecone::thermal_cutter_1::enable::mode(Mode::OUTPUT);
     nosecone::thermal_cutter_1::enable::low();
@@ -499,20 +498,14 @@ void IRQbspInit()
 
     sense_aux_1::mode(Mode::INPUT);
     sense_aux_2::mode(Mode::INPUT);
-    aux_pd_pu::mode(Mode::OUTPUT);
-    aux_spi1_cs::mode(Mode::OUTPUT);
     servo::mode(Mode::ALTERNATE);
     servo::alternateFunction(3);
 
     using namespace leds;
-    led1::mode(Mode::OUTPUT);
-    led2::mode(Mode::OUTPUT);
-    led3::mode(Mode::OUTPUT);
-    led4::mode(Mode::OUTPUT);
-
-    led_red1::mode(Mode::OUTPUT);
-    led_red2::mode(Mode::OUTPUT);
-    led_blue1::mode(Mode::OUTPUT);
+    led_green1::mode(Mode::OUTPUT);
+    led_green2::mode(Mode::OUTPUT);
+    led_blue::mode(Mode::OUTPUT);
+    led_red::mode(Mode::OUTPUT);
 
     using namespace buzzer;
     drive::mode(Mode::ALTERNATE);
@@ -531,14 +524,6 @@ void IRQbspInit()
     sdio_d2::alternateFunction(12);
     sdio_d3::mode(Mode::ALTERNATE);    
     sdio_d3::alternateFunction(12);
-
-    using namespace xbee;
-
-    xbee::cs::mode(Mode::OUTPUT);
-    xbee::cs::high();
-    xbee::attn::mode(Mode::INPUT_PULL_UP);
-    xbee::reset::mode(Mode::OPEN_DRAIN);
-    xbee::reset::high();
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,
