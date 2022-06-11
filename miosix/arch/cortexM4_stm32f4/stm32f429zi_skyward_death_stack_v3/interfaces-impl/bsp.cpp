@@ -512,17 +512,17 @@ void IRQbspInit()
     drive::alternateFunction(3);
 
     using namespace black_box;
-    sdio_clk::mode(Mode::ALTERNATE);    
+    sdio_clk::mode(Mode::ALTERNATE);
     sdio_clk::alternateFunction(12);
-    sdio_cmd::mode(Mode::ALTERNATE);    
+    sdio_cmd::mode(Mode::ALTERNATE);
     sdio_cmd::alternateFunction(12);
-    sdio_d0::mode(Mode::ALTERNATE);    
+    sdio_d0::mode(Mode::ALTERNATE);
     sdio_d0::alternateFunction(12);
-    sdio_d1::mode(Mode::ALTERNATE);    
+    sdio_d1::mode(Mode::ALTERNATE);
     sdio_d1::alternateFunction(12);
-    sdio_d2::mode(Mode::ALTERNATE);    
+    sdio_d2::mode(Mode::ALTERNATE);
     sdio_d2::alternateFunction(12);
-    sdio_d3::mode(Mode::ALTERNATE);    
+    sdio_d3::mode(Mode::ALTERNATE);
     sdio_d3::alternateFunction(12);
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(

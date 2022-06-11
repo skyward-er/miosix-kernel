@@ -220,7 +220,7 @@ namespace actuators
 
 namespace nosecone
 {
-using servo        = Gpio<GPIOB_BASE, 7>;  // Pwm expulsion servo, TIM4_CH2
+using servo = Gpio<GPIOB_BASE, 7>;  // Pwm expulsion servo, TIM4_CH2
 
 namespace thermal_cutter_1
 {
@@ -261,8 +261,8 @@ using servo       = Gpio<GPIOB_BASE, 9>;  // TIM11_CH1
 namespace leds
 {
 using led_green1 = Gpio<GPIOC_BASE, 5>;
-using led_red = Gpio<GPIOC_BASE, 4>;
-using led_blue = Gpio<GPIOD_BASE, 13>;
+using led_red    = Gpio<GPIOC_BASE, 4>;
+using led_blue   = Gpio<GPIOD_BASE, 13>;
 using led_green2 = Gpio<GPIOD_BASE, 12>;
 }  // namespace leds
 
