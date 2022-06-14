@@ -38,7 +38,7 @@
 using namespace std;
 using namespace miosix;
 
-static const int numPorts=3; //Supporting only USART1, USART2, USART3
+static const int numPorts=4; //Supporting only USART1, USART2, USART3
 
 //A nice feature of the stm32 is that the USART are connected to the same
 //GPIOS in all families, stm32f1, f2, f4 and l1. Additionally, USART1 is
@@ -60,6 +60,9 @@ typedef Gpio<GPIOB_BASE,10> u3tx;
 typedef Gpio<GPIOB_BASE,11> u3rx;
 typedef Gpio<GPIOB_BASE,13> u3cts;
 typedef Gpio<GPIOB_BASE,14> u3rts;
+
+typedef Gpio<GPIOA_BASE, 0> u4tx;
+typedef Gpio<GPIOA_BASE, 1> u4rx;
 
 /// Pointer to serial port classes to let interrupts access the classes
 miosix::STM32Serial *miosix::STM32Serial::ports[MAX_SERIAL_PORTS];
@@ -128,6 +131,24 @@ void __attribute__((naked, weak)) USART3_4_IRQHandler()
     restoreContext();
 }
 #endif //!defined(STM32F072xB)
+
+/**
+ * \internal interrupt routine for usart3 actual implementation
+ */
+void __attribute__((noinline)) uart4irqImpl()
+{
+   if(miosix::STM32Serial::ports[3]) miosix::STM32Serial::ports[3]->IRQhandleInterrupt();
+}
+
+/**
+ * \internal interrupt routine for usart3
+ */
+void __attribute__((naked, weak)) UART4_IRQHandler()
+{
+    saveContext();
+    asm volatile("bl _Z12uart4irqImplv");
+    restoreContext();
+}
 #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
 #endif //!defined(STM32_NO_SERIAL_2_3)
 
@@ -448,6 +469,10 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             }
             #endif //!defined(_ARCH_CORTEXM0_STM32)            
             break;
+        case 4:
+            u4tx::alternateFunction(8);
+            u4rx::alternateFunction(8);      
+            break;
     }
     #endif //_ARCH_CORTEXM3_STM32
     
@@ -463,6 +488,10 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             break;
         case 3:
             commonInit(id,baudrate,u3tx::getPin(),u3rx::getPin(),
+                       u3rts::getPin(),u3cts::getPin());
+            break;
+        case 4:
+            commonInit(id,baudrate,u4tx::getPin(),u4rx::getPin(),
                        u3rts::getPin(),u3cts::getPin());
             break;
     }
@@ -698,6 +727,38 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                 freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
             #endif //_ARCH_CORTEXM7_STM32H7
             break;
+        case 4:
+            port=UART4;
+            #ifndef _ARCH_CORTEXM7_STM32H7
+            #ifndef _ARCH_CORTEXM4_STM32L4
+            RCC->APB1ENR |= RCC_APB1ENR_UART4EN;
+            #else  //_ARCH_CORTEXM4_STM32L4
+            RCC->APB1ENR1 |= RCC_APB1ENR1_UART4EN;
+            #endif //_ARCH_CORTEXM4_STM32L4
+            #else  //_ARCH_CORTEXM7_STM32H7
+            RCC->APB1LENR |= RCC_APB1LENR_UART4EN;
+            #endif //_ARCH_CORTEXM7_STM32H7
+            RCC_SYNC();
+			
+			NVIC_SetPriority(UART4_IRQn,15);//Lowest priority for serial
+            NVIC_EnableIRQ(UART4_IRQn);
+            #if !defined(_ARCH_CORTEXM7_STM32H7) && !defined(_ARCH_CORTEXM0_STM32)
+            if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>ppre1) & 0x3)+1);
+            #elif defined(_ARCH_CORTEXM0_STM32)
+            // STM32F0 family has only PPRE2 register
+            if(RCC->CFGR & RCC_CFGR_PPRE_2) freq/=1<<(((RCC->CFGR>>8) & 0x3)+1);
+            #else //_ARCH_CORTEXM7_STM32H7
+            //rcc_hclk3 = SystemCoreClock / HPRE
+            //rcc_pclk1 = rcc_hclk1 / D2PPRE1
+            //NOTE: are rcc_hclk3 and rcc_hclk1 the same signal?
+            //usart2 clock is rcc_pclk1
+            if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+            if(RCC->D2CFGR & RCC_D2CFGR_D2PPRE1_2)
+                freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
+            #endif //_ARCH_CORTEXM7_STM32H7
+            
+            break;
         #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
         #endif //!defined(STM32_NO_SERIAL_2_3)
     }
@@ -721,7 +782,7 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     else port->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
     //Enabled, 8 data bit, no parity, interrupt on character rx
     #ifdef SERIAL_DMA
-    if(dmaTx)
+    if(dmaTx && id<4)
     {
         port->CR1 = USART_CR1_UE     //Enable port
                   | USART_CR1_IDLEIE //Interrupt on idle line
@@ -736,6 +797,8 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
               | USART_CR1_IDLEIE //Interrupt on idle line
               | USART_CR1_TE     //Transmission enbled
               | USART_CR1_RE;    //Reception enabled
+
+    
 }
 
 ssize_t STM32Serial::readBlock(void *buffer, size_t size, off_t where)
@@ -1069,6 +1132,19 @@ STM32Serial::~STM32Serial()
                 break;
             #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
             #endif //!defined(STM32_NO_SERIAL_2_3)
+            case 4:
+                NVIC_SetPriority(UART4_IRQn,15);//Lowest priority for serial
+                NVIC_EnableIRQ(UART4_IRQn);
+                #ifndef _ARCH_CORTEXM7_STM32H7
+                #ifdef _ARCH_CORTEXM4_STM32L4
+                RCC->APB1ENR1 &= ~RCC_APB1ENR1_UART4EN;
+                #else
+                RCC->APB1ENR &= ~RCC_APB1ENR_UART4EN;
+                #endif
+                #else //_ARCH_CORTEXM7_STM32H7
+                RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
+                #endif //_ARCH_CORTEXM7_STM32H7
+                break;
         }
     }
 }
