@@ -1128,8 +1128,6 @@ STM32Serial::~STM32Serial()
                 RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
                 #endif //_ARCH_CORTEXM7_STM32H7
                 break;
-            #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
-            #endif //!defined(STM32_NO_SERIAL_2_3)
             case 4:
                 NVIC_SetPriority(UART4_IRQn,15);//Lowest priority for serial
                 NVIC_EnableIRQ(UART4_IRQn);
@@ -1143,6 +1141,8 @@ STM32Serial::~STM32Serial()
                 RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
                 #endif //_ARCH_CORTEXM7_STM32H7
                 break;
+            #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
+            #endif //!defined(STM32_NO_SERIAL_2_3)
         }
     }
 }

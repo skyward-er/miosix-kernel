@@ -39,33 +39,34 @@ set(BOARDS
     stm32f429zi_oledboard2
     efm32gg332f1024_wandstem
     stm32f411re_nucleo
-    stm32f429zi_skyward_anakin
     stm32f100rc_solertegiard
-    stm32f205rc_skyward_stormtrooper
     stm32f401vc_stm32f4discovery
     stm32f103c8_breakout
     stm32f100c8_microboard
     stm32f469ni_stm32f469i-disco
-    stm32f429zi_skyward_homeone
-    stm32f429zi_skyward_rogallina
-    stm32f103c8_skyward_alderaan
     stm32f401re_nucleo
     stm32f746zg_nucleo
     stm32h753xi_eval
     stm32f407vg_thermal_test_chip
     stm32f205_generic
     stm32f103cx_generic
-    stm32f103cb_skyward_strain_board
     stm32f072rb_stm32f0discovery
-    stm32f429zi_skyward_death_stack
-    stm32f429zi_skyward_death_stack_x
     stm32f100cx_generic
-    stm32f407vg_skyward_tortellino
     stm32f303vc_stm32f3discovery
     stm32f100c8_vaisala_rs41
     stm32l476rg_nucleo
     atsam4lc2aa_generic
     stm32f411ce_blackpill
     stm32f429zi_hre_test_stand
+    stm32f429zi_skyward_homeone
+    stm32f205rc_skyward_stormtrooper
+    stm32f429zi_skyward_rogallina
+    stm32f103c8_skyward_alderaan
+    stm32f429zi_skyward_anakin
+    stm32f407vg_skyward_tortellino
+    stm32f429zi_skyward_death_stack
+    stm32f429zi_skyward_death_stack_x
+    stm32f103cb_skyward_strain_board
     stm32f429zi_parafoil
-)
+    stm32f429zi_skyward_pyxis_auxiliary
+    )
