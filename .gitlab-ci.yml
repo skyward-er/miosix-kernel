@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Skyward Experimental Rocketry
+# Copyright (c) 2022 Skyward Experimental Rocketry
 # Author: Damiano Amatruda
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -13,27 +13,23 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.16)
-project(MiosixProject C CXX ASM)
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
 
-set(OPT_BOARD "" CACHE STRING "Target board")
-if(NOT OPT_BOARD)
-    message(FATAL_ERROR "No board selected")
-endif()
+stages:
+  - build
 
-add_subdirectory(miosix EXCLUDE_FROM_ALL)
+# Stage build
 
-add_executable(main main.cpp)
-target_link_libraries(main PRIVATE Miosix::Miosix::${OPT_BOARD})
-add_custom_command(
-    TARGET main POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O ihex main main.hex
-    COMMAND ${CMAKE_OBJCOPY} -O binary main main.bin
-    BYPRODUCTS main.hex main.bin
-)
+build:
+  stage: build
+  tags:
+    - miosix
+  script:
+    - ./miosix/_tools/testsuite/build.sh

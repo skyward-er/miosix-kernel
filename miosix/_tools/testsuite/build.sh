@@ -1,5 +1,7 @@
-# Copyright (c) 2021 Skyward Experimental Rocketry
-# Author: Damiano Amatruda
+#!/bin/bash
+
+# Copyright (c) 2022 Skyward Experimental Rocketry
+# Authors: Damiano Amatruda
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,21 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.16)
-project(MiosixProject C CXX ASM)
+set -e
 
-set(OPT_BOARD "" CACHE STRING "Target board")
-if(NOT OPT_BOARD)
-    message(FATAL_ERROR "No board selected")
-endif()
+cd -- "$(dirname "$0")/../.."
 
-add_subdirectory(miosix EXCLUDE_FROM_ALL)
+cmake \
+    -Bbuild \
+    -DCMAKE_TOOLCHAIN_FILE=_tools/toolchain.cmake \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_BUILD_TYPE=Release \
+    -GNinja \
+    .
 
-add_executable(main main.cpp)
-target_link_libraries(main PRIVATE Miosix::Miosix::${OPT_BOARD})
-add_custom_command(
-    TARGET main POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O ihex main main.hex
-    COMMAND ${CMAKE_OBJCOPY} -O binary main main.bin
-    BYPRODUCTS main.hex main.bin
-)
+cmake --build build --target miosix-testsuite

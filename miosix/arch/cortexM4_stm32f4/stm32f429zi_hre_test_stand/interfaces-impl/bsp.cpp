@@ -216,8 +216,6 @@ void IRQbspInit()
 
     using namespace interfaces;
 
-    spi1::cs::mode(Mode::ALTERNATE);
-    spi1::cs::alternateFunction(5);
     spi1::sck::mode(Mode::ALTERNATE);
     spi1::sck::alternateFunction(5);
     spi1::miso::mode(Mode::ALTERNATE);
@@ -225,8 +223,6 @@ void IRQbspInit()
     spi1::mosi::mode(Mode::ALTERNATE);
     spi1::mosi::alternateFunction(5);
 
-    spi4::cs::mode(Mode::ALTERNATE);
-    spi4::cs::alternateFunction(5);
     spi4::sck::mode(Mode::ALTERNATE);
     spi4::sck::alternateFunction(5);
     spi4::miso::mode(Mode::ALTERNATE);
@@ -251,18 +247,8 @@ void IRQbspInit()
     uart3::tx::mode(Mode::ALTERNATE);
     uart3::tx::alternateFunction(7);
 
-    timers::tim1ch4::mode(Mode::ALTERNATE);
-    timers::tim1ch4::alternateFunction(1);
-    timers::tim3ch4::mode(Mode::ALTERNATE);
-    timers::tim3ch4::alternateFunction(2);
     timers::tim4ch2::mode(Mode::ALTERNATE);
     timers::tim4ch2::alternateFunction(2);
-    timers::tim8ch2::mode(Mode::ALTERNATE);
-    timers::tim8ch2::alternateFunction(3);
-    timers::tim9ch1::mode(Mode::ALTERNATE);
-    timers::tim9ch1::alternateFunction(3);
-    timers::tim9ch2::mode(Mode::ALTERNATE);
-    timers::tim9ch2::alternateFunction(3);
     timers::tim10ch1::mode(Mode::ALTERNATE);
     timers::tim10ch1::alternateFunction(3);
     timers::tim11ch1::mode(Mode::ALTERNATE);
@@ -270,29 +256,40 @@ void IRQbspInit()
 
     using namespace sensors;
 
-    imu::intr::mode(Mode::INPUT_PULL_UP);
+    ads131m04::cs::mode(Mode::OUTPUT);
+    ads131m04::cs::high();
 
-    thermocouples::cs1::mode(Mode::OUTPUT);
-    thermocouples::cs1::high();
-    thermocouples::cs2::mode(Mode::OUTPUT);
-    thermocouples::cs2::high();
-    thermocouples::cs3::mode(Mode::OUTPUT);
-    thermocouples::cs3::high();
-    thermocouples::cs4::mode(Mode::OUTPUT);
-    thermocouples::cs4::high();
-    thermocouples::cs5::mode(Mode::OUTPUT);
-    thermocouples::cs5::high();
-    thermocouples::cs6::mode(Mode::OUTPUT);
-    thermocouples::cs6::high();
+    max31855::cs1::mode(Mode::OUTPUT);
+    max31855::cs1::high();
+    max31855::cs2::mode(Mode::OUTPUT);
+    max31855::cs2::high();
+    max31855::cs3::mode(Mode::OUTPUT);
+    max31855::cs3::high();
+    max31855::cs4::mode(Mode::OUTPUT);
+    max31855::cs4::high();
+    max31855::cs5::mode(Mode::OUTPUT);
+    max31855::cs5::high();
+    max31855::cs6::mode(Mode::OUTPUT);
+    max31855::cs6::high();
 
-    using namespace actuators;
+    // Set the Discovery's gyroscope CS to not interfere with the thermocouples
+    using csGyro = Gpio<GPIOC_BASE, 1>;
+    csGyro::mode(Mode::OUTPUT);
+    csGyro::high();
 
-    leds::led1::mode(Mode::OUTPUT);
-    leds::led1::low();
-    leds::led2::mode(Mode::OUTPUT);
-    leds::led2::low();
-    leds::led3::mode(Mode::OUTPUT);
-    leds::led3::low();
+    using namespace ui;
+
+    button1::mode(Mode::INPUT);
+    button2::mode(Mode::INPUT);
+
+    using namespace relays;
+
+    relay1::mode(Mode::OUTPUT);
+    relay1::high();
+    relay2::mode(Mode::OUTPUT);
+    relay2::high();
+    relay3::mode(Mode::OUTPUT);
+    relay3::high();
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,

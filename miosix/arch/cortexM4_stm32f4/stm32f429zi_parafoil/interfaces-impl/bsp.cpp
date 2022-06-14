@@ -69,8 +69,6 @@ static void sdramCommandWait()
             return;
 }
 
-#ifdef SDRAM_ISSI
-
 void configureSdram()
 {
     // Enable all gpios, passing clock
@@ -190,136 +188,6 @@ void configureSdram()
 #endif
 }
 
-#else
-
-void configureSdram()
-{
-    // Enable all gpios
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN |
-                    RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN |
-                    RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
-                    RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_GPIOHEN;
-    RCC_SYNC();
-
-    // First, configure SDRAM GPIOs
-    GPIOB->AFR[0] = 0x0cc00000;
-    GPIOC->AFR[0] = 0x0000000c;
-    GPIOD->AFR[0] = 0x000000cc;
-    GPIOD->AFR[1] = 0xcc000ccc;
-    GPIOE->AFR[0] = 0xc00000cc;
-    GPIOE->AFR[1] = 0xcccccccc;
-    GPIOF->AFR[0] = 0x00cccccc;
-    GPIOF->AFR[1] = 0xccccc000;
-    GPIOG->AFR[0] = 0x00cc00cc;
-    GPIOG->AFR[1] = 0xc000000c;
-
-    GPIOB->MODER = 0x00002800;
-    GPIOC->MODER = 0x00000002;
-    GPIOD->MODER = 0xa02a000a;
-    GPIOE->MODER = 0xaaaa800a;
-    GPIOF->MODER = 0xaa800aaa;
-    GPIOG->MODER = 0x80020a0a;
-
-    GPIOA->OSPEEDR = 0xaaaaaaaa;  // Default to 50MHz speed for all GPIOs...
-    GPIOB->OSPEEDR =
-        0xaaaaaaaa | 0x00003c00;  //...but 100MHz for the SDRAM pins
-    GPIOC->OSPEEDR = 0xaaaaaaaa | 0x00000003;
-    GPIOD->OSPEEDR = 0xaaaaaaaa | 0xf03f000f;
-    GPIOE->OSPEEDR = 0xaaaaaaaa | 0xffffc00f;
-    GPIOF->OSPEEDR = 0xaaaaaaaa | 0xffc00fff;
-    GPIOG->OSPEEDR = 0xaaaaaaaa | 0xc0030f0f;
-    GPIOH->OSPEEDR = 0xaaaaaaaa;
-
-    // Since we'we un-configured PB3/PB4 from the default at boot TDO,NTRST,
-    // finish the job and remove the default pull-up
-    GPIOB->PUPDR = 0;
-
-    // Second, actually start the SDRAM controller
-    RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
-    RCC_SYNC();
-
-    // SDRAM is a AS4C4M16SA-6TAN, connected to bank 2 (0xd0000000)
-    // Some bits in SDCR[1] are don't care, and the have to be set in SDCR[0],
-    // they aren't just don't care, the controller will fail if they aren't at 0
-    FMC_Bank5_6->SDCR[0] = FMC_SDCR1_SDCLK_1  // SDRAM runs @ half CPU frequency
-                           | FMC_SDCR1_RBURST  // Enable read burst
-                           | 0;  //  0 delay between reads after CAS
-    FMC_Bank5_6->SDCR[1] =
-        0                   //  8 bit column address
-        | FMC_SDCR1_NR_0    // 12 bit row address
-        | FMC_SDCR1_MWID_0  // 16 bit data bus
-        | FMC_SDCR1_NB      //  4 banks
-        | FMC_SDCR1_CAS_1;  //  2 cycle CAS latency (TCK>9+0.5ns [1])
-
-#ifdef SYSCLK_FREQ_180MHz
-    // One SDRAM clock cycle is 11.1ns
-    // Some bits in SDTR[1] are don't care, and the have to be set in SDTR[0],
-    // they aren't just don't care, the controller will fail if they aren't at 0
-    FMC_Bank5_6->SDTR[0] = (6 - 1) << 12     // 6 cycle TRC  (66.6ns>60ns)
-                           | (2 - 1) << 20;  // 2 cycle TRP  (22.2ns>18ns)
-    FMC_Bank5_6->SDTR[1] = (2 - 1) << 0      // 2 cycle TMRD
-                           |
-                           (6 - 1) << 4  // 6 cycle TXSR (66.6ns>61.5+0.5ns [1])
-                           | (4 - 1) << 8    // 4 cycle TRAS (44.4ns>42ns)
-                           | (2 - 1) << 16   // 2 cycle TWR
-                           | (2 - 1) << 24;  // 2 cycle TRCD (22.2ns>18ns)
-#elif defined(SYSCLK_FREQ_168MHz)
-    // One SDRAM clock cycle is 11.9ns
-    // Some bits in SDTR[1] are don't care, and the have to be set in SDTR[0],
-    // they aren't just don't care, the controller will fail if they aren't at 0
-    FMC_Bank5_6->SDTR[0] = (6 - 1) << 12     // 6 cycle TRC  (71.4ns>60ns)
-                           | (2 - 1) << 20;  // 2 cycle TRP  (23.8ns>18ns)
-    FMC_Bank5_6->SDTR[1] = (2 - 1) << 0      // 2 cycle TMRD
-                           |
-                           (6 - 1) << 4  // 6 cycle TXSR (71.4ns>61.5+0.5ns [1])
-                           | (4 - 1) << 8    // 4 cycle TRAS (47.6ns>42ns)
-                           | (2 - 1) << 16   // 2 cycle TWR
-                           | (2 - 1) << 24;  // 2 cycle TRCD (23.8ns>18ns)
-#else
-#error No SDRAM timings for this clock
-#endif
-    // NOTE [1]: the timings for TCK and TIS depend on rise and fall times
-    //(see note 9 and 10 on datasheet). Timings are adjusted accordingly to
-    // the measured 2ns rise and fall time
-
-    FMC_Bank5_6->SDCMR = FMC_SDCMR_CTB2  // Enable bank 2
-                         | 1;            // MODE=001 clock enabled
-    sdramCommandWait();
-
-    // SDRAM datasheet requires 200us delay here (note 11), here we use 10% more
-    delayUs(220);
-
-    FMC_Bank5_6->SDCMR = FMC_SDCMR_CTB2  // Enable bank 2
-                         | 2;            // MODE=010 precharge all command
-    sdramCommandWait();
-
-    // FIXME: note 11 on SDRAM datasheet says extended mode register must be
-    // set, but the ST datasheet does not seem to explain how
-    FMC_Bank5_6->SDCMR = 0x220 << 9  // MRD=0x220:CAS latency=2 burst len=1
-                         | FMC_SDCMR_CTB2  // Enable bank 2
-                         | 4;              // MODE=100 load mode register
-    sdramCommandWait();
-
-    FMC_Bank5_6->SDCMR = (4 - 1) << 5  // NRFS=8 SDRAM datasheet requires
-                                       // a minimum of 2 cycles, here we use 4
-                         | FMC_SDCMR_CTB2  // Enable bank 2
-                         | 3;              // MODE=011 auto refresh
-    sdramCommandWait();
-
-// 32ms/4096=7.8125us, but datasheet says to round that to 7.8us
-#ifdef SYSCLK_FREQ_180MHz
-    // 7.8us*90MHz=702-20=682
-    FMC_Bank5_6->SDRTR = 682 << 1;
-#elif defined(SYSCLK_FREQ_168MHz)
-    // 7.8us*84MHz=655-20=635
-    FMC_Bank5_6->SDRTR = 635 << 1;
-#else
-#error No refresh timings for this clock
-#endif
-}
-
-#endif
-
 void IRQbspInit()
 {
 // If using SDRAM GPIOs are enabled by configureSdram(), else enable them here
@@ -331,12 +199,18 @@ void IRQbspInit()
     RCC_SYNC();
 #endif  //__ENABLE_XRAM
 
-    // enable spi1, spi2
     RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-    RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+    RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+    RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
 
-    // enable can1
-    RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+
+    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM10EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
 
     RCC_SYNC();
 
@@ -349,119 +223,62 @@ void IRQbspInit()
     spi1::mosi::mode(Mode::ALTERNATE);
     spi1::mosi::alternateFunction(5);
 
-    spi2::sck::mode(Mode::ALTERNATE);
-    spi2::sck::alternateFunction(5);
-    spi2::miso::mode(Mode::ALTERNATE);
-    spi2::miso::alternateFunction(5);
-    spi2::mosi::mode(Mode::ALTERNATE);
-    spi2::mosi::alternateFunction(5);
+    spi4::sck::mode(Mode::ALTERNATE);
+    spi4::sck::alternateFunction(5);
+    spi4::miso::mode(Mode::ALTERNATE);
+    spi4::miso::alternateFunction(5);
+    spi4::mosi::mode(Mode::ALTERNATE);
+    spi4::mosi::alternateFunction(5);
+
+    uart1::rx::mode(Mode::ALTERNATE);
+    uart1::rx::alternateFunction(7);
+    uart1::tx::mode(Mode::ALTERNATE);
+    uart1::tx::alternateFunction(7);
 
     uart2::rx::mode(Mode::ALTERNATE);
     uart2::rx::alternateFunction(7);
     uart2::tx::mode(Mode::ALTERNATE);
     uart2::tx::alternateFunction(7);
 
-    uart3::rx::mode(Mode::ALTERNATE);
-    uart3::rx::alternateFunction(7);
-    uart3::tx::mode(Mode::ALTERNATE);
-    uart3::tx::alternateFunction(7);
-
-    uart4::rx::mode(Mode::ALTERNATE);
-    uart4::rx::alternateFunction(8);
-    uart4::tx::mode(Mode::ALTERNATE);
-    uart4::tx::alternateFunction(8);
-
-    can::rx::mode(Mode::ALTERNATE);
-    can::rx::alternateFunction(9);
-    can::tx::mode(Mode::ALTERNATE);
-    can::tx::alternateFunction(9);
+    timers::tim4ch2::mode(Mode::ALTERNATE);
+    timers::tim4ch2::alternateFunction(2);
+    timers::tim10ch1::mode(Mode::ALTERNATE);
+    timers::tim10ch1::alternateFunction(3);
 
     using namespace sensors;
 
-    ads1118::cs::mode(Mode::OUTPUT);
-    ads1118::cs::high();
+    mpu9250::cs::mode(Mode::OUTPUT);
+    mpu9250::cs::high();
 
-    bmx160::cs::mode(Mode::OUTPUT);
-    bmx160::cs::high();
-    bmx160::intr::mode(Mode::INPUT_PULL_UP);
+    bme280::cs::mode(Mode::OUTPUT);
+    bme280::cs::high();
 
-    lsm9ds1::cs_a_g::mode(Mode::OUTPUT);
-    lsm9ds1::cs_a_g::high();
-    lsm9ds1::cs_m::mode(Mode::OUTPUT);
-    lsm9ds1::cs_m::high();
-    lsm9ds1::intr_a_g::mode(Mode::INPUT);
+    adc::battery::mode(Mode::INPUT_ANALOG);
 
-    lis3mdl::cs::mode(Mode::OUTPUT);
-    lis3mdl::cs::high();
+    sx1278::cs::mode(Mode::OUTPUT);
+    sx1278::cs::high();
+    sx1278::interrupt::mode(Mode::OUTPUT);
+    sx1278::interrupt::high();
 
-    ms5803::cs::mode(Mode::OUTPUT);
-    ms5803::cs::high();
+    using namespace ui;
 
-    using namespace inputs;
+    button::mode(Mode::INPUT);
 
-    vbat::mode(Mode::INPUT_ANALOG);
-    launchpad::mode(Mode::INPUT);
-    nosecone_detach::mode(Mode::INPUT);
-    expulsion::mode(Mode::INPUT);
-
-    using namespace actuators;
-
-    nosecone::servo::mode(Mode::ALTERNATE);
-    nosecone::servo::alternateFunction(2);
-    nosecone::th_cut_input::mode(Mode::OUTPUT);
-
-    nosecone::thermal_cutter_1::enable::mode(Mode::OUTPUT);
-    nosecone::thermal_cutter_1::enable::low();
-    nosecone::thermal_cutter_1::cutter_sens::mode(Mode::INPUT_ANALOG);
-
-    nosecone::thermal_cutter_2::enable::mode(Mode::OUTPUT);
-    nosecone::thermal_cutter_2::enable::low();
-    nosecone::thermal_cutter_2::cutter_sens::mode(Mode::INPUT_ANALOG);
-
-    airbrakes::servo::mode(Mode::ALTERNATE);
-    airbrakes::servo::alternateFunction(3);
-
-    using namespace aux;
-
-    sense_aux_1::mode(Mode::INPUT);
-    sense_aux_2::mode(Mode::INPUT);
-    aux_pd_pu::mode(Mode::OUTPUT);
-    aux_spi1_cs::mode(Mode::OUTPUT);
-
-    using namespace leds;
-
-    led_red1::mode(Mode::OUTPUT);
-    led_red2::mode(Mode::OUTPUT);
-    led_blue1::mode(Mode::OUTPUT);
-
-    using namespace xbee;
-
-    xbee::cs::mode(Mode::OUTPUT);
-    xbee::cs::high();
-    xbee::attn::mode(Mode::INPUT_PULL_UP);
-    xbee::reset::mode(Mode::OPEN_DRAIN);
-    xbee::reset::high();
+    greenLed::mode(Mode::OUTPUT);
+    greenLed::low();
+    redLed::mode(Mode::OUTPUT);
+    redLed::low();
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,
                         defaultSerialFlowctrl ? STM32Serial::RTSCTS
                                               : STM32Serial::NOFLOWCTRL)));
-
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        ledOn();
-        delayMs(10);
-        ledOff();
-        delayMs(10);
-    }
 }
 
 void bspInit2()
 {
 #ifdef WITH_FILESYSTEM
-    // PA2,PA3
-    intrusive_ref_ptr<DevFs> devFs =
-        basicFilesystemSetup(SDIODriver::instance());
+    basicFilesystemSetup(SDIODriver::instance());
 #endif  // WITH_FILESYSTEM
 }
 
@@ -470,10 +287,21 @@ void bspInit2()
 //
 
 /**
- * For safety reasons, we never want the board to shutdown.
- * When requested to shutdown, we reboot instead.
+ * @brief This function disables filesystem and serial port.
  */
-void shutdown() { reboot(); }
+void shutdown()
+{
+    ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
+
+#ifdef WITH_FILESYSTEM
+    FilesystemManager::instance().umountAll();
+#endif  // WITH_FILESYSTEM
+
+    disableInterrupts();
+
+    while (true)
+        ;
+}
 
 void reboot()
 {

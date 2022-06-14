@@ -38,7 +38,7 @@ namespace interfaces
 namespace spi1
 {
 using sck  = Gpio<GPIOA_BASE, 5>;
-using miso = Gpio<GPIOA_BASE, 6>;
+using miso = Gpio<GPIOB_BASE, 4>;
 using mosi = Gpio<GPIOA_BASE, 7>;
 }  // namespace spi1
 
@@ -49,13 +49,6 @@ using miso = Gpio<GPIOE_BASE, 5>;
 using mosi = Gpio<GPIOE_BASE, 6>;
 }  // namespace spi4
 
-namespace spi5
-{
-using sck  = Gpio<GPIOF_BASE, 7>;
-using miso = Gpio<GPIOF_BASE, 8>;
-using mosi = Gpio<GPIOF_BASE, 9>;
-}  // namespace spi5
-
 // USB UART
 namespace uart1
 {
@@ -64,17 +57,16 @@ using rx = Gpio<GPIOA_BASE, 10>;
 }  // namespace uart1
 
 // GPS UART
-namespace uart3
+namespace uart2
 {
-using tx = Gpio<GPIOB_BASE, 10>;
-using rx = Gpio<GPIOB_BASE, 11>;
-}  // namespace uart3
+using tx = Gpio<GPIOA_BASE, 2>;
+using rx = Gpio<GPIOA_BASE, 3>;
+}  // namespace uart2
 
 namespace timers
 {
-using tim4ch2  = Gpio<GPIOB_BASE, 7>;  // Buzzer
-using tim10ch1 = Gpio<GPIOB_BASE, 8>;  // Servo 1
-using tim11ch1 = Gpio<GPIOB_BASE, 9>;  // Servo 2
+using tim4ch2  = Gpio<GPIOB_BASE, 7>;  // Servo 1
+using tim10ch1 = Gpio<GPIOF_BASE, 6>;  // Servo 2
 }  // namespace timers
 
 }  // namespace interfaces
@@ -82,52 +74,55 @@ using tim11ch1 = Gpio<GPIOB_BASE, 9>;  // Servo 2
 namespace sensors
 {
 
-namespace ads131m04
+namespace mpu9250
 {
-using cs   = Gpio<GPIOA_BASE, 4>;
+using cs   = Gpio<GPIOB_BASE, 2>;
 using sck  = interfaces::spi1::sck;
 using miso = interfaces::spi1::miso;
 using mosi = interfaces::spi1::mosi;
-}  // namespace ads131m04
+}  // namespace mpu9250
 
-namespace hx711
+namespace bme280
 {
-using sck  = interfaces::spi4::sck;
-using miso = interfaces::spi4::miso;
-}  // namespace hx711
+using cs   = Gpio<GPIOC_BASE, 11>;
+using sck  = interfaces::spi1::sck;
+using miso = interfaces::spi1::miso;
+using mosi = interfaces::spi1::mosi;
+}  // namespace bme280
 
-namespace max31855
+namespace gps
 {
-using cs1  = Gpio<GPIOC_BASE, 13>;
-using cs2  = Gpio<GPIOC_BASE, 14>;
-using cs3  = Gpio<GPIOA_BASE, 15>;
-using cs4  = Gpio<GPIOD_BASE, 11>;
-using cs5  = Gpio<GPIOD_BASE, 12>;
-using cs6  = Gpio<GPIOD_BASE, 13>;
-using sck  = interfaces::spi5::sck;
-using miso = interfaces::spi5::miso;
-}  // namespace max31855
+using tx = interfaces::uart2::tx;
+using rx = interfaces::uart2::rx;
+}  // namespace gps
+
+namespace adc
+{
+using battery = Gpio<GPIOC_BASE, 3>;
+}
 
 }  // namespace sensors
 
+namespace sx1278
+{
+using cs        = Gpio<GPIOC_BASE, 1>;
+using interrupt = Gpio<GPIOF_BASE, 10>;
+using sck       = interfaces::spi4::sck;
+using miso      = interfaces::spi4::miso;
+using mosi      = interfaces::spi4::mosi;
+}  // namespace sx1278
+
 namespace servos
 {
-using servo1 = interfaces::timers::tim10ch1;
-using servo2 = interfaces::timers::tim11ch1;
+using servo1 = interfaces::timers::tim4ch2;
+using servo2 = interfaces::timers::tim10ch1;
 }  // namespace servos
 
 namespace ui
 {
-using buzzer  = interfaces::timers::tim4ch2;
-using button1 = Gpio<GPIOG_BASE, 10>;  // Calibration button
-using button2 = Gpio<GPIOG_BASE, 9>;   // Record switch
+using button   = Gpio<GPIOA_BASE, 0>;   // User button
+using greenLed = Gpio<GPIOG_BASE, 13>;  // Green LED
+using redLed   = Gpio<GPIOG_BASE, 14>;  // Red LED
 }  // namespace ui
-
-namespace relays
-{
-using relay1 = Gpio<GPIOC_BASE, 11>;
-using relay2 = Gpio<GPIOB_BASE, 4>;
-using relay3 = Gpio<GPIOC_BASE, 3>;
-}  // namespace relays
 
 }  // namespace miosix

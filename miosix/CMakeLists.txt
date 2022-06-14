@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Skyward Experimental Rocketry
+# Copyright (c) 2021-2022 Skyward Experimental Rocketry
 # Authors: Damiano Amatruda, Michele Scuttari
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,17 +22,39 @@
 cmake_minimum_required(VERSION 3.16)
 project(Miosix C CXX ASM)
 
-set(KPATH ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "Path to kernel directory")
-file(GLOB KPATH ${KPATH})
-if(NOT KPATH)
-    message(FATAL_ERROR "Kernel directory not found")
-endif()
+set(KPATH ${CMAKE_CURRENT_LIST_DIR})
 
 include(${KPATH}/config/boards.cmake)
 
 foreach(OPT_BOARD ${BOARDS})
     set(DFLAGS -MMD -MP)
     include(${KPATH}/config/options.cmake)
+
+    function(set_miosix_properties TARGET)
+        target_include_directories(${TARGET} PUBLIC
+            ${KPATH}/config
+            ${KPATH}/config/${BOARD_INC}
+            ${KPATH}
+            ${KPATH}/arch/common
+            ${KPATH}/${ARCH_INC}
+            ${KPATH}/${BOARD_INC}
+        )
+        target_compile_definitions(${TARGET} PUBLIC $<$<CONFIG:Debug>:DEBUG> PRIVATE COMPILING_MIOSIX)
+        target_compile_features(${TARGET} PUBLIC cxx_std_14)
+        target_compile_options(${TARGET} PUBLIC
+            ${DFLAGS}
+            $<$<COMPILE_LANGUAGE:C>:${CFLAGS_BASE}>
+            $<$<COMPILE_LANGUAGE:CXX>:${CXXFLAGS_BASE}>
+            $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>
+        )
+        set_property(TARGET ${TARGET} PROPERTY INTERFACE_LINK_DEPENDS ${LINKER_SCRIPT})
+        target_link_options(${TARGET} INTERFACE ${LFLAGS_BASE})
+        target_link_libraries(${TARGET} INTERFACE stdc++ c m gcc atomic)
+    endfunction()
+
+    set(STAGE_1_BOOT stage_1_boot-${OPT_BOARD})
+    add_library(${STAGE_1_BOOT} OBJECT ${BOOT_FILE})
+    set_miosix_properties(${STAGE_1_BOOT})
 
     set(MIOSIX_LIBRARY miosix-${OPT_BOARD})
     add_library(${MIOSIX_LIBRARY} STATIC
@@ -71,22 +93,9 @@ foreach(OPT_BOARD ${BOARDS})
         util/lcd44780.cpp
         ${ARCH_SRC}
     )
-    add_library(Miosix::Miosix-${OPT_BOARD} ALIAS ${MIOSIX_LIBRARY})
-    target_sources(${MIOSIX_LIBRARY} INTERFACE ${BOOT_FILE})
-    target_include_directories(${MIOSIX_LIBRARY} PUBLIC
-        ${KPATH}/config
-        ${KPATH}/config/${BOARD_INC}
-        ${KPATH}
-        ${KPATH}/arch/common
-        ${KPATH}/${ARCH_INC}
-        ${KPATH}/${BOARD_INC}
-    )
-    target_compile_definitions(${MIOSIX_LIBRARY} PUBLIC COMPILING_MIOSIX $<$<CONFIG:Debug>:DEBUG>)
-    target_compile_features(${MIOSIX_LIBRARY} PUBLIC cxx_std_14)
-    target_compile_options(${MIOSIX_LIBRARY} PUBLIC ${DFLAGS} $<$<COMPILE_LANGUAGE:C>:${CFLAGS_BASE}> $<$<COMPILE_LANGUAGE:CXX>:${CXXFLAGS_BASE}> $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>)
-    set_property(TARGET ${MIOSIX_LIBRARY} PROPERTY INTERFACE_LINK_DEPENDS ${LINKER_SCRIPT})
-    target_link_options(${MIOSIX_LIBRARY} INTERFACE ${LFLAGS_BASE})
-    target_link_libraries(${MIOSIX_LIBRARY} INTERFACE stdc++ c m gcc atomic)
+    add_library(Miosix::Miosix::${OPT_BOARD} ALIAS ${MIOSIX_LIBRARY})
+    target_sources(${MIOSIX_LIBRARY} INTERFACE $<TARGET_OBJECTS:${STAGE_1_BOOT}>)
+    set_miosix_properties(${MIOSIX_LIBRARY})
     add_custom_command(
         TARGET ${MIOSIX_LIBRARY} POST_BUILD
         COMMAND perl ${KPATH}/_tools/kernel_global_objects.pl $<TARGET_OBJECTS:${MIOSIX_LIBRARY}>
@@ -94,3 +103,5 @@ foreach(OPT_BOARD ${BOARDS})
         COMMAND_EXPAND_LISTS
     )
 endforeach()
+
+add_subdirectory(_tools/testsuite EXCLUDE_FROM_ALL)
