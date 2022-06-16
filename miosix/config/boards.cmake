@@ -70,4 +70,4 @@ set(BOARDS
     stm32f429zi_skyward_death_stack_v3
     stm32f429zi_skyward_pyxis_auxiliary
     stm32f429zi_parafoil
-    )
+)

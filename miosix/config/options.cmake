@@ -723,13 +723,13 @@ if(${OPT_BOARD} STREQUAL stm32f429zi_skyward_death_stack_v3)
     ## 2) Code in FLASH, stack + heap in external RAM (file *8m_xram.ld)
     ##    You must uncomment -D__ENABLE_XRAM below in this case.
     set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM4_stm32f4/stm32f429zi_skyward_death_stack_v3/)
-    #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+256k_rom.ld)
-    set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+8m_xram.ld)
+    set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+256k_rom.ld)
+    # set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+8m_xram.ld)
 
     ## Uncommenting __ENABLE_XRAM enables the initialization of the external
     ## 8MB SDRAM memory. Do not uncomment this even if you don't use a linker
     ## script that requires it, as it is used for the LCD framebuffer.
-    set(XRAM -D__ENABLE_XRAM)
+    # set(XRAM -D__ENABLE_XRAM)
 
     ## Select clock frequency. 
     ## Warning: the default clock frequency for
