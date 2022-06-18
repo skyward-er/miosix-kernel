@@ -460,10 +460,10 @@ void IRQbspInit()
     ms5803::cs::mode(Mode::OUTPUT);
     ms5803::cs::high();
 
-    mlx91221_1::vout::mode(Mode::INPUT);
+    mlx91221_1::vout::mode(Mode::INPUT_ANALOG);
     mlx91221_1::vout::high();
 
-    mlx91221_2::vout::mode(Mode::INPUT);
+    mlx91221_2::vout::mode(Mode::INPUT_ANALOG);
     mlx91221_2::vout::high();
 
     using namespace inputs;
