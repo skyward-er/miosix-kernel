@@ -108,6 +108,11 @@ using sck  = interfaces::spi5::sck;
 using miso = interfaces::spi5::miso;
 }  // namespace max31855
 
+namespace currentSense
+{
+using adc123in3 = Gpio<GPIOA_BASE, 3>;
+}
+
 }  // namespace sensors
 
 namespace servos

@@ -272,6 +272,10 @@ void IRQbspInit()
     max31855::cs6::mode(Mode::OUTPUT);
     max31855::cs6::high();
 
+    using namespace currentSense;
+
+    adc123in3::mode(Mode::INPUT_ANALOG);
+
     // Set the Discovery's gyroscope CS to not interfere with the thermocouples
     using csGyro = Gpio<GPIOC_BASE, 1>;
     csGyro::mode(Mode::OUTPUT);
