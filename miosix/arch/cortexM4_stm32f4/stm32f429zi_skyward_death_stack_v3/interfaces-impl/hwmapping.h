@@ -53,13 +53,6 @@ using miso = Gpio<GPIOB_BASE, 14>;
 using mosi = Gpio<GPIOB_BASE, 15>;
 }  // namespace spi2
 
-namespace spi3
-{
-using sck  = Gpio<GPIOB_BASE, 3>;
-using miso = Gpio<GPIOB_BASE, 4>;
-using mosi = Gpio<GPIOB_BASE, 5>;
-}  // namespace spi3
-
 // BMX160 - MPU9250
 namespace spi4
 {
@@ -112,48 +105,16 @@ using tx = Gpio<GPIOA_BASE, 0>;
 using rx = Gpio<GPIOA_BASE, 1>;
 }  // namespace uart4
 
-namespace uart5
-{
-using tx = Gpio<GPIOC_BASE, 12>;
-using rx = Gpio<GPIOD_BASE, 2>;
-}  // namespace uart5
-
-namespace usart6
-{
-using tx = Gpio<GPIOC_BASE, 6>;
-using rx = Gpio<GPIOC_BASE, 7>;
-}  // namespace usart6
-
-namespace uart7
-{
-using tx = Gpio<GPIOE_BASE, 8>;
-using rx = Gpio<GPIOE_BASE, 7>;
-}  // namespace uart7
-
-namespace uart8
-{
-using tx = Gpio<GPIOE_BASE, 1>;
-using rx = Gpio<GPIOE_BASE, 0>;
-}  // namespace uart8
-
 namespace can1
 {
 using rx = Gpio<GPIOA_BASE, 11>;
 using tx = Gpio<GPIOA_BASE, 12>;
 }  // namespace can1
 
-namespace can2
-{
-using rx = Gpio<GPIOB_BASE, 5>;
-using tx = Gpio<GPIOB_BASE, 6>;
-}  // namespace can2
-
 }  // namespace interfaces
 
 namespace sensors
 {
-
-// Removed: lsm9ds1, lis3mdl
 
 namespace ads131m04
 {
@@ -205,43 +166,24 @@ namespace mlx91221_2
 using vout = Gpio<GPIOC_BASE, 2>;  // ADC
 }  // namespace mlx91221_2
 
+using vbat             = Gpio<GPIOF_BASE, 7>;
+using launchpad_detach = Gpio<GPIOD_BASE, 5>;  // launchpad detach
+
 }  // namespace sensors
 
-namespace inputs
+namespace expulsion
 {
-using vbat            = Gpio<GPIOF_BASE, 7>;
-using launchpad       = Gpio<GPIOD_BASE, 5>;  // launchpad detach
-using nosecone_detach = Gpio<GPIOD_BASE, 4>;  // nosecone detach
-using expulsion       = Gpio<GPIOD_BASE, 3>;  // expulsion sensor
-}  // namespace inputs
+using servo           = Gpio<GPIOB_BASE, 7>;  // Pwm expulsion servo, TIM4_CH2
+using sense           = Gpio<GPIOD_BASE, 3>;  // Expulsion sensor
+using nosecone_detach = Gpio<GPIOD_BASE, 4>;  // Nosecone detach
+}  // namespace expulsion
 
-namespace actuators
+namespace cutter
 {
-
-namespace nosecone
-{
-using servo = Gpio<GPIOB_BASE, 7>;  // Pwm expulsion servo, TIM4_CH2
-
-namespace thermal_cutter_1
-{
-using enable      = Gpio<GPIOG_BASE, 2>;
-using cutter_sens = Gpio<GPIOC_BASE, 14>;
-}  // namespace thermal_cutter_1
-
-namespace thermal_cutter_1_backup
-{
-using enable      = Gpio<GPIOG_BASE, 3>;
-using cutter_sens = Gpio<GPIOC_BASE, 14>;
-}  // namespace thermal_cutter_1_backup
-
-// NOT PRESENT
-namespace thermal_cutter_2
-{
-using enable      = Gpio<GPIOG_BASE, 3>;
-using cutter_sens = Gpio<GPIOC_BASE, 14>;
-}  // namespace thermal_cutter_2
-
-}  // namespace nosecone
+using enable        = Gpio<GPIOG_BASE, 2>;
+using enable_backup = Gpio<GPIOG_BASE, 3>;
+using sense         = Gpio<GPIOC_BASE, 14>;
+}  // namespace cutter
 
 namespace airbrakes
 {
@@ -249,21 +191,12 @@ using servo  = Gpio<GPIOB_BASE, 8>;  // Airbrakes PWM, TIM10_CH1
 using sensor = Gpio<GPIOC_BASE, 3>;  // Airbrakes ADC
 }  // namespace airbrakes
 
-}  // namespace actuators
-
-namespace aux
-{
-using sense_aux_1 = Gpio<GPIOG_BASE, 6>;
-using sense_aux_2 = Gpio<GPIOG_BASE, 7>;
-using servo       = Gpio<GPIOB_BASE, 9>;  // TIM11_CH1
-}  // namespace aux
-
 namespace leds
 {
-using led_green1 = Gpio<GPIOC_BASE, 5>;
-using led_red    = Gpio<GPIOC_BASE, 4>;
-using led_blue   = Gpio<GPIOD_BASE, 13>;
-using led_green2 = Gpio<GPIOD_BASE, 12>;
+using green1 = Gpio<GPIOC_BASE, 5>;
+using red    = Gpio<GPIOC_BASE, 4>;
+using blue   = Gpio<GPIOD_BASE, 13>;
+using green2 = Gpio<GPIOD_BASE, 12>;
 }  // namespace leds
 
 namespace buzzer
@@ -271,15 +204,12 @@ namespace buzzer
 using drive = Gpio<GPIOC_BASE, 6>;  // PWM TIM8_CH1
 }  // namespace buzzer
 
-namespace black_box
+namespace aux
 {
-using sdio_clk = Gpio<GPIOC_BASE, 12>;
-using sdio_cmd = Gpio<GPIOD_BASE, 2>;
-using sdio_d0  = Gpio<GPIOC_BASE, 8>;
-using sdio_d1  = Gpio<GPIOC_BASE, 9>;
-using sdio_d2  = Gpio<GPIOC_BASE, 10>;
-using sdio_d3  = Gpio<GPIOC_BASE, 11>;
-}  // namespace black_box
+using servo   = Gpio<GPIOB_BASE, 9>;  // TIM11_CH1
+using sense_1 = Gpio<GPIOG_BASE, 6>;
+using sense_2 = Gpio<GPIOG_BASE, 7>;
+}  // namespace aux
 
 }  // namespace miosix
 

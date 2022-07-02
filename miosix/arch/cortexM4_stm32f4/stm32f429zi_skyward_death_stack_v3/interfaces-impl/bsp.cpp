@@ -338,192 +338,131 @@ void IRQbspInit()
     // enable can1
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
+    // Set the clock divider for the analog circuitry (/8)
+    ADC->CCR |= ADC_CCR_ADCPRE_0 | ADC_CCR_ADCPRE_1;
+
     RCC_SYNC();
 
-    using namespace interfaces;
+    interfaces::spi1::sck::mode(Mode::ALTERNATE);
+    interfaces::spi1::sck::alternateFunction(5);
+    interfaces::spi1::miso::mode(Mode::ALTERNATE);
+    interfaces::spi1::miso::alternateFunction(5);
+    interfaces::spi1::mosi::mode(Mode::ALTERNATE);
+    interfaces::spi1::mosi::alternateFunction(5);
 
-    spi1::sck::mode(Mode::ALTERNATE);
-    spi1::sck::alternateFunction(5);
-    spi1::miso::mode(Mode::ALTERNATE);
-    spi1::miso::alternateFunction(5);
-    spi1::mosi::mode(Mode::ALTERNATE);
-    spi1::mosi::alternateFunction(5);
+    interfaces::spi2::sck::mode(Mode::ALTERNATE);
+    interfaces::spi2::sck::alternateFunction(5);
+    interfaces::spi2::miso::mode(Mode::ALTERNATE);
+    interfaces::spi2::miso::alternateFunction(5);
+    interfaces::spi2::mosi::mode(Mode::ALTERNATE);
+    interfaces::spi2::mosi::alternateFunction(5);
 
-    spi2::sck::mode(Mode::ALTERNATE);
-    spi2::sck::alternateFunction(5);
-    spi2::miso::mode(Mode::ALTERNATE);
-    spi2::miso::alternateFunction(5);
-    spi2::mosi::mode(Mode::ALTERNATE);
-    spi2::mosi::alternateFunction(5);
+    interfaces::spi4::sck::mode(Mode::ALTERNATE);
+    interfaces::spi4::sck::alternateFunction(5);
+    interfaces::spi4::miso::mode(Mode::ALTERNATE);
+    interfaces::spi4::miso::alternateFunction(5);
+    interfaces::spi4::mosi::mode(Mode::ALTERNATE);
+    interfaces::spi4::mosi::alternateFunction(5);
 
-    // spi3::sck::mode(Mode::ALTERNATE);
-    // spi3::sck::alternateFunction(6);
-    // spi3::miso::mode(Mode::ALTERNATE);
-    // spi3::miso::alternateFunction(6);
-    // spi3::mosi::mode(Mode::ALTERNATE);
-    // spi3::mosi::alternateFunction(6);
+    interfaces::spi5::sck::mode(Mode::ALTERNATE);
+    interfaces::spi5::sck::alternateFunction(5);
+    interfaces::spi5::miso::mode(Mode::ALTERNATE);
+    interfaces::spi5::miso::alternateFunction(5);
+    interfaces::spi5::mosi::mode(Mode::ALTERNATE);
+    interfaces::spi5::mosi::alternateFunction(5);
 
-    spi4::sck::mode(Mode::ALTERNATE);
-    spi4::sck::alternateFunction(5);
-    spi4::miso::mode(Mode::ALTERNATE);
-    spi4::miso::alternateFunction(5);
-    spi4::mosi::mode(Mode::ALTERNATE);
-    spi4::mosi::alternateFunction(5);
+    interfaces::spi6::sck::mode(Mode::ALTERNATE);
+    interfaces::spi6::sck::alternateFunction(5);
+    interfaces::spi6::miso::mode(Mode::ALTERNATE);
+    interfaces::spi6::miso::alternateFunction(5);
+    interfaces::spi6::mosi::mode(Mode::ALTERNATE);
+    interfaces::spi6::mosi::alternateFunction(5);
 
-    spi5::sck::mode(Mode::ALTERNATE);
-    spi5::sck::alternateFunction(5);
-    spi5::miso::mode(Mode::ALTERNATE);
-    spi5::miso::alternateFunction(5);
-    spi5::mosi::mode(Mode::ALTERNATE);
-    spi5::mosi::alternateFunction(5);
+    interfaces::usart1::rx::mode(Mode::ALTERNATE);
+    interfaces::usart1::rx::alternateFunction(7);
+    interfaces::usart1::tx::mode(Mode::ALTERNATE);
+    interfaces::usart1::tx::alternateFunction(7);
 
-    spi6::sck::mode(Mode::ALTERNATE);
-    spi6::sck::alternateFunction(5);
-    spi6::miso::mode(Mode::ALTERNATE);
-    spi6::miso::alternateFunction(5);
-    spi6::mosi::mode(Mode::ALTERNATE);
-    spi6::mosi::alternateFunction(5);
+    interfaces::usart2::rx::mode(Mode::ALTERNATE);
+    interfaces::usart2::rx::alternateFunction(7);
+    interfaces::usart2::tx::mode(Mode::ALTERNATE);
+    interfaces::usart2::tx::alternateFunction(7);
 
-    usart1::rx::mode(Mode::ALTERNATE);
-    usart1::rx::alternateFunction(7);
-    usart1::tx::mode(Mode::ALTERNATE);
-    usart1::tx::alternateFunction(7);
+    interfaces::usart3::rx::mode(Mode::ALTERNATE);
+    interfaces::usart3::rx::alternateFunction(7);
+    interfaces::usart3::tx::mode(Mode::ALTERNATE);
+    interfaces::usart3::tx::alternateFunction(7);
 
-    usart2::rx::mode(Mode::ALTERNATE);
-    usart2::rx::alternateFunction(7);
-    usart2::tx::mode(Mode::ALTERNATE);
-    usart2::tx::alternateFunction(7);
+    interfaces::uart4::rx::mode(Mode::ALTERNATE);
+    interfaces::uart4::rx::alternateFunction(8);
+    interfaces::uart4::tx::mode(Mode::ALTERNATE);
+    interfaces::uart4::tx::alternateFunction(8);
 
-    usart3::rx::mode(Mode::ALTERNATE);
-    usart3::rx::alternateFunction(7);
-    usart3::tx::mode(Mode::ALTERNATE);
-    usart3::tx::alternateFunction(7);
+    interfaces::can1::rx::mode(Mode::ALTERNATE);
+    interfaces::can1::rx::alternateFunction(9);
+    interfaces::can1::tx::mode(Mode::ALTERNATE);
+    interfaces::can1::tx::alternateFunction(9);
 
-    uart4::rx::mode(Mode::ALTERNATE);
-    uart4::rx::alternateFunction(8);
-    uart4::tx::mode(Mode::ALTERNATE);
-    uart4::tx::alternateFunction(8);
+    sensors::ads131m04::cs1::mode(Mode::OUTPUT);
+    sensors::ads131m04::cs1::high();
 
-    // uart5::rx::mode(Mode::ALTERNATE);
-    // uart5::rx::alternateFunction(8);
-    // uart5::tx::mode(Mode::ALTERNATE);
-    // uart5::tx::alternateFunction(8);
+    sensors::bmx160::cs::mode(Mode::OUTPUT);
+    sensors::bmx160::cs::high();
+    sensors::bmx160::intr::mode(Mode::INPUT_PULL_UP);
 
-    // usart6::rx::mode(Mode::ALTERNATE);
-    // usart6::rx::alternateFunction(8);
-    // usart6::tx::mode(Mode::ALTERNATE);
-    // usart6::tx::alternateFunction(8);
+    sensors::mpu9250::cs::mode(Mode::OUTPUT);
+    sensors::mpu9250::cs::high();
 
-    // uart7::rx::mode(Mode::ALTERNATE);
-    // uart7::rx::alternateFunction(8);
-    // uart7::tx::mode(Mode::ALTERNATE);
-    // uart7::tx::alternateFunction(8);
+    sensors::cc3135::cs::mode(Mode::OUTPUT);
+    sensors::cc3135::cs::high();
+    sensors::cc3135::intr::mode(Mode::INPUT_PULL_UP);
 
-    // uart8::rx::mode(Mode::ALTERNATE);
-    // uart8::rx::alternateFunction(8);
-    // uart8::tx::mode(Mode::ALTERNATE);
-    // uart8::tx::alternateFunction(8);
+    sensors::sx127x::cs::mode(Mode::OUTPUT);
+    sensors::sx127x::cs::high();
+    sensors::sx127x::dio0::mode(Mode::OUTPUT);
 
-    can1::rx::mode(Mode::ALTERNATE);
-    can1::rx::alternateFunction(9);
-    can1::tx::mode(Mode::ALTERNATE);
-    can1::tx::alternateFunction(9);
+    sensors::gps::cs::mode(Mode::OUTPUT);
+    sensors::gps::cs::high();
 
-    // can2::rx::mode(Mode::ALTERNATE);
-    // can2::rx::alternateFunction(9);
-    // can2::tx::mode(Mode::ALTERNATE);
-    // can2::tx::alternateFunction(9);
+    sensors::ms5803::cs::mode(Mode::OUTPUT);
+    sensors::ms5803::cs::high();
 
-    using namespace sensors;
+    sensors::mlx91221_1::vout::mode(Mode::INPUT_ANALOG);
+    sensors::mlx91221_1::vout::high();
 
-    ads131m04::cs1::mode(Mode::OUTPUT);
-    ads131m04::cs1::high();
+    sensors::mlx91221_2::vout::mode(Mode::INPUT_ANALOG);
+    sensors::mlx91221_2::vout::high();
 
-    bmx160::cs::mode(Mode::OUTPUT);
-    bmx160::cs::high();
-    bmx160::intr::mode(Mode::INPUT_PULL_UP);
+    sensors::vbat::mode(Mode::INPUT_ANALOG);
+    sensors::launchpad_detach::mode(Mode::INPUT);
 
-    mpu9250::cs::mode(Mode::OUTPUT);
-    mpu9250::cs::high();
+    expulsion::servo::mode(Mode::ALTERNATE);
+    expulsion::servo::alternateFunction(2);
+    expulsion::sense::mode(Mode::INPUT);
+    expulsion::nosecone_detach::mode(Mode::INPUT);
 
-    cc3135::cs::mode(Mode::OUTPUT);
-    cc3135::cs::high();
-    cc3135::intr::mode(Mode::INPUT_PULL_UP);
-
-    sx127x::cs::mode(Mode::OUTPUT);
-    sx127x::cs::high();
-    sx127x::dio0::mode(Mode::OUTPUT);
-
-    gps::cs::mode(Mode::OUTPUT);
-    gps::cs::high();
-
-    ms5803::cs::mode(Mode::OUTPUT);
-    ms5803::cs::high();
-
-    mlx91221_1::vout::mode(Mode::INPUT_ANALOG);
-    mlx91221_1::vout::high();
-
-    mlx91221_2::vout::mode(Mode::INPUT_ANALOG);
-    mlx91221_2::vout::high();
-
-    using namespace inputs;
-
-    vbat::mode(Mode::INPUT_ANALOG);
-    launchpad::mode(Mode::INPUT);
-    nosecone_detach::mode(Mode::INPUT);
-    expulsion::mode(Mode::INPUT);
-
-    using namespace actuators;
-
-    nosecone::servo::mode(Mode::ALTERNATE);
-    nosecone::servo::alternateFunction(2);
-
-    nosecone::thermal_cutter_1::enable::mode(Mode::OUTPUT);
-    nosecone::thermal_cutter_1::enable::low();
-    nosecone::thermal_cutter_1::cutter_sens::mode(Mode::INPUT_ANALOG);
-
-    nosecone::thermal_cutter_1_backup::enable::mode(Mode::OUTPUT);
-    nosecone::thermal_cutter_1_backup::enable::low();
-    nosecone::thermal_cutter_1_backup::cutter_sens::mode(Mode::INPUT_ANALOG);
-
-    nosecone::thermal_cutter_2::enable::mode(Mode::OUTPUT);
-    nosecone::thermal_cutter_2::enable::low();
-    nosecone::thermal_cutter_2::cutter_sens::mode(Mode::INPUT_ANALOG);
+    cutter::enable::mode(Mode::OUTPUT);
+    cutter::enable::low();
+    cutter::enable_backup::mode(Mode::OUTPUT);
+    cutter::enable_backup::low();
+    cutter::sense::mode(Mode::INPUT);
 
     airbrakes::servo::mode(Mode::ALTERNATE);
     airbrakes::servo::alternateFunction(3);
     airbrakes::sensor::mode(Mode::INPUT_ANALOG);
 
-    using namespace aux;
+    leds::green1::mode(Mode::OUTPUT);
+    leds::green2::mode(Mode::OUTPUT);
+    leds::blue::mode(Mode::OUTPUT);
+    leds::red::mode(Mode::OUTPUT);
 
-    sense_aux_1::mode(Mode::INPUT);
-    sense_aux_2::mode(Mode::INPUT);
-    servo::mode(Mode::ALTERNATE);
-    servo::alternateFunction(3);
+    buzzer::drive::mode(Mode::ALTERNATE);
+    buzzer::drive::alternateFunction(3);
 
-    using namespace leds;
-    led_green1::mode(Mode::OUTPUT);
-    led_green2::mode(Mode::OUTPUT);
-    led_blue::mode(Mode::OUTPUT);
-    led_red::mode(Mode::OUTPUT);
-
-    using namespace buzzer;
-    drive::mode(Mode::ALTERNATE);
-    drive::alternateFunction(3);
-
-    using namespace black_box;
-    sdio_clk::mode(Mode::ALTERNATE);
-    sdio_clk::alternateFunction(12);
-    sdio_cmd::mode(Mode::ALTERNATE);
-    sdio_cmd::alternateFunction(12);
-    sdio_d0::mode(Mode::ALTERNATE);
-    sdio_d0::alternateFunction(12);
-    sdio_d1::mode(Mode::ALTERNATE);
-    sdio_d1::alternateFunction(12);
-    sdio_d2::mode(Mode::ALTERNATE);
-    sdio_d2::alternateFunction(12);
-    sdio_d3::mode(Mode::ALTERNATE);
-    sdio_d3::alternateFunction(12);
+    aux::servo::mode(Mode::ALTERNATE);
+    aux::servo::alternateFunction(3);
+    aux::sense_1::mode(Mode::INPUT);
+    aux::sense_2::mode(Mode::INPUT);
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,
