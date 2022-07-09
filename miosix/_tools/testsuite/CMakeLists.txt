@@ -38,6 +38,7 @@ set(BOARDS
     stm32f429zi_skyward_anakin
     stm32f100rc_solertegiard
     stm32f205rc_skyward_stormtrooper
+    stm32f205rc_skyward_ciuti
     stm32f401vc_stm32f4discovery
     stm32f469ni_stm32f469i-disco
     stm32f429zi_skyward_homeone

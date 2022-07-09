@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2012 by Terraneo Federico                               *
+ *   Copyright (C) 2010, 2011, 2012 by Terraneo Federico                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,39 +25,53 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/***********************************************************************
- * bsp_impl.h Part of the Miosix Embedded OS.
- * Board support package, this file initializes hardware.
- ************************************************************************/
+#include "interfaces/delays.h"
 
-#ifndef BSP_IMPL_H
-#define BSP_IMPL_H
+namespace miosix {
 
-#include "config/miosix_settings.h"
-#include "drivers/stm32_hardware_rng.h"
-#include "interfaces/gpio.h"
-
-namespace miosix
+void delayMs(unsigned int mseconds)
 {
+    #ifndef __CODE_IN_XRAM
 
-/**
-\addtogroup Hardware
-\{
-*/
+    #ifdef SYSCLK_FREQ_120MHz
+    register const unsigned int count=29999;
+    #else
+    #warning "Delays are uncalibrated for this clock frequency"    
+    #endif
+    
+    for(unsigned int i=0;i<mseconds;i++)
+    {
+        // This delay has been calibrated to take 1 millisecond
+        // It is written in assembler to be independent on compiler optimization
+        asm volatile("           mov   r1, #0     \n"
+                     "___loop_m: cmp   r1, %0     \n"
+                     "           itt   lo         \n"
+                     "           addlo r1, r1, #1 \n"
+                     "           blo   ___loop_m  \n"::"r"(count):"r1");
+    }
 
-inline void ledOn() {}
-inline void ledOff() {}
+    #else //__CODE_IN_XRAM
+    #error "No delays"
+    #endif //__CODE_IN_XRAM
+}
 
-/**
- * Polls the SD card sense GPIO
- * \return true if there is an uSD card in the socket.
- */
-inline bool sdCardSense() { return true; }
+void delayUs(unsigned int useconds)
+{
+    #ifndef __CODE_IN_XRAM
 
-/**
-\}
-*/
+    // This delay has been calibrated to take x microseconds
+    // It is written in assembler to be independent on compiler optimization
+    asm volatile("           mov   r1, #30    \n"
+                 "           mul   r2, %0, r1 \n"
+                 "           mov   r1, #0     \n"
+                 "___loop_u: cmp   r1, r2     \n"
+                 "           itt   lo         \n"
+                 "           addlo r1, r1, #1 \n"
+                 "           blo   ___loop_u  \n"::"r"(useconds):"r1","r2");
 
-};  // namespace miosix
+    #else //__CODE_IN_XRAM
+    #error "No delays"
+    #endif //__CODE_IN_XRAM
+}
 
-#endif  // BSP_IMPL_H
+} //namespace miosix

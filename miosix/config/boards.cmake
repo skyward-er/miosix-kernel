@@ -60,6 +60,7 @@ set(BOARDS
     stm32f429zi_hre_test_stand
     stm32f429zi_skyward_homeone
     stm32f205rc_skyward_stormtrooper
+    stm32f205rc_skyward_ciuti
     stm32f429zi_skyward_rogallina
     stm32f103c8_skyward_alderaan
     stm32f429zi_skyward_anakin

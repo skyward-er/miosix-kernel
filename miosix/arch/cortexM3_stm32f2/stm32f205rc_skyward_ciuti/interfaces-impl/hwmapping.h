@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2012 by Terraneo Federico                               *
+ *   Copyright (C) 2016 by Silvano Seva for Skyward Experimental           *
+ *   Rocketry                                                              *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,39 +26,111 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/***********************************************************************
- * bsp_impl.h Part of the Miosix Embedded OS.
- * Board support package, this file initializes hardware.
- ************************************************************************/
+#ifndef HWMAPPING_H
+#define HWMAPPING_H
 
-#ifndef BSP_IMPL_H
-#define BSP_IMPL_H
-
-#include "config/miosix_settings.h"
-#include "drivers/stm32_hardware_rng.h"
 #include "interfaces/gpio.h"
 
 namespace miosix
 {
 
-/**
-\addtogroup Hardware
-\{
-*/
+namespace interfaces
+{
 
-inline void ledOn() {}
-inline void ledOff() {}
+namespace spi1
+{
+using cs   = Gpio<GPIOA_BASE, 4>;
+using sck  = Gpio<GPIOA_BASE, 5>;
+using miso = Gpio<GPIOA_BASE, 6>;
+using mosi = Gpio<GPIOA_BASE, 7>;
+}  // namespace spi1
 
-/**
- * Polls the SD card sense GPIO
- * \return true if there is an uSD card in the socket.
- */
-inline bool sdCardSense() { return true; }
+// LIS331HH and AD8403
+namespace spi2
+{
+using sck  = Gpio<GPIOB_BASE, 13>;
+using miso = Gpio<GPIOB_BASE, 14>;
+using mosi = Gpio<GPIOB_BASE, 15>;
+}  // namespace spi2
 
-/**
-\}
-*/
+// Debug
+namespace usart1
+{
+using tx = Gpio<GPIOA_BASE, 9>;
+using rx = Gpio<GPIOA_BASE, 10>;
+}  // namespace usart1
 
-};  // namespace miosix
+// Pogo pin
+namespace usart2
+{
+using tx = Gpio<GPIOA_BASE, 2>;
+using rx = Gpio<GPIOA_BASE, 3>;
+}  // namespace usart2
 
-#endif  // BSP_IMPL_H
+// Pogo pin
+namespace usart3
+{
+using tx = Gpio<GPIOB_BASE, 10>;
+using rx = Gpio<GPIOB_BASE, 11>;
+}  // namespace usart3
+
+namespace can1
+{
+using rx = Gpio<GPIOA_BASE, 11>;
+using tx = Gpio<GPIOA_BASE, 12>;
+}  // namespace can1
+
+}  // namespace interfaces
+
+namespace sensors
+{
+
+namespace lis331hh
+{
+using cs = Gpio<GPIOC_BASE, 4>;
+}
+
+namespace ad8403
+{
+using cs = Gpio<GPIOC_BASE, 0>;
+}
+
+namespace ina188
+{
+using vsense1 = Gpio<GPIOA_BASE, 0>;
+using vsense2 = Gpio<GPIOA_BASE, 1>;
+using mosfet1 = Gpio<GPIOC_BASE, 3>;
+using mosfet2 = Gpio<GPIOC_BASE, 2>;
+}  // namespace ina188
+
+using vbat = Gpio<GPIOC_BASE, 5>;
+
+}  // namespace sensors
+
+namespace actuators
+{
+
+namespace buttons
+{
+using bypass = Gpio<GPIOC_BASE, 7>;
+using record = Gpio<GPIOA_BASE, 8>;
+}  // namespace buttons
+
+namespace buzzer
+{
+using drive = Gpio<GPIOC_BASE, 6>;  // PWM TIM8_CH1
+}
+
+namespace leds
+{
+using led1 = Gpio<GPIOB_BASE, 0>;  // TIM3_CH3
+using led2 = Gpio<GPIOB_BASE, 5>;
+using led3 = Gpio<GPIOB_BASE, 6>;
+using led4 = Gpio<GPIOB_BASE, 7>;
+}  // namespace leds
+
+}  // namespace actuators
+
+}  // namespace miosix
+
+#endif  // HWMAPPING_H

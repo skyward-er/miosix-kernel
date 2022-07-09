@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2012 by Terraneo Federico                               *
+ *   Copyright (C) 2016 by Terraneo Federico and Silvano Seva for          *
+ *   Skyward Experimental Rocketry                                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -35,6 +36,7 @@
 
 #include "config/miosix_settings.h"
 #include "drivers/stm32_hardware_rng.h"
+#include "hwmapping.h"
 #include "interfaces/gpio.h"
 
 namespace miosix
@@ -45,8 +47,21 @@ namespace miosix
 \{
 */
 
-inline void ledOn() {}
-inline void ledOff() {}
+inline void ledOn()
+{
+    actuators::leds::led1::high();
+    actuators::leds::led2::high();
+    actuators::leds::led3::high();
+    actuators::leds::led4::high();
+}
+
+inline void ledOff()
+{
+    actuators::leds::led1::low();
+    actuators::leds::led2::low();
+    actuators::leds::led3::low();
+    actuators::leds::led4::low();
+}
 
 /**
  * Polls the SD card sense GPIO
@@ -58,6 +73,6 @@ inline bool sdCardSense() { return true; }
 \}
 */
 
-};  // namespace miosix
+}  // namespace miosix
 
 #endif  // BSP_IMPL_H

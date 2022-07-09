@@ -33,6 +33,7 @@
 #OPT_BOARD := stm32f429zi_skyward_anakin
 #OPT_BOARD := stm32f100rc_solertegiard
 #OPT_BOARD := stm32f205rc_skyward_stormtrooper
+#OPT_BOARD := stm32f205rc_skyward_ciuti
 #OPT_BOARD := stm32f401vc_stm32f4discovery
 #OPT_BOARD := stm32f103c8_breakout
 #OPT_BOARD := stm32f100c8_microboard
@@ -876,6 +877,8 @@ else ifeq ($(OPT_BOARD),stm32f429zi_skyward_anakin)
 else ifeq ($(OPT_BOARD),stm32f100rc_solertegiard)
     ARCH := cortexM3_stm32
 else ifeq ($(OPT_BOARD),stm32f205rc_skyward_stormtrooper)
+    ARCH := cortexM3_stm32f2
+else ifeq ($(OPT_BOARD),stm32f205rc_skyward_ciuti)
     ARCH := cortexM3_stm32f2
 else ifeq ($(OPT_BOARD),stm32f401vc_stm32f4discovery)
     ARCH := cortexM4_stm32f4
@@ -2370,6 +2373,32 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F205RC_SKYWARD_STORMTROOPER
         CXXFLAGS_BASE += -D_BOARD_STM32F205RC_SKYWARD_STORMTROOPER
+
+        ## Clock frequency
+        CLOCK_FREQ := -DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f205rc_skyward_ciuti
+    ##
+    else ifeq ($(OPT_BOARD),stm32f205rc_skyward_ciuti)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM3_stm32f2/stm32f205rc_skyward_ciuti
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_512k+128k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        arch/common/drivers/stm32f2_f4_i2c.cpp       \
+        $(BOARD_INC)/interfaces-impl/delays.cpp      \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32F205RC_SKYWARD_CIUTI
+        CXXFLAGS_BASE += -D_BOARD_STM32F205RC_SKYWARD_CIUTI
 
         ## Clock frequency
         CLOCK_FREQ := -DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000

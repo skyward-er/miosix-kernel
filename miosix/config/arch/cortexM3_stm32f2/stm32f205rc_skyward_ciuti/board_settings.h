@@ -1,5 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2012 by Terraneo Federico                               *
+ *   Copyright (C) 2016 by Terraneo Federico and Silvano Seva              *
+ *   for Skyward Experimental Rocketry                                     *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,39 +26,60 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/***********************************************************************
- * bsp_impl.h Part of the Miosix Embedded OS.
- * Board support package, this file initializes hardware.
- ************************************************************************/
+#ifndef BOARD_SETTINGS_H
+#define BOARD_SETTINGS_H
 
-#ifndef BSP_IMPL_H
-#define BSP_IMPL_H
+#include "util/version.h"
 
-#include "config/miosix_settings.h"
-#include "drivers/stm32_hardware_rng.h"
-#include "interfaces/gpio.h"
+/**
+ * \internal
+ * Versioning for board_settings.h for out of git tree projects
+ */
+#define BOARD_SETTINGS_VERSION 100
 
 namespace miosix
 {
 
 /**
-\addtogroup Hardware
-\{
-*/
-
-inline void ledOn() {}
-inline void ledOff() {}
-
-/**
- * Polls the SD card sense GPIO
- * \return true if there is an uSD card in the socket.
+ * \addtogroup Settings
+ * \{
  */
-inline bool sdCardSense() { return true; }
+
+/// Size of stack for main().
+/// The C standard library is stack-heavy (iprintf requires 1.5KB) and the
+/// STM32F205RC has 128KB of RAM so there is room for a big 4K stack.
+const unsigned int MAIN_STACK_SIZE = 4 * 1024;
+
+/// Frequency of tick (in Hz). The frequency of the STM32F205RC timer in the
+/// Miosix board can be divided by 1000. This allows to use a 1KHz tick and
+/// the minimum Thread::sleep value is 1ms
+/// For the priority scheduler this is also the context switch frequency
+const unsigned int TICK_FREQ = 1000;
+
+///\internal Aux timer run @ 100KHz
+/// Note that since the timer is only 16 bits this imposes a limit on the
+/// burst measurement of 655ms. If due to a pause_kernel() or
+/// disable_interrupts() section a thread runs for more than that time, a wrong
+/// burst value will be measured
+const unsigned int AUX_TIMER_CLOCK = 100000;
+const unsigned int AUX_TIMER_MAX   = 0xffff;  ///<\internal Aux timer is 16 bits
+
+/// Serial port
+const unsigned int defaultSerial      = 1;
+const unsigned int defaultSerialSpeed = 19200;
+const bool defaultSerialFlowctrl      = false;
+#define SERIAL_1_DMA
+// #define SERIAL_2_DMA //Serial 2 is used by the pogo pins
+//#define SERIAL_3_DMA  //Serial 3 is used by the pogo pins
+
+// SD card driver
+static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
+// #define SD_ONE_BIT_DATABUS // This board supports 4 bit data bus to SD card
 
 /**
-\}
-*/
+ * \}
+ */
 
-};  // namespace miosix
+}  // namespace miosix
 
-#endif  // BSP_IMPL_H
+#endif /* BOARD_SETTINGS_H */
