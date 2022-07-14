@@ -63,7 +63,7 @@ namespace cam3
 using tx = Gpio<GPIOE_BASE, 8>;
 }  // namespace cam3
 
-using camMosfet = Gpio<GPIOF_BASE, 6>;
+using camMosfet = Gpio<GPIOE_BASE, 7>;
 
 namespace can1
 {
