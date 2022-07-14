@@ -76,15 +76,14 @@ void IRQbspInit()
     cam1::tx::mode(Mode::ALTERNATE);
     cam1::tx::alternateFunction(7);
 
-    cam2::rx::mode(Mode::ALTERNATE);
-    cam2::rx::alternateFunction(8);
     cam2::tx::mode(Mode::ALTERNATE);
     cam2::tx::alternateFunction(8);
 
-    cam3::rx::mode(Mode::ALTERNATE);
-    cam3::rx::alternateFunction(8);
     cam3::tx::mode(Mode::ALTERNATE);
     cam3::tx::alternateFunction(8);
+
+    camMosfet::mode(Mode::OUTPUT);
+    camMosfet::low();
 
     can1::rx::mode(Mode::ALTERNATE);
     can1::rx::alternateFunction(9);

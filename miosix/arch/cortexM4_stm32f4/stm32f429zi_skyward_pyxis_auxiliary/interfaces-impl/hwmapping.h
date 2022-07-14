@@ -54,16 +54,16 @@ using rx = Gpio<GPIOA_BASE, 3>;
 // Cam 2 - UART7
 namespace cam2
 {
-using rx = Gpio<GPIOF_BASE, 6>;
 using tx = Gpio<GPIOF_BASE, 7>;
 }  // namespace cam2
 
 // Cam 3 - UART7
 namespace cam3
 {
-using rx = Gpio<GPIOE_BASE, 7>;
 using tx = Gpio<GPIOE_BASE, 8>;
 }  // namespace cam3
+
+using camMosfet = Gpio<GPIOF_BASE, 6>;
 
 namespace can1
 {
