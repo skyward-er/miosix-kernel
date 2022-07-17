@@ -855,16 +855,16 @@ if(${OPT_BOARD} STREQUAL stm32f429zi_hre_test_stand)
 endif()
 
 ##---------------------------------------------------------------------------
-## stm32f429zi_parafoil
+## stm32f429zi_skyward_parafoil
 ##
-if(${OPT_BOARD} STREQUAL stm32f429zi_parafoil)
+if(${OPT_BOARD} STREQUAL stm32f429zi_skyward_parafoil)
 
     ## Linker script type, there are three options
     ## 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
     ##    the most common choice, available for all microcontrollers
     ## 2) Code in FLASH, stack + heap in external RAM (file *8m_xram.ld)
     ##    You must uncomment -D__ENABLE_XRAM below in this case.
-    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM4_stm32f4/stm32f429zi_parafoil/)
+    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM4_stm32f4/stm32f429zi_skyward_parafoil/)
     #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+256k_rom.ld)
     set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_2m+8m_xram.ld)
 
@@ -1005,7 +1005,7 @@ elseif(${OPT_BOARD} STREQUAL stm32f411ce_blackpill)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_hre_test_stand)
     set(ARCH cortexM4_stm32f4)
-elseif(${OPT_BOARD} STREQUAL stm32f429zi_parafoil)
+elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_parafoil)
     set(ARCH cortexM4_stm32f4)
 else()
     message(FATAL_ERROR "no board specified in miosix/config/options.cmake")
@@ -2266,12 +2266,12 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F429ZI_HRE_TEST_STAND)
     
     ##-------------------------------------------------------------------------
-    ## BOARD: stm32f429zi_parafoil
+    ## BOARD: stm32f429zi_skyward_parafoil
     ##
-    elseif(${OPT_BOARD} STREQUAL stm32f429zi_parafoil)
+    elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_parafoil)
 
     ## Base directory with header files for this board
-    set(BOARD_INC arch/cortexM4_stm32f4/stm32f429zi_parafoil)
+    set(BOARD_INC arch/cortexM4_stm32f4/stm32f429zi_skyward_parafoil)
 
     ## Select linker script and boot file
     ## Their path must be relative to the miosix directory.
@@ -2287,8 +2287,8 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
     )
 
     ## Add a #define to allow querying board name
-    list(APPEND CFLAGS_BASE -D_BOARD_STM32F429ZI_PARAFOIL)
-    list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F429ZI_PARAFOIL)
+    list(APPEND CFLAGS_BASE -D_BOARD_STM32F429ZI_SKYWARD_PARAFOIL)
+    list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F429ZI_SKYWARD_PARAFOIL)
 
     ##-------------------------------------------------------------------------
     ## End of board list
