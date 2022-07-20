@@ -133,6 +133,7 @@ namespace relays
 using relay1 = Gpio<GPIOC_BASE, 11>;
 using relay2 = Gpio<GPIOB_BASE, 4>;
 using relay3 = Gpio<GPIOC_BASE, 3>;
+using relay4 = Gpio<GPIOB_BASE, 1>;
 }  // namespace relays
 
 }  // namespace miosix

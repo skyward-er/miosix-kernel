@@ -294,6 +294,8 @@ void IRQbspInit()
     relay2::high();
     relay3::mode(Mode::OUTPUT);
     relay3::high();
+    relay4::mode(Mode::OUTPUT);
+    relay4::high();
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,
