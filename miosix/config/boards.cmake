@@ -69,6 +69,7 @@ set(BOARDS
     stm32f429zi_skyward_death_stack_x
     stm32f103cb_skyward_strain_board
     stm32f429zi_skyward_death_stack_v3
+    stm32f429zi_skyward_ground_station
     stm32f429zi_skyward_pyxis_auxiliary
     stm32f429zi_skyward_parafoil
 )
