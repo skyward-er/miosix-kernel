@@ -166,7 +166,6 @@ namespace mlx91221_2
 using vout = Gpio<GPIOC_BASE, 2>;  // ADC
 }  // namespace mlx91221_2
 
-using vbat             = Gpio<GPIOF_BASE, 7>;
 using launchpad_detach = Gpio<GPIOD_BASE, 5>;  // launchpad detach
 
 }  // namespace sensors

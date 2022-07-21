@@ -419,7 +419,7 @@ void IRQbspInit()
 
     sensors::sx127x::cs::mode(Mode::OUTPUT);
     sensors::sx127x::cs::high();
-    sensors::sx127x::dio0::mode(Mode::OUTPUT);
+    sensors::sx127x::dio0::mode(Mode::INPUT);
 
     sensors::gps::cs::mode(Mode::OUTPUT);
     sensors::gps::cs::high();
@@ -433,7 +433,6 @@ void IRQbspInit()
     sensors::mlx91221_2::vout::mode(Mode::INPUT_ANALOG);
     sensors::mlx91221_2::vout::high();
 
-    sensors::vbat::mode(Mode::INPUT_ANALOG);
     sensors::launchpad_detach::mode(Mode::INPUT);
 
     expulsion::servo::mode(Mode::ALTERNATE);
