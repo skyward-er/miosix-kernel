@@ -76,11 +76,21 @@ using tx = Gpio<GPIOA_BASE, 0>;
 using rx = Gpio<GPIOA_BASE, 1>;
 }  // namespace uart4
 
+// CAN1
 namespace can
-{  // CAN1
+{
 using rx = Gpio<GPIOA_BASE, 11>;
 using tx = Gpio<GPIOA_BASE, 12>;
 }  // namespace can
+
+// Servo motors timers
+namespace timers
+{
+using tim4ch1 = Gpio<GPIOD_BASE, 12>;  // Servo 1
+using tim8ch2 = Gpio<GPIOC_BASE, 7>;   // Servo 2
+}  // namespace timers
+
+using camMosfet = Gpio<GPIOC_BASE, 14>;
 
 }  // namespace interfaces
 
@@ -119,19 +129,23 @@ using cs = Gpio<GPIOD_BASE, 7>;
 
 namespace inputs
 {
-using vbat            = Gpio<GPIOF_BASE, 7>;
-using launchpad       = Gpio<GPIOE_BASE, 4>;   // launchpad detach
-using nosecone_detach = Gpio<GPIOC_BASE, 14>;  // nosecone detach
-using expulsion       = Gpio<GPIOB_BASE, 7>;   // expulsion sensor
+using vbat      = Gpio<GPIOF_BASE, 7>;
+using expulsion = Gpio<GPIOE_BASE, 4>;
 }  // namespace inputs
 
 namespace actuators
 {
 
+namespace servos
+{
+using servo1 = interfaces::timers::tim4ch1;
+using servo2 = interfaces::timers::tim8ch2;
+}  // namespace servos
+
 namespace nosecone
 {
-using servo        = Gpio<GPIOD_BASE, 12>;  // Pwm expulsion servo, TIM4_CH1
-using th_cut_input = Gpio<GPIOE_BASE, 6>;   // Input thermal cutters
+
+using th_cut_input = Gpio<GPIOE_BASE, 6>;  // Input thermal cutters
 
 namespace thermal_cutter_1
 {
@@ -147,17 +161,11 @@ using cutter_sens = Gpio<GPIOF_BASE, 8>;  // ADC3 CH6
 
 }  // namespace nosecone
 
-namespace airbrakes
-{
-using servo = Gpio<GPIOC_BASE, 7>;  // Airbrakes PWM, TIM8_CH2
-}  // namespace airbrakes
-
 }  // namespace actuators
 
 namespace aux
 {
 using sense_aux_1 = Gpio<GPIOE_BASE, 2>;
-using sense_aux_2 = Gpio<GPIOE_BASE, 3>;
 using aux_pd_pu   = Gpio<GPIOC_BASE, 5>;
 using aux_spi1_cs = Gpio<GPIOG_BASE, 7>;
 }  // namespace aux
@@ -167,14 +175,15 @@ namespace leds
 using led_red1  = Gpio<GPIOG_BASE, 7>;
 using led_red2  = Gpio<GPIOG_BASE, 10>;
 using led_blue1 = Gpio<GPIOG_BASE, 14>;
+using led_ring  = Gpio<GPIOE_BASE, 3>;
 
 /**
- * These are conencted to the enable pin of the thermal cutters and the cs of
+ * These are connected to the enable pin of the thermal cutters and the cs of
  * the lis3mdl magnetometer.
  */
-using led_blue2  = Gpio<GPIOG_BASE, 2>;
-using led_green1 = Gpio<GPIOG_BASE, 6>;
-using led_green2 = Gpio<GPIOD_BASE, 11>;
+// using led_blue2  = Gpio<GPIOG_BASE, 2>;
+// using led_green1 = Gpio<GPIOG_BASE, 6>;
+// using led_green2 = Gpio<GPIOD_BASE, 11>;
 }  // namespace leds
 
 namespace xbee

@@ -376,6 +376,13 @@ void IRQbspInit()
     can::tx::mode(Mode::ALTERNATE);
     can::tx::alternateFunction(9);
 
+    timers::tim4ch1::mode(Mode::ALTERNATE);
+    timers::tim4ch1::alternateFunction(2);
+    timers::tim8ch2::mode(Mode::ALTERNATE);
+    timers::tim8ch2::alternateFunction(3);
+
+    camMosfet::mode(Mode::OUTPUT);
+
     using namespace sensors;
 
     ads1118::cs::mode(Mode::OUTPUT);
@@ -400,14 +407,10 @@ void IRQbspInit()
     using namespace inputs;
 
     vbat::mode(Mode::INPUT_ANALOG);
-    launchpad::mode(Mode::INPUT);
-    nosecone_detach::mode(Mode::INPUT);
     expulsion::mode(Mode::INPUT);
 
     using namespace actuators;
 
-    nosecone::servo::mode(Mode::ALTERNATE);
-    nosecone::servo::alternateFunction(2);
     nosecone::th_cut_input::mode(Mode::OUTPUT);
 
     nosecone::thermal_cutter_1::enable::mode(Mode::OUTPUT);
@@ -418,13 +421,9 @@ void IRQbspInit()
     nosecone::thermal_cutter_2::enable::low();
     nosecone::thermal_cutter_2::cutter_sens::mode(Mode::INPUT_ANALOG);
 
-    airbrakes::servo::mode(Mode::ALTERNATE);
-    airbrakes::servo::alternateFunction(3);
-
     using namespace aux;
 
     sense_aux_1::mode(Mode::INPUT);
-    sense_aux_2::mode(Mode::INPUT);
     aux_pd_pu::mode(Mode::OUTPUT);
     aux_spi1_cs::mode(Mode::OUTPUT);
 
@@ -433,6 +432,7 @@ void IRQbspInit()
     led_red1::mode(Mode::OUTPUT);
     led_red2::mode(Mode::OUTPUT);
     led_blue1::mode(Mode::OUTPUT);
+    led_ring::mode(Mode::OUTPUT);
 
     using namespace xbee;
 
