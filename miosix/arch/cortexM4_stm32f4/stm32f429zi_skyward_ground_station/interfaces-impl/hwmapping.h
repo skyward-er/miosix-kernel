@@ -52,6 +52,12 @@ using miso = Gpio<GPIOE_BASE, 5>;
 using mosi = Gpio<GPIOE_BASE, 6>;
 } // namespace spi4
 
+namespace uart5
+{
+using tx = Gpio<GPIOC_BASE, 12>;
+using rx = Gpio<GPIOD_BASE, 2>;
+} // namespace uart5
+
 } // namespace interfaces
 
 namespace peripherals

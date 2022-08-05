@@ -213,6 +213,11 @@ void IRQbspInit()
     interfaces::spi4::mosi::mode(Mode::ALTERNATE);
     interfaces::spi4::mosi::alternateFunction(5);
 
+    interfaces::uart5::tx::mode(Mode::ALTERNATE);
+    interfaces::uart5::tx::alternateFunction(8);
+    interfaces::uart5::rx::mode(Mode::ALTERNATE);
+    interfaces::uart5::rx::alternateFunction(8);
+
     peripherals::ra01::cs::mode(Mode::OUTPUT);
     peripherals::ra01::dio0::mode(Mode::INPUT);
     peripherals::ra01::nrst::mode(Mode::OUTPUT);
