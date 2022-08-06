@@ -57,7 +57,8 @@ namespace miosix
 void IRQbspInit()
 {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN |
-                    RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN;
+                    RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN |
+                    RCC_AHB1ENR_GPIOFEN;
 
     // Enable can1
     RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
