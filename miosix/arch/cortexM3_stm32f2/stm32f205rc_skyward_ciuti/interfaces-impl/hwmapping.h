@@ -82,7 +82,7 @@ using tx = Gpio<GPIOA_BASE, 12>;
 
 }  // namespace interfaces
 
-namespace sensors
+namespace devices
 {
 
 namespace lis331hh
@@ -90,7 +90,7 @@ namespace lis331hh
 using cs = Gpio<GPIOC_BASE, 4>;
 }
 
-namespace ad8403
+namespace ad5204
 {
 using cs = Gpio<GPIOC_BASE, 0>;
 }
@@ -104,11 +104,6 @@ using mosfet2 = Gpio<GPIOC_BASE, 2>;
 }  // namespace ina188
 
 using vbat = Gpio<GPIOC_BASE, 5>;
-
-}  // namespace sensors
-
-namespace actuators
-{
 
 namespace buttons
 {
@@ -129,7 +124,7 @@ using led3 = Gpio<GPIOB_BASE, 6>;
 using led4 = Gpio<GPIOB_BASE, 7>;
 }  // namespace leds
 
-}  // namespace actuators
+}  // namespace devices
 
 }  // namespace miosix
 

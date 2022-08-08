@@ -49,18 +49,18 @@ namespace miosix
 
 inline void ledOn()
 {
-    actuators::leds::led1::high();
-    actuators::leds::led2::high();
-    actuators::leds::led3::high();
-    actuators::leds::led4::high();
+    devices::leds::led1::high();
+    devices::leds::led2::high();
+    devices::leds::led3::high();
+    devices::leds::led4::high();
 }
 
 inline void ledOff()
 {
-    actuators::leds::led1::low();
-    actuators::leds::led2::low();
-    actuators::leds::led3::low();
-    actuators::leds::led4::low();
+    devices::leds::led1::low();
+    devices::leds::led2::low();
+    devices::leds::led3::low();
+    devices::leds::led4::low();
 }
 
 /**
