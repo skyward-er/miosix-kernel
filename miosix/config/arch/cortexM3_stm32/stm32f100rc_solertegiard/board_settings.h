@@ -26,7 +26,7 @@
  ***************************************************************************/
 
 #ifndef BOARD_SETTINGS_H
-#define	BOARD_SETTINGS_H
+#define BOARD_SETTINGS_H
 
 #include "util/version.h"
 
@@ -36,7 +36,8 @@
  */
 #define BOARD_SETTINGS_VERSION 100
 
-namespace miosix {
+namespace miosix
+{
 
 /**
  * \addtogroup Settings
@@ -46,40 +47,40 @@ namespace miosix {
 /// Size of stack for main().
 /// The C standard library is stack-heavy (iprintf requires 1KB) but the
 /// STM32F100RB only has 8KB of RAM so the stack is only 1.5KB.
-const unsigned int MAIN_STACK_SIZE=1024+512;
+const unsigned int MAIN_STACK_SIZE = 1024 + 512;
 
 /// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
 /// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
 /// tick and the minimun Thread::sleep value is 1ms
 /// For the priority scheduler this is also the context switch frequency
-const unsigned int TICK_FREQ=1000;
+const unsigned int TICK_FREQ = 1000;
 
 ///\internal Aux timer run @ 100KHz
-///Note that since the timer is only 16 bits this imposes a limit on the
-///burst measurement of 655ms. If due to a pause_kernel() or
-///disable_interrupts() section a thread runs for more than that time, a wrong
-///burst value will be measured
-const unsigned int AUX_TIMER_CLOCK=100000;
-const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
+/// Note that since the timer is only 16 bits this imposes a limit on the
+/// burst measurement of 655ms. If due to a pause_kernel() or
+/// disable_interrupts() section a thread runs for more than that time, a wrong
+/// burst value will be measured
+const unsigned int AUX_TIMER_CLOCK = 100000;
+const unsigned int AUX_TIMER_MAX   = 0xffff;  ///<\internal Aux timer is 16 bits
 
 /// Serial port
-const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=19200;
-const bool defaultSerialFlowctrl=false;
+const unsigned int defaultSerial      = 1;
+const unsigned int defaultSerialSpeed = 115200;
+const bool defaultSerialFlowctrl      = false;
 #define SERIAL_1_DMA
 //#define SERIAL_2_DMA //Serial 1 is not used, so not enabling DMA
 //#define SERIAL_3_DMA //Serial 1 is not used, so not enabling DMA
 
 ///\def STDOUT_REDIRECTED_TO_DCC
-///If defined, stdout is redirected to the debug communication channel, and
-///will be printed if OpenOCD is connected. If not defined, stdout will be
-///redirected throug USART1, as usual.
+/// If defined, stdout is redirected to the debug communication channel, and
+/// will be printed if OpenOCD is connected. If not defined, stdout will be
+/// redirected throug USART1, as usual.
 //#define STDOUT_REDIRECTED_TO_DCC
 
 /**
  * \}
  */
 
-} //namespace miosix
+}  // namespace miosix
 
-#endif	/* BOARD_SETTINGS_H */
+#endif /* BOARD_SETTINGS_H */

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2016 by Terraneo Federico                               *
+ *   Copyright (C) 2014 by Terraneo Federico                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,7 +26,7 @@
  ***************************************************************************/
 
 #ifndef BOARD_SETTINGS_H
-#define BOARD_SETTINGS_H
+#define	BOARD_SETTINGS_H
 
 #include "util/version.h"
 
@@ -36,8 +36,7 @@
  */
 #define BOARD_SETTINGS_VERSION 100
 
-namespace miosix
-{
+namespace miosix {
 
 /**
  * \addtogroup Settings
@@ -46,45 +45,41 @@ namespace miosix
 
 /// Size of stack for main().
 /// The C standard library is stack-heavy (iprintf requires 1KB) but the
-/// STM32F429ZI only has 256KB of RAM so there is room for a big 4K stack.
-const unsigned int MAIN_STACK_SIZE = 4 * 1024;
+/// STM32F407VG only has 192KB of RAM so there is room for a big 4K stack.
+const unsigned int MAIN_STACK_SIZE=4*1024;
 
-/// Frequency of tick (in Hz). The frequency of the STM32F429ZI timer in the
-/// anakin board can be divided by 1000. This allows to use a 1KHz
+/// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
+/// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
 /// tick and the minimun Thread::sleep value is 1ms
 /// For the priority scheduler this is also the context switch frequency
-const unsigned int TICK_FREQ = 1000;
+const unsigned int TICK_FREQ=1000;
 
 ///\internal Aux timer run @ 100KHz
-/// Note that since the timer is only 16 bits this imposes a limit on the
-/// burst measurement of 655ms. If due to a pause_kernel() or
-/// disable_interrupts() section a thread runs for more than that time, a wrong
-/// burst value will be measured
-const unsigned int AUX_TIMER_CLOCK = 100000;
-const unsigned int AUX_TIMER_MAX   = 0xffff;  ///<\internal Aux timer is 16 bits
+///Note that since the timer is only 16 bits this imposes a limit on the
+///burst measurement of 655ms. If due to a pause_kernel() or
+///disable_interrupts() section a thread runs for more than that time, a wrong
+///burst value will be measured
+const unsigned int AUX_TIMER_CLOCK=100000;
+const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
 
 /// Serial port
-const unsigned int defaultSerial      = 1;
-const unsigned int defaultSerialSpeed = 115200;
-const bool defaultSerialFlowctrl      = false;
-//#define SERIAL_1_DMA //Serial 1 has no DMA as it would conflict with SPI6
-#define SERIAL_2_DMA  // Serial 2 is used by the piksi GPS, enable DMA
-//#define SERIAL_3_DMA //Serial 3 is not used
+const unsigned int defaultSerial=1;
+const unsigned int defaultSerialSpeed=115200;
+const bool defaultSerialFlowctrl=false;
+#define SERIAL_1_DMA
+//#define SERIAL_2_DMA //Serial 2 can't be used (GPIO conflict), so no DMA
+//#define SERIAL_3_DMA //Serial 3 can't be used (GPIO conflict), so no DMA
 
-#define I2C_WITH_DMA
+//#define I2C_WITH_DMA
 
-// SD card driver
-static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
-#ifdef __ENABLE_XRAM
-// Reduce SD clock to ~4.8MHz
-#define OVERRIDE_SD_CLOCK_DIVIDER_MAX 8
-#endif  //__ENABLE_XRAM
-//#define SD_ONE_BIT_DATABUS //Use full 4 bit data bus to SD card
+//SD card driver
+static const unsigned char sdVoltage=30; //Board powered @ 3.0V
+#define SD_ONE_BIT_DATABUS //Can't use 4 bit databus due to pin conflicts
 
 /**
  * \}
  */
 
-}  // namespace miosix
+} //namespace miosix
 
-#endif /* BOARD_SETTINGS_H */
+#endif	/* BOARD_SETTINGS_H */
