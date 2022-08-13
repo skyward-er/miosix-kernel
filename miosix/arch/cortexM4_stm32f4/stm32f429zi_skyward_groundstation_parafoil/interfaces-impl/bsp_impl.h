@@ -23,63 +23,54 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/
+ ***************************************************************************/ 
 
-#ifndef BOARD_SETTINGS_H
-#define	BOARD_SETTINGS_H
+/***********************************************************************
+* bsp_impl.h Part of the Miosix Embedded OS.
+* Board support package, this file initializes hardware.
+************************************************************************/
 
-#include "util/version.h"
+#ifndef BSP_IMPL_H
+#define BSP_IMPL_H
 
-/**
- * \internal
- * Versioning for board_settings.h for out of git tree projects
- */
-#define BOARD_SETTINGS_VERSION 100
+#include "config/miosix_settings.h"
+#include "interfaces/gpio.h"
+#include "drivers/stm32_hardware_rng.h"
 
 namespace miosix {
 
 /**
- * \addtogroup Settings
- * \{
- */
-
-/// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB) but the
-/// STM32F407VG only has 192KB of RAM so there is room for a big 4K stack.
-const unsigned int MAIN_STACK_SIZE=4*1024;
-
-/// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
-/// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
-/// tick and the minimun Thread::sleep value is 1ms
-/// For the priority scheduler this is also the context switch frequency
-const unsigned int TICK_FREQ=1000;
-
-///\internal Aux timer run @ 100KHz
-///Note that since the timer is only 16 bits this imposes a limit on the
-///burst measurement of 655ms. If due to a pause_kernel() or
-///disable_interrupts() section a thread runs for more than that time, a wrong
-///burst value will be measured
-const unsigned int AUX_TIMER_CLOCK=100000;
-const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
-
-/// Serial port
-const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=115200;
-const bool defaultSerialFlowctrl=false;
-#define SERIAL_1_DMA
-//#define SERIAL_2_DMA //Serial 2 can't be used (GPIO conflict), so no DMA
-//#define SERIAL_3_DMA //Serial 3 can't be used (GPIO conflict), so no DMA
-
-//#define I2C_WITH_DMA
-
-//SD card driver
-static const unsigned char sdVoltage=30; //Board powered @ 3.0V
-#define SD_ONE_BIT_DATABUS //Can't use 4 bit databus due to pin conflicts
+\addtogroup Hardware
+\{
+*/
 
 /**
- * \}
+ * \internal
+ * Called by stage_1_boot.cpp to enable the SDRAM before initializing .data/.bss
+ * Requires the CPU clock to be already configured (running from the PLL)
  */
+void configureSdram();
+
+/**
+ * \internal
+ * used by the ledOn() and ledOff() implementation
+ */
+typedef Gpio<GPIOG_BASE,14> _led;
+
+inline void ledOn()
+{
+    _led::high();
+}
+
+inline void ledOff()
+{
+    _led::low();
+}
+
+/**
+\}
+*/
 
 } //namespace miosix
 
-#endif	/* BOARD_SETTINGS_H */
+#endif //BSP_IMPL_H
