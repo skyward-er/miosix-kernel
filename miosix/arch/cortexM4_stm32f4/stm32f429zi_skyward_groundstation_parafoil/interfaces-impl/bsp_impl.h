@@ -23,21 +23,23 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
 /***********************************************************************
-* bsp_impl.h Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
+ * bsp_impl.h Part of the Miosix Embedded OS.
+ * Board support package, this file initializes hardware.
+ ************************************************************************/
 
 #ifndef BSP_IMPL_H
 #define BSP_IMPL_H
 
 #include "config/miosix_settings.h"
-#include "interfaces/gpio.h"
 #include "drivers/stm32_hardware_rng.h"
+#include "hwmapping.h"
+#include "interfaces/gpio.h"
 
-namespace miosix {
+namespace miosix
+{
 
 /**
 \addtogroup Hardware
@@ -51,26 +53,14 @@ namespace miosix {
  */
 void configureSdram();
 
-/**
- * \internal
- * used by the ledOn() and ledOff() implementation
- */
-typedef Gpio<GPIOG_BASE,14> _led;
+inline void ledOn() { peripherals::user_led::high(); }
 
-inline void ledOn()
-{
-    _led::high();
-}
-
-inline void ledOff()
-{
-    _led::low();
-}
+inline void ledOff() { peripherals::user_led::low(); }
 
 /**
 \}
 */
 
-} //namespace miosix
+}  // namespace miosix
 
-#endif //BSP_IMPL_H
+#endif  // BSP_IMPL_H

@@ -33,66 +33,38 @@
 namespace miosix
 {
 
-namespace interfaces 
+namespace interfaces
 {
 
-// GPS - CC3135
-namespace spi1
+// SX127x
+namespace spi4
 {
-using sck = Gpio<GPIOA_BASE, 5>;
-using miso = Gpio<GPIOB_BASE, 4>;
-using mosi = Gpio<GPIOA_BASE, 7>;
-} // namespace spi1
-
-// RA-01 - SX127x
-namespace spi4 
-{
-using sck = Gpio<GPIOE_BASE, 2>;
+using sck  = Gpio<GPIOE_BASE, 2>;
 using miso = Gpio<GPIOE_BASE, 5>;
 using mosi = Gpio<GPIOE_BASE, 6>;
-} // namespace spi4
+}  // namespace spi4
 
-namespace uart5
+namespace usart1
 {
-using tx = Gpio<GPIOC_BASE, 12>;
-using rx = Gpio<GPIOD_BASE, 2>;
-} // namespace uart5
+using tx = miosix::Gpio<GPIOA_BASE, 9>;
+using rx = miosix::Gpio<GPIOA_BASE, 10>;
+}  // namespace usart1
 
-} // namespace interfaces
+}  // namespace interfaces
 
 namespace peripherals
 {
 
-namespace ra01
+namespace sx127x
 {
-using cs = Gpio<GPIOC_BASE, 13>;
-using dio0 = Gpio<GPIOF_BASE, 6>;
-using nrst = Gpio<GPIOC_BASE, 14>;
-} // namespace ra01
+using cs   = Gpio<GPIOC_BASE, 1>;
+using dio0 = Gpio<GPIOF_BASE, 10>;
+}  // namespace sx127x
 
-namespace sx127x 
-{
-using cs = Gpio<GPIOE_BASE, 4>;
-using dio0 = Gpio<GPIOE_BASE, 3>;
-using nrst = Gpio<GPIOG_BASE, 2>;
-} // namespace sx127x
+using user_led = Gpio<GPIOG_BASE, 14>;
 
-namespace cc3135
-{
-using cs = Gpio<GPIOD_BASE, 4>;
-using hib = Gpio<GPIOG_BASE, 3>;
-using intr = Gpio<GPIOD_BASE, 5>;
-using nrst = Gpio<GPIOB_BASE, 7>;
-} // namespace cc3135
+}  // namespace peripherals
 
-namespace gps
-{
-using cs = Gpio<GPIOD_BASE, 7>;
-using nrst = Gpio<GPIOB_BASE, 2>;
-} // namespace gps
-
-} // namespace peripherals
-
-}
+}  // namespace miosix
 
 #endif  // HWMAPPING_H
