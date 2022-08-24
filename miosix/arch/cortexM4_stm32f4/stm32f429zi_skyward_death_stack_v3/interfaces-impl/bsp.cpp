@@ -437,23 +437,22 @@ void IRQbspInit()
 
     expulsion::servo::mode(Mode::ALTERNATE);
     expulsion::servo::alternateFunction(2);
-    expulsion::sense::mode(Mode::INPUT_PULL_UP);
+    expulsion::sense::mode(Mode::INPUT_PULL_DOWN);
     expulsion::nosecone_detach::mode(Mode::INPUT);
 
     cutter::enable::mode(Mode::OUTPUT);
     cutter::enable::low();
     cutter::enable_backup::mode(Mode::OUTPUT);
     cutter::enable_backup::low();
-    cutter::sense::mode(Mode::INPUT);
+    cutter::sense::mode(Mode::INPUT_ANALOG);
 
     airbrakes::servo::mode(Mode::ALTERNATE);
     airbrakes::servo::alternateFunction(3);
     airbrakes::sensor::mode(Mode::INPUT_ANALOG);
 
-    leds::green1::mode(Mode::OUTPUT);
-    leds::green2::mode(Mode::OUTPUT);
-    leds::blue::mode(Mode::OUTPUT);
     leds::red::mode(Mode::OUTPUT);
+    leds::green::mode(Mode::OUTPUT);
+    leds::blue::mode(Mode::OUTPUT);
 
     buzzer::drive::mode(Mode::ALTERNATE);
     buzzer::drive::alternateFunction(3);

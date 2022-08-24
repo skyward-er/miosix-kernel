@@ -181,7 +181,7 @@ namespace cutter
 {
 using enable        = Gpio<GPIOG_BASE, 2>;
 using enable_backup = Gpio<GPIOG_BASE, 3>;
-using sense         = Gpio<GPIOC_BASE, 14>;
+using sense         = Gpio<GPIOC_BASE, 5>;
 }  // namespace cutter
 
 namespace airbrakes
@@ -192,10 +192,9 @@ using sensor = Gpio<GPIOC_BASE, 3>;  // Airbrakes ADC
 
 namespace leds
 {
-using green1 = Gpio<GPIOC_BASE, 5>;
-using red    = Gpio<GPIOC_BASE, 4>;
-using blue   = Gpio<GPIOD_BASE, 13>;
-using green2 = Gpio<GPIOD_BASE, 12>;
+using red   = Gpio<GPIOC_BASE, 4>;
+using green = Gpio<GPIOD_BASE, 12>;
+using blue  = Gpio<GPIOD_BASE, 13>;
 }  // namespace leds
 
 namespace buzzer

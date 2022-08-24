@@ -60,18 +60,16 @@ void configureSdram();
 
 inline void ledOn()
 {
-    leds::green1::high();
-    leds::blue::high();
     leds::red::high();
-    leds::green2::high();
+    leds::green::high();
+    leds::blue::high();
 }
 
 inline void ledOff()
 {
-    leds::green1::low();
-    leds::blue::low();
     leds::red::low();
-    leds::green2::low();
+    leds::green::low();
+    leds::blue::low();
 }
 
 /**
