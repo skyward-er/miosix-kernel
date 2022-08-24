@@ -382,6 +382,7 @@ void IRQbspInit()
     timers::tim8ch2::alternateFunction(3);
 
     camMosfet::mode(Mode::OUTPUT);
+    camMosfet::low();
 
     using namespace sensors;
 
