@@ -437,7 +437,7 @@ void IRQbspInit()
 
     expulsion::servo::mode(Mode::ALTERNATE);
     expulsion::servo::alternateFunction(2);
-    expulsion::sense::mode(Mode::INPUT_PULL_DOWN);
+    expulsion::sense::mode(Mode::INPUT_PULL_UP);
     expulsion::nosecone_detach::mode(Mode::INPUT);
 
     cutter::enable::mode(Mode::OUTPUT);
