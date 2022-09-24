@@ -50,6 +50,7 @@ set(BOARDS
     stm32f205_generic
     stm32f429zi_skyward_death_stack
     stm32f429zi_skyward_death_stack_x
+    stm32f429zi_skyward_death_stack_x_maker_faire
     stm32f407vg_skyward_tortellino
     stm32f411ce_blackpill
     stm32f429zi_hre_test_stand

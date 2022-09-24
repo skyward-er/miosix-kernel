@@ -67,6 +67,7 @@ set(BOARDS
     stm32f407vg_skyward_tortellino
     stm32f429zi_skyward_death_stack
     stm32f429zi_skyward_death_stack_x
+    stm32f429zi_skyward_death_stack_x_maker_faire
     stm32f103cb_skyward_strain_board
     stm32f429zi_skyward_death_stack_v3
     stm32f429zi_skyward_groundstation
