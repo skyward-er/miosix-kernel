@@ -169,8 +169,8 @@ using launchpad_detach = RANDOM_PIN;  // launchpad detach
 
 namespace expulsion
 {
-using servo           = RANDOM_PIN;           // Pwm expulsion servo, TIM4_CH2
-using sense           = Gpio<GPIOE_BASE, 4>;  // Expulsion sensor
+using servo           = Gpio<GPIOB_BASE, 7>;  // Pwm expulsion servo, TIM4_CH2
+using sense           = RANDOM_PIN;           // Expulsion sensor
 using nosecone_detach = RANDOM_PIN;           // Nosecone detach
 }  // namespace expulsion
 
@@ -183,8 +183,8 @@ using sense         = Gpio<GPIOF_BASE, 6>;
 
 namespace airbrakes
 {
-using servo  = Gpio<GPIOD_BASE, 12>;  // Airbrakes PWM, TIM4_CH1
-using sensor = RANDOM_PIN;            // Airbrakes ADC
+using servo  = Gpio<GPIOC_BASE, 7>;  // Airbrakes PWM, TIM8_CH2
+using sensor = RANDOM_PIN;           // Airbrakes ADC
 }  // namespace airbrakes
 
 namespace leds

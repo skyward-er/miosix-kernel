@@ -395,69 +395,71 @@ void IRQbspInit()
     interfaces::uart4::tx::mode(Mode::ALTERNATE);
     interfaces::uart4::tx::alternateFunction(8);
 
-    interfaces::can1::rx::mode(Mode::ALTERNATE);
-    interfaces::can1::rx::alternateFunction(9);
-    interfaces::can1::tx::mode(Mode::ALTERNATE);
-    interfaces::can1::tx::alternateFunction(9);
+    // interfaces::can1::rx::mode(Mode::ALTERNATE);
+    // interfaces::can1::rx::alternateFunction(9);
+    // interfaces::can1::tx::mode(Mode::ALTERNATE);
+    // interfaces::can1::tx::alternateFunction(9);
 
-    sensors::ads131m04::cs1::mode(Mode::OUTPUT);
-    sensors::ads131m04::cs1::high();
+    // sensors::ads131m04::cs1::mode(Mode::OUTPUT);
+    // sensors::ads131m04::cs1::high();
 
-    sensors::bmx160::cs::mode(Mode::OUTPUT);
-    sensors::bmx160::cs::high();
-    sensors::bmx160::intr::mode(Mode::INPUT_PULL_UP);
+    // sensors::bmx160::cs::mode(Mode::OUTPUT);
+    // sensors::bmx160::cs::high();
+    // sensors::bmx160::intr::mode(Mode::INPUT_PULL_UP);
 
-    sensors::mpu9250::cs::mode(Mode::OUTPUT);
-    sensors::mpu9250::cs::high();
+    // sensors::mpu9250::cs::mode(Mode::OUTPUT);
+    // sensors::mpu9250::cs::high();
 
-    sensors::cc3135::cs::mode(Mode::OUTPUT);
-    sensors::cc3135::cs::high();
-    sensors::cc3135::intr::mode(Mode::INPUT_PULL_UP);
+    // sensors::cc3135::cs::mode(Mode::OUTPUT);
+    // sensors::cc3135::cs::high();
+    // sensors::cc3135::intr::mode(Mode::INPUT_PULL_UP);
 
-    sensors::sx127x::cs::mode(Mode::OUTPUT);
-    sensors::sx127x::cs::high();
-    sensors::sx127x::dio0::mode(Mode::INPUT);
+    // sensors::sx127x::cs::mode(Mode::OUTPUT);
+    // sensors::sx127x::cs::high();
+    // sensors::sx127x::dio0::mode(Mode::INPUT);
 
-    sensors::gps::cs::mode(Mode::OUTPUT);
-    sensors::gps::cs::high();
+    // sensors::gps::cs::mode(Mode::OUTPUT);
+    // sensors::gps::cs::high();
 
-    sensors::ms5803::cs::mode(Mode::OUTPUT);
-    sensors::ms5803::cs::high();
+    // sensors::ms5803::cs::mode(Mode::OUTPUT);
+    // sensors::ms5803::cs::high();
 
-    sensors::mlx91221_1::vout::mode(Mode::INPUT_ANALOG);
-    sensors::mlx91221_1::vout::high();
+    // sensors::mlx91221_1::vout::mode(Mode::INPUT_ANALOG);
+    // sensors::mlx91221_1::vout::high();
 
-    sensors::mlx91221_2::vout::mode(Mode::INPUT_ANALOG);
-    sensors::mlx91221_2::vout::high();
+    // sensors::mlx91221_2::vout::mode(Mode::INPUT_ANALOG);
+    // sensors::mlx91221_2::vout::high();
 
     sensors::launchpad_detach::mode(Mode::INPUT);
 
     expulsion::servo::mode(Mode::ALTERNATE);
     expulsion::servo::alternateFunction(2);
-    expulsion::sense::mode(Mode::INPUT_PULL_UP);
+    // expulsion::sense::mode(Mode::INPUT_PULL_UP);
     expulsion::nosecone_detach::mode(Mode::INPUT);
 
-    cutter::enable::mode(Mode::OUTPUT);
-    cutter::enable::low();
-    cutter::enable_backup::mode(Mode::OUTPUT);
-    cutter::enable_backup::low();
-    cutter::sense::mode(Mode::INPUT_ANALOG);
+    // cutter::enable::mode(Mode::OUTPUT);
+    // cutter::enable::low();
+    // cutter::enable_backup::mode(Mode::OUTPUT);
+    // cutter::enable_backup::low();
+    // cutter::sense::mode(Mode::INPUT_ANALOG);
 
     airbrakes::servo::mode(Mode::ALTERNATE);
     airbrakes::servo::alternateFunction(3);
-    airbrakes::sensor::mode(Mode::INPUT_ANALOG);
+    // airbrakes::sensor::mode(Mode::INPUT_ANALOG);
 
     leds::red::mode(Mode::OUTPUT);
     leds::green::mode(Mode::OUTPUT);
     leds::blue::mode(Mode::OUTPUT);
+    leds::led_blue1::mode(Mode::OUTPUT);
+    leds::led_ring::mode(Mode::OUTPUT);
 
     buzzer::drive::mode(Mode::ALTERNATE);
     buzzer::drive::alternateFunction(3);
 
     aux::servo::mode(Mode::ALTERNATE);
     aux::servo::alternateFunction(3);
-    aux::sense_1::mode(Mode::INPUT);
-    aux::sense_2::mode(Mode::INPUT);
+    // aux::sense_1::mode(Mode::INPUT);
+    // aux::sense_2::mode(Mode::INPUT);
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial, defaultSerialSpeed,
