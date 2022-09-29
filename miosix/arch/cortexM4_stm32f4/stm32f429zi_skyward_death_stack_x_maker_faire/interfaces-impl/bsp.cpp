@@ -447,6 +447,8 @@ void IRQbspInit()
     airbrakes::servo::alternateFunction(3);
     // airbrakes::sensor::mode(Mode::INPUT_ANALOG);
 
+    inputs::vbat::mode(Mode::INPUT_ANALOG);
+
     leds::red::mode(Mode::OUTPUT);
     leds::green::mode(Mode::OUTPUT);
     leds::blue::mode(Mode::OUTPUT);

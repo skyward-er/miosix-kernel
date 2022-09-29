@@ -62,7 +62,7 @@ using mosi = Gpio<GPIOE_BASE, 6>;
 // SX127x
 namespace spi5
 {
-using sck  = Gpio<GPIOF_BASE, 7>;
+using sck  = RANDOM_PIN;
 using miso = Gpio<GPIOF_BASE, 8>;
 using mosi = Gpio<GPIOF_BASE, 9>;
 }  // namespace spi5
@@ -166,6 +166,11 @@ using vout = RANDOM_PIN;  // ADC
 using launchpad_detach = RANDOM_PIN;  // launchpad detach
 
 }  // namespace sensors
+
+namespace inputs
+{
+using vbat = Gpio<GPIOF_BASE, 7>;
+}  // namespace inputs
 
 namespace expulsion
 {
