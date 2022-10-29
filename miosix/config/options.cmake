@@ -2331,8 +2331,8 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         )
 
         ## Add a #define to allow querying board name
-        list(APPEND CFLAGS_BASE -D_BOARD_STM32F429ZI_SKYWARD_DEATHST_X)
-        list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F429ZI_SKYWARD_DEATHST_X)
+        list(APPEND CFLAGS_BASE -D_BOARD_STM32F429ZI_SKYWARD_DEATHST_X_MAKER_FAIRE)
+        list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F429ZI_SKYWARD_DEATHST_X_MAKER_FAIRE)
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
