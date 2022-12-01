@@ -98,6 +98,22 @@
                                    This value must be a multiple of 0x200. */
 /******************************************************************************/
 
+// By Alberto Nidasio -- begin
+
+// Divide the input clock
+#define PLL_M (HSE_VALUE/1000000)
+
+#ifdef SYSCLK_FREQ_216MHz
+#define PLL_Q      9
+#define PLL_R      7
+#define PLL_N      432
+#define PLL_P      2
+#else
+#error Clock not selected
+#endif
+
+// By Alberto Nidasio -- end
+
 /**
   * @}
   */
@@ -237,7 +253,7 @@ void SystemInit(void)
   */
 void SystemCoreClockUpdate(void)
 {
-  uint32_t tmp = 0, pllvco = 0, pllp = 2, pllsource = 0, pllm = 2;
+  uint32_t tmp = 0, pllvco = 0, pllp = 2, pllSource = 0, pllm = 2;
   
   /* Get SYSCLK source -------------------------------------------------------*/
   tmp = RCC->CFGR & RCC_CFGR_SWS;
@@ -255,10 +271,10 @@ void SystemCoreClockUpdate(void)
       /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N
          SYSCLK = PLL_VCO / PLL_P
          */    
-      pllsource = (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> 22;
+      pllSource = (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> 22;
       pllm = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
       
-      if (pllsource != 0)
+      if (pllSource != 0)
       {
         /* HSE used as PLL clock source */
         pllvco = (HSE_VALUE / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 6);
@@ -286,20 +302,11 @@ void SystemCoreClockUpdate(void)
 //By TFT: added PLL initialization that was not present in the CMSIS code
 void SetSysClk(void)
 {
-  register uint32_t tmpreg = 0, timeout = 0xFFFF;
+  register uint32_t tmpReg = 0, timeout = 0xFFFF;
   
 /******************************************************************************/
 /*            PLL (clocked by HSE) used as System clock source                */
 /******************************************************************************/
-  
-/************************* PLL Parameters for clock at 216MHz******************/
-  //By TFT: the original settings were for a boar with a 25MHz clock, not 8MHz
-  //They also mention a PLL_R that doesn't exist in the datasheet and maps to
-  //reseved bits. Finally, the PLL input frequency was set to 2MHz to reduce
-  //PLL jitter as suggested by the datasheet.
-  
-  //uint32_t PLL_M = 25,PLL_Q = 9, PLL_R = 7, PLL_N = 432, PLL_P = 2;
-  uint32_t PLL_M = 4,PLL_Q = 9, PLL_R = 7, PLL_N = 216, PLL_P = 2;
   
   /* Enable Power Control clock */
   RCC->APB1ENR |= RCC_APB1ENR_PWREN;
@@ -313,8 +320,8 @@ void SetSysClk(void)
   /* Wait till HSE is ready and if Time out is reached exit */
   do
   {
-    tmpreg = RCC->CR & RCC_CR_HSERDY;
-  } while((tmpreg != RCC_CR_HSERDY) && (timeout-- > 0));
+    tmpReg = RCC->CR & RCC_CR_HSERDY;
+  } while((tmpReg != RCC_CR_HSERDY) && (timeout-- > 0));
   
   if(timeout != 0)
   {  
@@ -330,8 +337,8 @@ void SetSysClk(void)
     /* Wait till ODR is ready and if Time out is reached exit */
     do
     {
-      tmpreg = PWR->CSR1 & PWR_CSR1_ODRDY;
-    } while((tmpreg != PWR_CSR1_ODRDY) && (timeout-- > 0));
+      tmpReg = PWR->CSR1 & PWR_CSR1_ODRDY;
+    } while((tmpReg != PWR_CSR1_ODRDY) && (timeout-- > 0));
     
     /* Enable ODSW */
     PWR->CR1 |= 0x00020000;
@@ -339,8 +346,8 @@ void SetSysClk(void)
     /* Wait till ODR is ready and if Time out is reached exit */
     do
     {
-      tmpreg = PWR->CSR1 & PWR_CSR1_ODSWRDY;
-    } while((tmpreg != PWR_CSR1_ODSWRDY) && (timeout-- > 0)); 
+      tmpReg = PWR->CSR1 & PWR_CSR1_ODSWRDY;
+    } while((tmpReg != PWR_CSR1_ODSWRDY) && (timeout-- > 0)); 
    
     /* HCLK = SYSCLK / 1*/
     RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
@@ -362,8 +369,8 @@ void SetSysClk(void)
   timeout = 0xFFFF;
   do
   {
-    tmpreg = (RCC->CR & RCC_CR_PLLRDY); 
-  } while((tmpreg != RCC_CR_PLLRDY) && (timeout-- > 0));
+    tmpReg = (RCC->CR & RCC_CR_PLLRDY); 
+  } while((tmpReg != RCC_CR_PLLRDY) && (timeout-- > 0));
   
   if(timeout != 0)
   {
@@ -377,8 +384,8 @@ void SetSysClk(void)
     timeout = 0xFFFF;
     do
     {
-      tmpreg = (RCC->CFGR & RCC_CFGR_SWS); 
-    } while((tmpreg != RCC_CFGR_SWS) && (timeout-- > 0));
+      tmpReg = (RCC->CFGR & RCC_CFGR_SWS); 
+    } while((tmpReg != RCC_CFGR_SWS) && (timeout-- > 0));
   }   
 }
 
