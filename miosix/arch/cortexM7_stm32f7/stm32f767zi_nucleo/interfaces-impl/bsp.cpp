@@ -41,6 +41,7 @@
 #include "config/miosix_settings.h"
 #include "drivers/serial.h"
 #include "drivers/serial_stm32.h"
+#include "drivers/sd_stm32f2_f4_f7.h"
 #include "filesystem/console/console_device.h"
 #include "filesystem/file_access.h"
 #include "interfaces/arch_registers.h"

@@ -46,25 +46,14 @@ namespace miosix {
 /// The C standard library is stack-heavy (iprintf requires 1KB)
 const unsigned int MAIN_STACK_SIZE = 4 * 1024;
 
-/// Frequency of tick (in Hz). For the priority scheduler this is also the
-/// context switch frequency
-const unsigned int TICK_FREQ = 1000;
-
-///\internal Aux timer run @ 100KHz
-/// Note that since the timer is only 16 bits this imposes a limit on the
-/// burst measurement of 655ms. If due to a pause_kernel() or
-/// disable_interrupts() section a thread runs for more than that time, a wrong
-/// burst value will be measured
-const unsigned int AUX_TIMER_CLOCK = 100000;
-const unsigned int AUX_TIMER_MAX = 0xffff;  ///<\internal Aux timer is 16 bits
-
 /// Serial port
 const unsigned int defaultSerial = 1;
 const unsigned int defaultSerialSpeed = 115200;
-// #define SERIAL_1_DMA
+#define SERIAL_1_DMA
 
 // SD card driver
 static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
+// #define SD_ONE_BIT_DATABUS
 
 /**
  * \}
