@@ -23,29 +23,32 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
 /***********************************************************************
-* bsp.cpp Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
+ * bsp.cpp Part of the Miosix Embedded OS.
+ * Board support package, this file initializes hardware.
+ ************************************************************************/
 
-#include <cstdlib>
+#include "interfaces/bsp.h"
+
 #include <inttypes.h>
 #include <sys/ioctl.h>
-#include "interfaces/bsp.h"
-#include "kernel/kernel.h"
-#include "kernel/sync.h"
+
+#include <cstdlib>
+
+#include "board_settings.h"
+#include "config/miosix_settings.h"
+#include "drivers/sd_stm32f2_f4_f7.h"
+#include "drivers/serial.h"
+#include "filesystem/console/console_device.h"
+#include "filesystem/file_access.h"
+#include "interfaces/arch_registers.h"
 #include "interfaces/delays.h"
 #include "interfaces/portability.h"
-#include "interfaces/arch_registers.h"
-#include "config/miosix_settings.h"
+#include "kernel/kernel.h"
 #include "kernel/logging.h"
-#include "filesystem/file_access.h"
-#include "filesystem/console/console_device.h"
-#include "drivers/serial.h"
-#include "drivers/sd_stm32f2_f4.h"
-#include "board_settings.h"
+#include "kernel/sync.h"
 
 namespace miosix {
 
@@ -53,64 +56,68 @@ namespace miosix {
 // Initialization
 //
 
-void IRQbspInit()
-{
-    //Enable all gpios
+void IRQbspInit() {
+    // Enable all gpios
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN |
                     RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN |
                     RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
                     RCC_AHB1ENR_GPIOHEN;
     RCC_SYNC();
-    GPIOA->OSPEEDR=0xaaaaaaaa; //Default to 50MHz speed for all GPIOS
-    GPIOB->OSPEEDR=0xaaaaaaaa;
-    GPIOC->OSPEEDR=0xaaaaaaaa;
-    GPIOD->OSPEEDR=0xaaaaaaaa;
-    GPIOE->OSPEEDR=0xaaaaaaaa;
-    GPIOF->OSPEEDR=0xaaaaaaaa;
-    GPIOH->OSPEEDR=0xaaaaaaaa;
-    _led::mode(Mode::OUTPUT);
+    GPIOA->OSPEEDR = 0xaaaaaaaa;  // Default to 50MHz speed for all GPIOS
+    GPIOB->OSPEEDR = 0xaaaaaaaa;
+    GPIOC->OSPEEDR = 0xaaaaaaaa;
+    GPIOD->OSPEEDR = 0xaaaaaaaa;
+    GPIOE->OSPEEDR = 0xaaaaaaaa;
+    GPIOF->OSPEEDR = 0xaaaaaaaa;
+    GPIOH->OSPEEDR = 0xaaaaaaaa;
+
+    userLed1::mode(Mode::OUTPUT);
+    userLed2::mode(Mode::OUTPUT);
+    userLed3::mode(Mode::OUTPUT);
+    userBtn::mode(Mode::INPUT);
+
     ledOn();
     delayMs(100);
     ledOff();
-    auto tx=Gpio<GPIOD_BASE,8>::getPin(); tx.alternateFunction(7);
-    auto rx=Gpio<GPIOD_BASE,9>::getPin(); rx.alternateFunction(7);
+    auto tx = Gpio<GPIOD_BASE, 8>::getPin();
+    tx.alternateFunction(7);
+    auto rx = Gpio<GPIOD_BASE, 9>::getPin();
+    rx.alternateFunction(7);
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(3,defaultSerialSpeed,tx,rx)));
+        new STM32Serial(3, defaultSerialSpeed, tx, rx)));
 }
 
-void bspInit2()
-{
-    #ifdef WITH_FILESYSTEM
+void bspInit2() {
+#ifdef WITH_FILESYSTEM
     basicFilesystemSetup(SDIODriver::instance());
-    #endif //WITH_FILESYSTEM
+#endif  // WITH_FILESYSTEM
 }
 
 //
 // Shutdown and reboot
 //
 
-void shutdown()
-{
-    ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
+void shutdown() {
+    ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
 
-    #ifdef WITH_FILESYSTEM
+#ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-    #endif //WITH_FILESYSTEM
+#endif  // WITH_FILESYSTEM
 
     disableInterrupts();
-    for(;;) ;
+    for (;;)
+        ;
 }
 
-void reboot()
-{
-    ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
-    
-    #ifdef WITH_FILESYSTEM
+void reboot() {
+    ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
+
+#ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-    #endif //WITH_FILESYSTEM
+#endif  // WITH_FILESYSTEM
 
     disableInterrupts();
     miosix_private::IRQsystemReboot();
 }
 
-} //namespace miosix
+}  // namespace miosix

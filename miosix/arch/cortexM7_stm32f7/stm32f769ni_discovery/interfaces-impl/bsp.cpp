@@ -41,6 +41,7 @@
 #include "config/miosix_settings.h"
 #include "drivers/serial.h"
 #include "drivers/serial_stm32.h"
+#include "drivers/sd_stm32f2_f4_f7.h"
 #include "filesystem/console/console_device.h"
 #include "filesystem/file_access.h"
 #include "interfaces/arch_registers.h"
@@ -262,7 +263,9 @@ void IRQbspInit() {
 }
 
 void bspInit2() {
-    // Nothing to do
+#ifdef WITH_FILESYSTEM
+    basicFilesystemSetup(SDIODriver::instance());
+#endif  // WITH_FILESYSTEM
 }
 
 //
@@ -272,6 +275,10 @@ void bspInit2() {
 void shutdown() {
     ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
 
+#ifdef WITH_FILESYSTEM
+    FilesystemManager::instance().umountAll();
+#endif  // WITH_FILESYSTEM
+
     disableInterrupts();
     for (;;)
         ;
@@ -279,6 +286,10 @@ void shutdown() {
 
 void reboot() {
     ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
+
+#ifdef WITH_FILESYSTEM
+    FilesystemManager::instance().umountAll();
+#endif  // WITH_FILESYSTEM
 
     disableInterrupts();
     miosix_private::IRQsystemReboot();

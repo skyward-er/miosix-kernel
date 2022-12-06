@@ -63,7 +63,7 @@
 #OPT_BOARD := stm32l476rg_nucleo
 #OPT_BOARD := atsam4lc2aa_generic
 #OPT_BOARD := stm32f411ce_blackpill
-OPT_BOARD := stm32f767zi_nucleo
+#OPT_BOARD := stm32f767zi_nucleo
 #OPT_BOARD := stm32f769ni_discovery
 
 ##
@@ -2465,7 +2465,7 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
     $(ARCH_INC)/interfaces-impl/portability.cpp              \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     $(ARCH_INC)/interfaces-impl/gpio_impl.cpp                \
-    arch/common/drivers/sd_stm32f2_f4.cpp                    \
+    arch/common/drivers/sd_stm32f2_f4_f7.cpp                 \
     arch/common/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
 
 ##-----------------------------------------------------------------------------
@@ -2490,7 +2490,7 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        arch/common/drivers/sd_stm32f2_f4.cpp        \
+        arch/common/drivers/sd_stm32f2_f4_f7.cpp     \
         $(BOARD_INC)/interfaces-impl/delays.cpp      \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
@@ -2529,7 +2529,7 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        arch/common/drivers/sd_stm32f2_f4.cpp        \
+        arch/common/drivers/sd_stm32f2_f4_f7.cpp     \
         $(BOARD_INC)/interfaces-impl/delays.cpp      \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
@@ -2697,7 +2697,7 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        arch/common/drivers/sd_stm32f2_f4.cpp        \
+        arch/common/drivers/sd_stm32f2_f4_f7.cpp     \
         arch/common/drivers/stm32f2_f4_i2c.cpp       \
         arch/common/drivers/servo_stm32.cpp          \
         $(BOARD_INC)/interfaces-impl/delays.cpp      \
@@ -2942,7 +2942,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
         BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
-        LINKER_SCRIPT := $(BOARD_INC)/stm32_1024k+256k_rom.ld
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_1m+256k_rom.ld
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
@@ -2953,6 +2953,10 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F746ZG_NUCLEO
         CXXFLAGS_BASE += -D_BOARD_STM32F746ZG_NUCLEO
+
+        ## Select the SDMMC peripheral to use for the filesystem
+        SD := -D__SDMMC1
+        # SD := -D__SDMMC2
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
         CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_216MHz=216000000
@@ -2988,6 +2992,10 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F767ZI_NUCLEO
         CXXFLAGS_BASE += -D_BOARD_STM32F767ZI_NUCLEO
+
+        ## Select the SDMMC peripheral to use for the filesystem
+        SD := -D__SDMMC1
+        # SD := -D__SDMMC2
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
         CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_216MHz=216000000
@@ -3028,6 +3036,10 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Enables the initialization of the external 16MB SDRAM memory
         XRAM := -D__ENABLE_XRAM
 
+        ## Select the SDMMC peripheral to use for the filesystem
+        # SD := -D__SDMMC1
+        SD := -D__SDMMC2
+
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
         CLOCK_FREQ := -DHSE_VALUE=25000000 -DSYSCLK_FREQ_216MHz=216000000
 
@@ -3059,9 +3071,9 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
 
     AFLAGS_BASE   := $(ARCHOPTS)
     CFLAGS_BASE   += -D_ARCH_CORTEXM7_STM32F7 $(CLOCK_FREQ) $(XRAM) $(SRAM_BOOT)\
-                     $(ARCHOPTS) $(OPT_OPTIMIZATION) -c
+                     $(SD) $(ARCHOPTS) $(OPT_OPTIMIZATION) -c
     CXXFLAGS_BASE += -D_ARCH_CORTEXM7_STM32F7 $(CLOCK_FREQ) $(XRAM) $(SRAM_BOOT)\
-                     $(ARCHOPTS) $(OPT_EXCEPT) $(OPT_OPTIMIZATION) -c
+                     $(SD) $(ARCHOPTS) $(OPT_EXCEPT) $(OPT_OPTIMIZATION) -c
     LFLAGS_BASE   := $(ARCHOPTS) -Wl,--gc-sections,-Map,main.map                \
                      -Wl,-T$(KPATH)/$(LINKER_SCRIPT) $(OPT_EXCEPT)              \
                      $(OPT_OPTIMIZATION) -nostdlib
@@ -3073,6 +3085,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
     arch/common/core/mpu_cortexMx.cpp                        \
     arch/common/core/cache_cortexMx.cpp                      \
     arch/common/drivers/serial_stm32.cpp                     \
+    arch/common/drivers/sd_stm32f2_f4_f7.cpp                 \
     arch/common/drivers/dcc.cpp                              \
     $(ARCH_INC)/interfaces-impl/portability.cpp              \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \

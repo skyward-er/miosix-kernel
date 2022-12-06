@@ -2590,7 +2590,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         ${KPATH}/${ARCH_INC}/interfaces-impl/portability.cpp
         ${KPATH}/${ARCH_INC}/interfaces-impl/delays.cpp
         ${KPATH}/${ARCH_INC}/interfaces-impl/gpio_impl.cpp
-        ${KPATH}/arch/common/drivers/sd_stm32f2_f4.cpp
+        ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
         ${KPATH}/arch/common/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
     )
 
@@ -2617,7 +2617,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         set(ARCH_SRC
-            ${KPATH}/arch/common/drivers/sd_stm32f2_f4.cpp
+            ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/delays.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
         )
@@ -2657,7 +2657,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         set(ARCH_SRC
-            ${KPATH}/arch/common/drivers/sd_stm32f2_f4.cpp
+            ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/delays.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
         )
@@ -2808,7 +2808,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         set(ARCH_SRC
-            ${KPATH}/arch/common/drivers/sd_stm32f2_f4.cpp
+            ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/delays.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
         )
@@ -2836,7 +2836,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         set(ARCH_SRC
-            ${KPATH}/arch/common/drivers/sd_stm32f2_f4.cpp
+            ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/delays.cpp
@@ -3033,7 +3033,7 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
         set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
-        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_1024k+256k_rom.ld)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_1m+256k_rom.ld)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
@@ -3045,6 +3045,10 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ## Add a #define to allow querying board name
         list(APPEND CFLAGS_BASE -D_BOARD_STM32F746ZG_NUCLEO)
         list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F746ZG_NUCLEO)
+
+        ## Select the SDMMC peripheral to use for the filesystem
+        set(SD -D__SDMMC1)
+        # set(SD -D__SDMMC2)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
         set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_216MHz=216000000)
@@ -3081,6 +3085,10 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ## Add a #define to allow querying board name
         list(APPEND CFLAGS_BASE -D_BOARD_STM32F767ZI_NUCLEO)
         list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F767ZI_NUCLEO)
+
+        ## Select the SDMMC peripheral to use for the filesystem
+        set(SD -D__SDMMC1)
+        # set(SD -D__SDMMC2)
 
         ## Enables the initialization of the external 16MB SDRAM memory
         set(XRAM -D__ENABLE_XRAM)
@@ -3122,6 +3130,10 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         list(APPEND CFLAGS_BASE -D_BOARD_STM32F769NI_DISCO)
         list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F769NI_DISCO)
 
+        ## Select the SDMMC peripheral to use for the filesystem
+        # set(SD -D__SDMMC1)
+        set(SD -D__SDMMC2)
+
         ## Enables the initialization of the external 16MB SDRAM memory
         set(XRAM -D__ENABLE_XRAM)
 
@@ -3142,8 +3154,8 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
     endif()
 
     set(AFLAGS_BASE ${ARCHOPTS})
-    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${ARCHOPTS} ${OPT_OPTIMIZATION} -c)
-    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${ARCHOPTS} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
+    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${SD} ${ARCHOPTS} ${OPT_OPTIMIZATION} -c)
+    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM7_STM32F7 ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${SD} ${ARCHOPTS} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -c)
     set(LFLAGS_BASE ${ARCHOPTS} -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
@@ -3153,6 +3165,7 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ${KPATH}/arch/common/core/mpu_cortexMx.cpp
         ${KPATH}/arch/common/core/cache_cortexMx.cpp
         ${KPATH}/arch/common/drivers/serial_stm32.cpp
+        ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
         ${KPATH}/arch/common/drivers/dcc.cpp
         ${KPATH}/${ARCH_INC}/interfaces-impl/portability.cpp
         ${KPATH}/${ARCH_INC}/interfaces-impl/delays.cpp

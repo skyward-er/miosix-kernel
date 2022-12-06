@@ -44,33 +44,28 @@ namespace miosix {
  */
 
 /// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB) 
-const unsigned int MAIN_STACK_SIZE=4*1024;
+/// The C standard library is stack-heavy (iprintf requires 1KB)
+const unsigned int MAIN_STACK_SIZE = 4 * 1024;
 
-/// Frequency of tick (in Hz). The frequency of the STM32F100RB timer in the
-/// stm32vldiscovery board can be divided by 1000. This allows to use a 1KHz
-/// tick and the minimun Thread::sleep value is 1ms
-/// For the priority scheduler this is also the context switch frequency
-const unsigned int TICK_FREQ=1000;
+/// Frequency of tick (in Hz). For the priority scheduler this is also the
+/// context switch frequency
+const unsigned int TICK_FREQ = 1000;
 
 ///\internal Aux timer run @ 100KHz
-///Note that since the timer is only 16 bits this imposes a limit on the
-///burst measurement of 655ms. If due to a pause_kernel() or
-///disable_interrupts() section a thread runs for more than that time, a wrong
-///burst value will be measured
-const unsigned int AUX_TIMER_CLOCK=100000;
-const unsigned int AUX_TIMER_MAX=0xffff; ///<\internal Aux timer is 16 bits
+/// Note that since the timer is only 16 bits this imposes a limit on the
+/// burst measurement of 655ms. If due to a pause_kernel() or
+/// disable_interrupts() section a thread runs for more than that time, a wrong
+/// burst value will be measured
+const unsigned int AUX_TIMER_CLOCK = 100000;
+const unsigned int AUX_TIMER_MAX = 0xffff;  ///<\internal Aux timer is 16 bits
 
 /// Serial port
-//This board only exposes USART3, without flow control, connected to an UART/USB
-const unsigned int defaultSerialSpeed=115200;
-// #define SERIAL_1_DMA
-// #define SERIAL_2_DMA
+const unsigned int defaultSerialSpeed = 115200;
 #define SERIAL_3_DMA
 
-//SD card driver
-static const unsigned char sdVoltage=33; //Board powered @ 3.3V
-#define SD_ONE_BIT_DATABUS //For now we'll use 1 bit bus
+// SD card driver
+static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
+// #define SD_ONE_BIT_DATABUS
 
 /**
  * \}

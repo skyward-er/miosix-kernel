@@ -59,9 +59,12 @@ const unsigned int AUX_TIMER_CLOCK = 100000;
 const unsigned int AUX_TIMER_MAX = 0xffff;  ///<\internal Aux timer is 16 bits
 
 /// Serial port
-// This board only exposes USART3, without flow control
 const unsigned int defaultSerialSpeed = 115200;
 #define SERIAL_3_DMA
+
+// SD card driver
+static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
+// #define SD_ONE_BIT_DATABUS
 
 /**
  * \}

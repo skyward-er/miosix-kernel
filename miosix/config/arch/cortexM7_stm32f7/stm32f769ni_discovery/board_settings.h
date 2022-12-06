@@ -61,10 +61,11 @@ const unsigned int AUX_TIMER_MAX = 0xffff;  ///<\internal Aux timer is 16 bits
 /// Serial port
 const unsigned int defaultSerial = 1;
 const unsigned int defaultSerialSpeed = 115200;
-// #define SERIAL_1_DMA
+#define SERIAL_1_DMA
 
 // SD card driver
 static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
+// #define SD_ONE_BIT_DATABUS
 
 /**
  * \}
