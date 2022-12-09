@@ -9,14 +9,6 @@ GCCMAJOR := $(shell arm-miosix-eabi-gcc --version | \
 ## KPATH and CONFPATH are forwarded by the parent Makefile
 include $(CONFPATH)/config/Makefile.inc
 
-ifeq ("$(BUILD_VERBOSE)","1")
-Q :=
-ECHO := @true
-else
-Q := @
-ECHO := @echo
-endif
-
 ## List of all Miosix OS source files that have no special requirements
 ## and that must be built for each architecture (both .c and .cpp)
 ## These files will end up in libmiosix.a
@@ -68,7 +60,6 @@ Q := @
 ECHO := @echo
 endif
 
-BINDIR := bin/$(OPT_BOARD)
 ## Replaces both "foo.cpp"-->"foo.o" and "foo.c"-->"foo.o"
 OBJ := $(addsuffix .o, $(basename $(SRC)))
 
@@ -84,33 +75,27 @@ DFLAGS    := -MMD -MP
 ## Build libmiosix.a and stage_1_boot.o (whose path is in BOOT_FILE)
 ## The file stage_1_boot.o is compiled separately because
 ## it must not end up in libmiosix.a
-all: makedir $(OBJ) $(BOOT_FILE)
+all: $(OBJ) $(BOOT_FILE)
 	$(ECHO) "[PERL] Checking global objects"
 	$(Q)perl _tools/kernel_global_objects.pl $(OBJ)
 	$(ECHO) "[AR  ] libmiosix.a"
-	$(Q)$(AR) rcs $(BINDIR)/libmiosix.a $(OBJ)
-
-makedir:
-	$(Q) mkdir -p $(BINDIR)
+	$(Q)$(AR) rcs libmiosix.a $(OBJ)
 
 clean:
-	-rm -f $(OBJ) $(BOOT_FILE) $(BINDIR)/libmiosix.a $(OBJ:.o=.d)
+	-rm -f $(OBJ) $(BOOT_FILE) libmiosix.a $(OBJ:.o=.d)
 	-rm -f $(BOOT_FILE:.o=.d)
 
 %.o: %.s
-	$(ECHO) "[AS]   $<"
+	$(ECHO) "[AS  ] $<"
 	$(Q)$(AS)  $(AFLAGS) $< -o $@
 
 %.o : %.c
-	$(ECHO) "[CC]   $<"
+	$(ECHO) "[CC  ] $<"
 	$(Q)$(CC)  $(DFLAGS) $(CFLAGS) $< -o $@
 
 %.o : %.cpp
-	$(ECHO) "[CXX]  $<"
+	$(ECHO) "[CXX ] $<"
 	$(Q)$(CXX) $(DFLAGS) $(CXXFLAGS) $< -o $@
 
 #pull in dependecy info for existing .o files
 -include $(OBJ:.o=.d)
-
-.PHONY: clean makedir
-.NOTPARALLEL: clean makedir
