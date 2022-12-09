@@ -96,7 +96,7 @@ if(${OPT_BOARD} STREQUAL stm32f103ze_stm3210e-eval)
     ##    The microcontroller must have an external memory interface.
     ## Warning! enable external ram if you use a linker script that requires it
     ## (see the XRAM flag below)
-    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32/stm32f103ze_stm3210e-eval/)
+    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32f1/stm32f103ze_stm3210e-eval/)
     #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_512k+64k_rom.ld)
     #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_512k+64k_xram.ld)
     set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_512k+64k_all_in_xram.ld)
@@ -130,7 +130,7 @@ if(${OPT_BOARD} STREQUAL stm32f103ve_mp3v2)
     ## 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
     ## 2) Code + stack + heap in internal RAM (file *_ram.ld)
     ## Note: this board relies on a bootloader for interrupt forwarding in ram
-    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32/stm32f103ve_mp3v2/)
+    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32f1/stm32f103ve_mp3v2/)
     set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_512k+64k_rom.ld)
     #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_512k+64k_ram.ld)
 
@@ -429,7 +429,7 @@ endif()
 ## stm32f103c8_skyward_alderaan
 ##
 if(${OPT_BOARD} STREQUAL stm32f103c8_skyward_alderaan)
-    #set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32/stm32f103c8_skyward_aldeeran/)
+    #set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32f1/stm32f103c8_skyward_aldeeran/)
 
     ## Linker script type, there are two options
     ## 1) Code in FLASH, stack + heap in RAM
@@ -594,7 +594,7 @@ endif()
 if(${OPT_BOARD} STREQUAL stm32f103cx_generic)
 
     # stm32f103c8 has 64K, stm32f103cb has 128K
-    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32/stm32f103cx_generic/)
+    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32f1/stm32f103cx_generic/)
     #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_64k+20k_rom.ld)
     set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_128k+20k_rom.ld)
 
@@ -614,7 +614,7 @@ endif()
 
 if(${OPT_BOARD} STREQUAL stm32f103cb_skyward_strain_board)
 
-    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32/stm32f103cb_skyward_strain_board/)
+    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32f1/stm32f103cb_skyward_strain_board/)
     set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_128k+20k_rom.ld)
 
     ## Select clock frequency
@@ -641,7 +641,7 @@ endif()
 if(${OPT_BOARD} STREQUAL stm32f100cx_generic)
 
     # stm32f100c8 has 64K, stm32f100cb has 128K
-    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32/stm32f100cx_generic/)
+    set(LINKER_SCRIPT_PATH ${KPATH}/arch/cortexM3_stm32f1/stm32f100cx_generic/)
     #set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_64k+8k_rom.ld)
     set(LINKER_SCRIPT ${LINKER_SCRIPT_PATH}stm32_128k+8k_rom.ld)
 
@@ -1040,15 +1040,15 @@ endif()
 if(${OPT_BOARD} STREQUAL lpc2138_miosix_board)
     set(ARCH arm7_lpc2000)
 elseif(${OPT_BOARD} STREQUAL stm32f103ze_stm3210e-eval)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f103ve_mp3v2)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f100rb_stm32vldiscovery)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f103ve_strive_mini)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f103ze_redbull_v2)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f407vg_stm32f4discovery)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f407vg_skyward_tortellino)
@@ -1068,9 +1068,9 @@ elseif(${OPT_BOARD} STREQUAL stm32f407vg_bitsboard)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_stm32f4discovery)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f103cb_als_mainboard_rev2)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f100cb_tempsensor)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_oledboard2)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL efm32gg332f1024_wandstem)
@@ -1080,7 +1080,7 @@ elseif(${OPT_BOARD} STREQUAL stm32f411re_nucleo)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_anakin)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f100rc_solertegiard)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f205rc_skyward_stormtrooper)
     set(ARCH cortexM3_stm32f2)
 elseif(${OPT_BOARD} STREQUAL stm32f205rc_skyward_ciuti)
@@ -1088,11 +1088,11 @@ elseif(${OPT_BOARD} STREQUAL stm32f205rc_skyward_ciuti)
 elseif(${OPT_BOARD} STREQUAL stm32f401vc_stm32f4discovery)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f103c8_breakout)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f103c8_skyward_alderaan)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f100c8_microboard)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f469ni_stm32f469i-disco)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_homeone)
@@ -1110,9 +1110,9 @@ elseif(${OPT_BOARD} STREQUAL stm32f407vg_thermal_test_chip)
 elseif(${OPT_BOARD} STREQUAL stm32f205_generic)
     set(ARCH cortexM3_stm32f2)
 elseif(${OPT_BOARD} STREQUAL stm32f103cx_generic)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f103cb_skyward_strain_board)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f072rb_stm32f0discovery)
     set(ARCH cortexM0_stm32f0)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_death_stack)
@@ -1132,11 +1132,11 @@ elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_groundstation_parafoil)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_pyxis_auxiliary)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f100cx_generic)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32f303vc_stm32f3discovery)
     set(ARCH cortexM4_stm32f3)
 elseif(${OPT_BOARD} STREQUAL stm32f100c8_vaisala_rs41)
-    set(ARCH cortexM3_stm32)
+    set(ARCH cortexM3_stm32f1)
 elseif(${OPT_BOARD} STREQUAL stm32l476rg_nucleo)
     set(ARCH cortexM4_stm32l4)
 elseif(${OPT_BOARD} STREQUAL atsam4lc2aa_generic)
@@ -1228,11 +1228,11 @@ if(${ARCH} STREQUAL arm7_lpc2000)
     set(PROGRAM_CMDLINE lpc21isp -verify main.hex /dev/ttyUSB0 115200 14746)
 
 ##-----------------------------------------------------------------------------
-## ARCHITECTURE: cortexM3_stm32
+## ARCHITECTURE: cortexM3_stm32f1
 ##
-elseif(${ARCH} STREQUAL cortexM3_stm32)
+elseif(${ARCH} STREQUAL cortexM3_stm32f1)
     ## Base directory with header files for this board
-    set(ARCH_INC arch/cortexM3_stm32/common)
+    set(ARCH_INC arch/cortexM3_stm32f1/common)
 
     ##-------------------------------------------------------------------------
     ## BOARD: stm32f103ze_stm3210e-eval
@@ -1240,7 +1240,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     if(${OPT_BOARD} STREQUAL stm32f103ze_stm3210e-eval)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103ze_stm3210e-eval)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103ze_stm3210e-eval)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1276,7 +1276,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103ve_mp3v2)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103ve_mp3v2)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103ve_mp3v2)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1315,7 +1315,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f100rb_stm32vldiscovery)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f100rb_stm32vldiscovery)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f100rb_stm32vldiscovery)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1352,7 +1352,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f100rc_solertegiard)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f100rc_solertegiard)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f100rc_solertegiard)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1388,7 +1388,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103ve_strive_mini)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103ve_strive_mini)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103ve_strive_mini)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1423,7 +1423,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103ze_redbull_v2)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103ze_redbull_v2)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103ze_redbull_v2)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1459,7 +1459,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103cb_als_mainboard_rev2)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103cb_als_mainboard_rev2)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103cb_als_mainboard_rev2)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1492,7 +1492,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f100cb_tempsensor)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f100cb_tempsensor)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f100cb_tempsensor)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1525,7 +1525,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103c8_breakout)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103c8_breakout)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103c8_breakout)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1558,7 +1558,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103c8_skyward_alderaan)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103c8_skyward_alderaan)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103c8_skyward_alderaan)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1588,7 +1588,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f100c8_microboard)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f100c8_microboard)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f100c8_microboard)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1624,7 +1624,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103cx_generic)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103cx_generic)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103cx_generic)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1656,7 +1656,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f103cb_skyward_strain_board)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f103cb_skyward_strain_board)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f103cb_skyward_strain_board)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1688,7 +1688,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f100cx_generic)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f100cx_generic)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f100cx_generic)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
@@ -1720,7 +1720,7 @@ elseif(${ARCH} STREQUAL cortexM3_stm32)
     elseif(${OPT_BOARD} STREQUAL stm32f100c8_vaisala_rs41)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM3_stm32/stm32f100c8_vaisala_rs41)
+        set(BOARD_INC arch/cortexM3_stm32f1/stm32f100c8_vaisala_rs41)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
