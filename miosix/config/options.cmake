@@ -3247,7 +3247,7 @@ elseif(${ARCH} STREQUAL cortexM7_stm32h7)
 ##
 elseif(${ARCH} STREQUAL cortexM0_stm32f0)
     ## Base directory with else header files for this board
-    set(ARCH_INC arch/cortexM0_stm32/common)
+    set(ARCH_INC arch/cortexM0_stm32f0/common)
 
     ##-------------------------------------------------------------------------
     ## BOARD: stm32f072rb_stm32f0discovery
@@ -3255,7 +3255,7 @@ elseif(${ARCH} STREQUAL cortexM0_stm32f0)
     if(${OPT_BOARD} STREQUAL stm32f072rb_stm32f0discovery)
 
         ## Base directory with header files for this board
-        set(BOARD_INC arch/cortexM0_stm32/stm32f072rb_stm32f0discovery)
+        set(BOARD_INC arch/cortexM0_stm32f0/stm32f072rb_stm32f0discovery)
 
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
