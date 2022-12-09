@@ -1750,8 +1750,8 @@ elseif(${ARCH} STREQUAL cortexM3_stm32f1)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m3 -mthumb)
-    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM3_STM32 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
-    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM3_STM32 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM3_STM32F1 ${CLOCK_FREQ} ${XRAM} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
+    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM3_STM32F1 ${CLOCK_FREQ} ${XRAM} ${OPT_EXCEPT} -mcpu=cortex-m3 -mthumb ${OPT_OPTIMIZATION} -c)
     set(LFLAGS_BASE -mcpu=cortex-m3 -mthumb -Wl,--gc-sections,-Map=main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
@@ -3288,8 +3288,8 @@ elseif(${ARCH} STREQUAL cortexM0_stm32f0)
 
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     set(AFLAGS_BASE -mcpu=cortex-m0 -mthumb)
-    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM0_STM32 ${CLOCK_FREQ} -mcpu=cortex-m0 -mthumb ${OPT_OPTIMIZATION} -c)
-    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM0_STM32 ${CLOCK_FREQ} -mcpu=cortex-m0 -mthumb ${OPT_OPTIMIZATION} -c)
+    list(APPEND CFLAGS_BASE -D_ARCH_CORTEXM0_STM32F0 ${CLOCK_FREQ} -mcpu=cortex-m0 -mthumb ${OPT_OPTIMIZATION} -c)
+    list(APPEND CXXFLAGS_BASE -D_ARCH_CORTEXM0_STM32F0 ${CLOCK_FREQ} -mcpu=cortex-m0 -mthumb ${OPT_OPTIMIZATION} -c)
     set(LFLAGS_BASE -mcpu=cortex-m0 -mthumb -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
     ## Select architecture specific files
