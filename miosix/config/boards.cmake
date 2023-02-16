@@ -75,6 +75,7 @@ set(BOARDS
     stm32f429zi_skyward_groundstation_parafoil
     stm32f429zi_skyward_pyxis_auxiliary
     stm32f429zi_skyward_parafoil
+    stm32f429zi_skyward_rig
     stm32f767zi_nucleo
     stm32f769ni_discovery
 )
