@@ -200,6 +200,7 @@ namespace miosix
 #endif //__ENABLE_XRAM
 
         RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+        RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
         RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
         RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
         RCC->APB2ENR |= RCC_APB2ENR_SPI6EN;
@@ -224,6 +225,13 @@ namespace miosix
         spi1::miso::alternateFunction(5);
         spi1::mosi::mode(Mode::ALTERNATE);
         spi1::mosi::alternateFunction(5);
+
+        spi2::sck::mode(Mode::ALTERNATE);
+        spi2::sck::alternateFunction(5);
+        spi2::miso::mode(Mode::ALTERNATE);
+        spi2::miso::alternateFunction(5);
+        spi2::mosi::mode(Mode::ALTERNATE);
+        spi2::mosi::alternateFunction(5);
 
         spi4::sck::mode(Mode::ALTERNATE);
         spi4::sck::alternateFunction(5);
@@ -272,6 +280,28 @@ namespace miosix
 
         MAX31855::cs::mode(Mode::OUTPUT);
         MAX31855::cs::high();
+
+        using namespace relays;
+        relay1::mode(Mode::OUTPUT);
+        relay2::mode(Mode::OUTPUT);
+        relay3::mode(Mode::OUTPUT);
+        relay4::mode(Mode::OUTPUT);
+
+        relay1::high();
+        relay2::high();
+        relay3::high();
+        relay4::high();
+
+        using namespace radio;
+        cs::mode(Mode::OUTPUT);
+        dio0::mode(Mode::INPUT_PULL_UP);
+        dio1::mode(Mode::INPUT_PULL_UP);
+        dio3::mode(Mode::INPUT_PULL_UP);
+        txEn::mode(Mode::OUTPUT);
+        rxEn::mode(Mode::OUTPUT);
+        nrst::mode(Mode::OUTPUT);
+
+        //TODO define default configs
 
         using namespace ui;
 
