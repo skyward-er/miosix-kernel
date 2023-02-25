@@ -301,6 +301,9 @@ namespace miosix
         rxEn::mode(Mode::OUTPUT);
         nrst::mode(Mode::OUTPUT);
 
+        cs::high();
+        nrst::high();
+
         //TODO define default configs
 
         using namespace ui;
