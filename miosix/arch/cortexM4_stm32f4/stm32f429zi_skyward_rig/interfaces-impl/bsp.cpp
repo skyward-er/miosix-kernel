@@ -211,7 +211,7 @@ namespace miosix
         RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
         RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
         RCC->APB2ENR |= RCC_APB2ENR_TIM8EN;
-        RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;
+        RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
         RCC->APB2ENR |= RCC_APB2ENR_TIM10EN;
         RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
 
@@ -263,13 +263,13 @@ namespace miosix
         timers::tim11ch1::mode(Mode::ALTERNATE);
         timers::tim3ch1::mode(Mode::ALTERNATE);
         timers::tim10ch1::mode(Mode::ALTERNATE);
-        timers::tim9ch2::mode(Mode::ALTERNATE);
+        timers::tim2ch2::mode(Mode::ALTERNATE);
 
         timers::tim4ch2::alternateFunction(2);
         timers::tim11ch1::alternateFunction(3);
         timers::tim3ch1::alternateFunction(2);
         timers::tim10ch1::alternateFunction(3);
-        timers::tim9ch2::alternateFunction(3);
+        timers::tim2ch2::alternateFunction(1);
 
         using namespace sensors;
         ADS131_1::cs::mode(Mode::OUTPUT);
