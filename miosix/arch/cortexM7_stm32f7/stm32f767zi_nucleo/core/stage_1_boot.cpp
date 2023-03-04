@@ -21,43 +21,11 @@
  * Never returns.
  */
 void program_startup() __attribute__((noreturn));
-void program_startup() {
-    // Cortex M7 core appears to get out of reset with interrupts already
-    // enabled
+void program_startup()
+{
+    //Cortex M7 core appears to get out of reset with interrupts already enabled
     __disable_irq();
 
-    miosix::IRQconfigureCache();
-
-    // These are defined in the linker script
-    extern unsigned char _etext asm("_etext");
-    extern unsigned char _data asm("_data");
-    extern unsigned char _edata asm("_edata");
-    extern unsigned char _bss_start asm("_bss_start");
-    extern unsigned char _bss_end asm("_bss_end");
-
-    // Initialize .data section, clear .bss section
-    unsigned char *etext = &_etext;
-    unsigned char *data = &_data;
-    unsigned char *edata = &_edata;
-    unsigned char *bss_start = &_bss_start;
-    unsigned char *bss_end = &_bss_end;
-    memcpy(data, etext, edata - data);
-    memset(bss_start, 0, bss_end - bss_start);
-
-    // Move on to stage 2
-    _init();
-
-    // If main returns, reboot
-    NVIC_SystemReset();
-    for (;;)
-        ;
-}
-
-/**
- * Reset handler, called by hardware immediately after reset
- */
-void Reset_Handler() __attribute__((__interrupt__, noreturn));
-void Reset_Handler() {
     /**
      * SystemInit() is called *before* initializing .data and zeroing .bss
      * Despite all startup files provided by ST do the opposite, there are three
@@ -73,6 +41,38 @@ void Reset_Handler() {
      */
     SystemInit();
 
+    miosix::IRQconfigureCache();
+
+    // These are defined in the linker script
+    extern unsigned char _etext asm("_etext");
+    extern unsigned char _data asm("_data");
+    extern unsigned char _edata asm("_edata");
+    extern unsigned char _bss_start asm("_bss_start");
+    extern unsigned char _bss_end asm("_bss_end");
+
+    // Initialize .data section, clear .bss section
+    unsigned char *etext=&_etext;
+    unsigned char *data=&_data;
+    unsigned char *edata=&_edata;
+    unsigned char *bss_start=&_bss_start;
+    unsigned char *bss_end=&_bss_end;
+    memcpy(data, etext, edata-data);
+    memset(bss_start, 0, bss_end-bss_start);
+
+    // Move on to stage 2
+    _init();
+
+    // If main returns, reboot
+    NVIC_SystemReset();
+    for(;;) ;
+}
+
+/**
+ * Reset handler, called by hardware immediately after reset
+ */
+void Reset_Handler() __attribute__((__interrupt__, noreturn));
+void Reset_Handler()
+{
     /*
      * Load into the program stack pointer the heap end address and switch from
      * the msp to sps.
@@ -86,8 +86,7 @@ void Reset_Handler() {
         "msr psp, r0                  \n\t"
         "movw r0, #2                  \n\n"  // Set the control register to use
         "msr control, r0              \n\t"  // the process stack
-        "isb                          \n\t" ::
-            : "r0");
+        "isb                          \n\t":::"r0");
 
     program_startup();
 }
@@ -227,7 +226,8 @@ extern char _main_stack_top asm("_main_stack_top");
 // Interrupt vectors, must be placed @ address 0x00000000
 // The extern declaration is required otherwise g++ optimizes it out
 extern void (*const __Vectors[])();
-void (*const __Vectors[])() __attribute__((section(".isr_vector"))) = {
+void (*const __Vectors[])() __attribute__((section(".isr_vector"))) =
+{
     reinterpret_cast<void (*)()>(&_main_stack_top), /* Stack pointer*/
     Reset_Handler,                                  /* Reset Handler */
     NMI_Handler,                                    /* NMI Handler */

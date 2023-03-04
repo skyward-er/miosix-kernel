@@ -40,10 +40,10 @@
 //Note: enabling debugging might cause deadlock when using sleep() or reboot()
 //The bug won't be fixed because debugging is only useful for driver development
 ///\internal Debug macro, for normal conditions
-// #define DBG iprintf
+//#define DBG iprintf
 #define DBG(x,...) do {} while(0)
 ///\internal Debug macro, for errors only
-// #define DBGERR iprintf
+//#define DBGERR iprintf
 #define DBGERR(x,...) do {} while(0)
 
 /*
@@ -52,16 +52,16 @@
  */
 #if defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
 
-#if defined(__SDMMC1)
+#if SD_SDMMC==1
 #define SDIO                 SDMMC1
 #define RCC_APB2ENR_SDIOEN   RCC_APB2ENR_SDMMC1EN
 #define SDIO_IRQn            SDMMC1_IRQn
-#elif defined(__SDMMC2)
-#define SDIO SDMMC2
+#elif SD_SDMMC==2
+#define SDIO                 SDMMC2
 #define RCC_APB2ENR_SDIOEN   RCC_APB2ENR_SDMMC2EN
 #define SDIO_IRQn            SDMMC2_IRQn
 #else
-#warning This error is a reminder that you have not selected between SDMMC1 and SDMMC2 in Makefile.int
+#error SD_SDMMC undefined or not in range
 #endif
 
 #define SDIO_STA_STBITERR    0 //This bit has been removed
@@ -100,9 +100,15 @@
 #define SDIO_POWER_PWRCTRL_1 SDMMC_POWER_PWRCTRL_1
 #define SDIO_POWER_PWRCTRL_0 SDMMC_POWER_PWRCTRL_0
 
+constexpr int ICR_FLAGS_CLR=0x5ff;
+
+#else  //defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
+
+constexpr int ICR_FLAGS_CLR=0x7ff;
+
 #endif //defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
 
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
+#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
 #define DMA_Stream           DMA2_Stream0
 #else
 #define DMA_Stream           DMA2_Stream3
@@ -112,7 +118,7 @@
  * \internal
  * DMA2 Stream interrupt handler
  */
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
+#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
 void __attribute__((naked)) DMA2_Stream0_IRQHandler()
 #else
 void __attribute__((naked)) DMA2_Stream3_IRQHandler()
@@ -127,9 +133,9 @@ void __attribute__((naked)) DMA2_Stream3_IRQHandler()
  * \internal
  * SDIO interrupt handler
  */
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC1)
+#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==1
 void __attribute__((naked)) SDMMC1_IRQHandler()
-#elif (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
+#elif (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
 void __attribute__((naked)) SDMMC2_IRQHandler()
 #else //stm32f2 and stm32f4
 void __attribute__((naked)) SDIO_IRQHandler()
@@ -154,28 +160,28 @@ static unsigned int sdioFlags;      ///< \internal SDIO status flags
 void __attribute__((used)) SDDMAirqImpl()
 {
     dmaFlags=DMA2->LISR;
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
-    if (dmaFlags & (DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0))
-        transferError = true;
+    #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
+    if(dmaFlags & (DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0))
+        transferError=true;
 
-    DMA2->LIFCR = DMA_LIFCR_CTCIF0 |
-                    DMA_LIFCR_CTEIF0 |
-                    DMA_LIFCR_CDMEIF0 |
-                    DMA_LIFCR_CFEIF0;
-#else
-    if (dmaFlags & (DMA_LISR_TEIF3 | DMA_LISR_DMEIF3 | DMA_LISR_FEIF3))
-        transferError = true;
+    DMA2->LIFCR = DMA_LIFCR_CTCIF0
+                | DMA_LIFCR_CTEIF0
+                | DMA_LIFCR_CDMEIF0
+                | DMA_LIFCR_CFEIF0;
+    #else
+    if(dmaFlags & (DMA_LISR_TEIF3 | DMA_LISR_DMEIF3 | DMA_LISR_FEIF3))
+        transferError=true;
 
-    DMA2->LIFCR = DMA_LIFCR_CTCIF3 |
-                    DMA_LIFCR_CTEIF3 |
-                    DMA_LIFCR_CDMEIF3 |
-                    DMA_LIFCR_CFEIF3;
-#endif
+    DMA2->LIFCR = DMA_LIFCR_CTCIF3
+                | DMA_LIFCR_CTEIF3
+                | DMA_LIFCR_CDMEIF3
+                | DMA_LIFCR_CFEIF3;
+    #endif
     
     if(!waiting) return;
     waiting->IRQwakeup();
-	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		Scheduler::IRQfindNextThread();
+    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+        Scheduler::IRQfindNextThread();
     waiting=0;
 }
 
@@ -190,12 +196,12 @@ void __attribute__((used)) SDirqImpl()
                     SDIO_STA_TXUNDERR | SDIO_STA_DTIMEOUT | SDIO_STA_DCRCFAIL))
         transferError=true;
     
-    SDIO->ICR=0x7ff;//Clear flags
+    SDIO->ICR=ICR_FLAGS_CLR; //Clear flags
     
     if(!waiting) return;
     waiting->IRQwakeup();
-	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		Scheduler::IRQfindNextThread();
+    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+        Scheduler::IRQfindNextThread();
     waiting=0;
 }
 
@@ -224,20 +230,20 @@ enum CardType
 static CardType cardType=Invalid;
 
 //SD card GPIOs
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
-typedef Gpio<GPIOG_BASE, 9> sdD0;
-typedef Gpio<GPIOG_BASE, 10> sdD1;
-typedef Gpio<GPIOB_BASE, 3> sdD2;
-typedef Gpio<GPIOB_BASE, 4> sdD3;
-typedef Gpio<GPIOD_BASE, 6> sdCLK;
-typedef Gpio<GPIOD_BASE, 7> sdCMD;
+#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
+typedef Gpio<GPIOG_BASE,9>  sdD0;
+typedef Gpio<GPIOG_BASE,10> sdD1;
+typedef Gpio<GPIOB_BASE,3>  sdD2;
+typedef Gpio<GPIOB_BASE,4>  sdD3;
+typedef Gpio<GPIOD_BASE,6>  sdCLK;
+typedef Gpio<GPIOD_BASE,7>  sdCMD;
 #else
-typedef Gpio<GPIOC_BASE, 8> sdD0;
-typedef Gpio<GPIOC_BASE, 9> sdD1;
-typedef Gpio<GPIOC_BASE, 10> sdD2;
-typedef Gpio<GPIOC_BASE, 11> sdD3;
-typedef Gpio<GPIOC_BASE, 12> sdCLK;
-typedef Gpio<GPIOD_BASE, 2> sdCMD;
+typedef Gpio<GPIOC_BASE,8>  sdD0;
+typedef Gpio<GPIOC_BASE,9>  sdD1;
+typedef Gpio<GPIOC_BASE,10> sdD2;
+typedef Gpio<GPIOC_BASE,11> sdD3;
+typedef Gpio<GPIOC_BASE,12> sdCLK;
+typedef Gpio<GPIOD_BASE,2>  sdCMD;
 #endif
 
 
@@ -672,12 +678,12 @@ CmdResult Command::send(CommandType cmd, unsigned int arg)
         {
             if(SDIO->STA & SDIO_STA_CMDSENT)
             {
-                SDIO->ICR=0x7ff;//Clear flags
+                SDIO->ICR=ICR_FLAGS_CLR;//Clear flags
                 return CmdResult(cc,CmdResult::Ok);
             }
             delayUs(1);
         }
-        SDIO->ICR=0x7ff;//Clear flags
+        SDIO->ICR=ICR_FLAGS_CLR;//Clear flags
         return CmdResult(cc,CmdResult::Timeout);
     }
 
@@ -687,7 +693,7 @@ CmdResult Command::send(CommandType cmd, unsigned int arg)
         unsigned int status=SDIO->STA;
         if(status & SDIO_STA_CMDREND)
         {
-            SDIO->ICR=0x7ff;//Clear flags
+            SDIO->ICR=ICR_FLAGS_CLR;//Clear flags
             if(SDIO->RESPCMD==cc) return CmdResult(cc,CmdResult::Ok);
             else return CmdResult(cc,CmdResult::RespNotMatch);
         }
@@ -925,12 +931,21 @@ static void displayBlockTransferError()
 static unsigned int dmaTransferCommonSetup(const unsigned char *buffer)
 {
     //Clear both SDIO and DMA interrupt flags
-    SDIO->ICR=0x4005ff;
-    DMA2->LIFCR=0xffffffff;
+    SDIO->ICR=ICR_FLAGS_CLR;
+    #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
+    DMA2->LIFCR = DMA_LIFCR_CTCIF0
+                | DMA_LIFCR_CTEIF0
+                | DMA_LIFCR_CDMEIF0
+                | DMA_LIFCR_CFEIF0;
+    #else
+    DMA2->LIFCR = DMA_LIFCR_CTCIF3
+                | DMA_LIFCR_CTEIF3
+                | DMA_LIFCR_CDMEIF3
+                | DMA_LIFCR_CFEIF3;
+    #endif
 
     transferError=false;
-    dmaFlags=0;
-    sdioFlags=0;
+    dmaFlags=sdioFlags=0;
     waiting=Thread::getCurrentThread();
     
     //Select DMA transfer size based on buffer alignment. Best performance
@@ -976,28 +991,28 @@ static bool multipleBlockRead(unsigned char *buffer, unsigned int nblk,
                SDIO_MASK_TXUNDERRIE | //Interrupt on tx underrun
                SDIO_MASK_DCRCFAILIE | //Interrupt on data CRC fail
                SDIO_MASK_DTIMEOUTIE;  //Interrupt on data timeout
-	DMA_Stream->PAR=reinterpret_cast<unsigned int>(&SDIO->FIFO);
-	DMA_Stream->M0AR=reinterpret_cast<unsigned int>(buffer);
-	//Note: DMA_Stream->NDTR is don't care in peripheral flow control mode
-    DMA_Stream->FCR=DMA_SxFCR_FEIE    | //Interrupt on fifo error
-                      DMA_SxFCR_DMDIS   | //Fifo enabled
-                      DMA_SxFCR_FTH_0;    //Take action if fifo half full
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
-    DMA_Stream->CR = (11 << DMA_SxCR_CHSEL_Pos) | // Channel 4 (SDIO)
-#else
-    DMA_Stream->CR = DMA_SxCR_CHSEL_2 | // Channel 4 (SDIO)
-#endif
-                     DMA_SxCR_PBURST_0  | //4-beat bursts read from SDIO
-                     DMA_SxCR_PL_0      | //Medium priority DMA stream
-                     memoryTransferSize | //RAM data size depends on alignment
-					 DMA_SxCR_PSIZE_1   | //Read 32bit at a time from SDIO
-				     DMA_SxCR_MINC      | //Increment RAM pointer
-			         0                  | //Peripheral to memory direction
-                     DMA_SxCR_PFCTRL    | //Peripheral is flow controller
-			         DMA_SxCR_TCIE      | //Interrupt on transfer complete
-                     DMA_SxCR_TEIE      | //Interrupt on transfer error
-                     DMA_SxCR_DMEIE     | //Interrupt on direct mode error
-			  	     DMA_SxCR_EN;         //Start the DMA
+    DMA_Stream->PAR=reinterpret_cast<unsigned int>(&SDIO->FIFO);
+    DMA_Stream->M0AR=reinterpret_cast<unsigned int>(buffer);
+    //Note: DMA_Stream->NDTR is don't care in peripheral flow control mode
+    DMA_Stream->FCR = DMA_SxFCR_FEIE   //Interrupt on fifo error
+                    | DMA_SxFCR_DMDIS  //Fifo enabled
+                    | DMA_SxFCR_FTH_0; //Take action if fifo half full
+    #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
+    DMA_Stream->CR = (11 << DMA_SxCR_CHSEL_Pos) //Channel 4 (SDIO)
+    #else
+    DMA_Stream->CR = DMA_SxCR_CHSEL_2   //Channel 4 (SDIO)
+    #endif
+                   | DMA_SxCR_PBURST_0  //4-beat bursts read from SDIO
+                   | DMA_SxCR_PL_0      //Medium priority DMA stream
+                   | memoryTransferSize //RAM data size depends on alignment
+                   | DMA_SxCR_PSIZE_1   //Read 32bit at a time from SDIO
+                   | DMA_SxCR_MINC      //Increment RAM pointer
+                   | 0                  //Peripheral to memory direction
+                   | DMA_SxCR_PFCTRL    //Peripheral is flow controller
+                   | DMA_SxCR_TCIE      //Interrupt on transfer complete
+                   | DMA_SxCR_TEIE      //Interrupt on transfer error
+                   | DMA_SxCR_DMEIE     //Interrupt on direct mode error
+                   | DMA_SxCR_EN;       //Start the DMA
     
     SDIO->DLEN=nblk*512;
     if(waiting==0)
@@ -1083,30 +1098,30 @@ static bool multipleBlockWrite(const unsigned char *buffer, unsigned int nblk,
                SDIO_MASK_TXUNDERRIE | //Interrupt on tx underrun
                SDIO_MASK_DCRCFAILIE | //Interrupt on data CRC fail
                SDIO_MASK_DTIMEOUTIE;  //Interrupt on data timeout
-	DMA_Stream->PAR=reinterpret_cast<unsigned int>(&SDIO->FIFO);
-	DMA_Stream->M0AR=reinterpret_cast<unsigned int>(buffer);
-	//Note: DMA_Stream->NDTR is don't care in peripheral flow control mode
+    DMA_Stream->PAR=reinterpret_cast<unsigned int>(&SDIO->FIFO);
+    DMA_Stream->M0AR=reinterpret_cast<unsigned int>(buffer);
+    //Note: DMA_Stream->NDTR is don't care in peripheral flow control mode
     //Quirk: not enabling DMA_SxFCR_FEIE because the SDIO seems to generate
     //a spurious fifo error. The code was tested and the transfer completes
     //successfully even in the presence of this fifo error
-    DMA_Stream->FCR=DMA_SxFCR_DMDIS   | //Fifo enabled
-                      DMA_SxFCR_FTH_1   | //Take action if fifo full
-                      DMA_SxFCR_FTH_0;
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
-    DMA_Stream->CR = (11 << DMA_SxCR_CHSEL_Pos) | // Channel 4 (SDIO)
+    DMA_Stream->FCR = DMA_SxFCR_DMDIS  //Fifo enabled
+                    | DMA_SxFCR_FTH_1  //Take action if fifo full
+                    | DMA_SxFCR_FTH_0;
+#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
+    DMA_Stream->CR = (11 << DMA_SxCR_CHSEL_Pos) // Channel 4 (SDIO)
 #else
-    DMA_Stream->CR = DMA_SxCR_CHSEL_2 |   // Channel 4 (SDIO)
+    DMA_Stream->CR = DMA_SxCR_CHSEL_2     // Channel 4 (SDIO)
 #endif
-                     DMA_SxCR_PBURST_0  | //4-beat bursts write to SDIO
-                     DMA_SxCR_PL_0      | //Medium priority DMA stream
-                     memoryTransferSize | //RAM data size depends on alignment
-					 DMA_SxCR_PSIZE_1   | //Write 32bit at a time to SDIO
-				     DMA_SxCR_MINC      | //Increment RAM pointer
-			         DMA_SxCR_DIR_0     | //Memory to peripheral direction
-                     DMA_SxCR_PFCTRL    | //Peripheral is flow controller
-                     DMA_SxCR_TEIE      | //Interrupt on transfer error
-                     DMA_SxCR_DMEIE     | //Interrupt on direct mode error
-			  	     DMA_SxCR_EN;         //Start the DMA
+                   | DMA_SxCR_PBURST_0  //4-beat bursts write to SDIO
+                   | DMA_SxCR_PL_0      //Medium priority DMA stream
+                   | memoryTransferSize //RAM data size depends on alignment
+                   | DMA_SxCR_PSIZE_1   //Write 32bit at a time to SDIO
+                   | DMA_SxCR_MINC      //Increment RAM pointer
+                   | DMA_SxCR_DIR_0     //Memory to peripheral direction
+                   | DMA_SxCR_PFCTRL    //Peripheral is flow controller
+                   | DMA_SxCR_TEIE      //Interrupt on transfer error
+                   | DMA_SxCR_DMEIE     //Interrupt on direct mode error
+                   | DMA_SxCR_EN;       //Start the DMA
     
     SDIO->DLEN=nblk*512;
     if(waiting==0)
@@ -1208,46 +1223,46 @@ static void initSDIOPeripheral()
         RCC_SYNC();
         RCC->APB2ENR |= RCC_APB2ENR_SDIOEN;
         RCC_SYNC();
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
+        #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
         sdD0::mode(Mode::ALTERNATE);
         sdD0::alternateFunction(11);
-#ifndef SD_ONE_BIT_DATABUS
+        #ifndef SD_ONE_BIT_DATABUS
         sdD1::mode(Mode::ALTERNATE);
         sdD1::alternateFunction(11);
         sdD2::mode(Mode::ALTERNATE);
         sdD2::alternateFunction(10);
         sdD3::mode(Mode::ALTERNATE);
         sdD3::alternateFunction(10);
-#endif // SD_ONE_BIT_DATABUS
+        #endif // SD_ONE_BIT_DATABUS
         sdCLK::mode(Mode::ALTERNATE);
         sdCLK::alternateFunction(11);
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(11);
-#else
+        #else
         sdD0::mode(Mode::ALTERNATE);
         sdD0::alternateFunction(12);
-#ifndef SD_ONE_BIT_DATABUS
+        #ifndef SD_ONE_BIT_DATABUS
         sdD1::mode(Mode::ALTERNATE);
         sdD1::alternateFunction(12);
         sdD2::mode(Mode::ALTERNATE);
         sdD2::alternateFunction(12);
         sdD3::mode(Mode::ALTERNATE);
         sdD3::alternateFunction(12);
-#endif // SD_ONE_BIT_DATABUS
+        #endif // SD_ONE_BIT_DATABUS
         sdCLK::mode(Mode::ALTERNATE);
         sdCLK::alternateFunction(12);
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(12);
-#endif
+        #endif
     }
 
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && defined(__SDMMC2)
+    #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
     NVIC_SetPriority(DMA2_Stream0_IRQn,15);//Low priority for DMA
     NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-#else
+    #else
     NVIC_SetPriority(DMA2_Stream3_IRQn,15);//Low priority for DMA
     NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-#endif
+    #endif
     NVIC_SetPriority(SDIO_IRQn,15);//Low priority for SDIO
     NVIC_EnableIRQ(SDIO_IRQn);
     
@@ -1256,7 +1271,11 @@ static void initSDIOPeripheral()
     SDIO->CLKCR=0;
     SDIO->CMD=0;
     SDIO->DCTRL=0;
+    #if defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
+    SDIO->ICR=0x4005ff;
+    #else
     SDIO->ICR=0xc007ff;
+    #endif
     SDIO->POWER=SDIO_POWER_PWRCTRL_1 | SDIO_POWER_PWRCTRL_0; //Power on state
     //This delay is particularly important: when setting the POWER register a
     //glitch on the CMD pin happens. This glitch has a fast fall time and a slow

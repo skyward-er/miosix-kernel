@@ -57,13 +57,15 @@ namespace miosix {
 // Initialization
 //
 
-static void sdramCommandWait() {
-    for (int i = 0; i < 0xffff; i++)
-        if ((FMC_Bank5_6->SDSR & FMC_SDSR_BUSY) == 0)
+static void sdramCommandWait()
+{
+    for(int i=0;i<0xffff;i++)
+        if((FMC_Bank5_6->SDSR & FMC_SDSR_BUSY)==0)
             return;
 }
 
-void configureSdram() {
+void configureSdram()
+{
     // Enable all gpios, passing clock
     RCC->AHB1ENR |=
         RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
@@ -177,34 +179,34 @@ void configureSdram() {
     // HCLK = 216MHz -> SDRAM clock = HCLK/2 = 133MHz
 
     // 1. Memory device features
-    FMC_Bank5_6->SDCR[0] = 0                    // 0 delay after CAS latency
-                           | FMC_SDCR1_RBURST   // Enable read bursts
-                           | FMC_SDCR1_SDCLK_1  // SDCLK = HCLK / 2
-                           | 0                  // Write accesses allowed
-                           | FMC_SDCR1_CAS_1    // 2 cycles CAS latency
-                           | FMC_SDCR1_NB       // 4 internal banks
-                           | FMC_SDCR1_MWID_1   // 32 bit data bus
-                           | FMC_SDCR1_NR_0     // 12 bit row address
-                           | 0;                 // 8 bit column address
+    FMC_Bank5_6->SDCR[0] = 0                  // 0 delay after CAS latency
+                         | FMC_SDCR1_RBURST   // Enable read bursts
+                         | FMC_SDCR1_SDCLK_1  // SDCLK = HCLK / 2
+                         | 0                  // Write accesses allowed
+                         | FMC_SDCR1_CAS_1    // 2 cycles CAS latency
+                         | FMC_SDCR1_NB       // 4 internal banks
+                         | FMC_SDCR1_MWID_1   // 32 bit data bus
+                         | FMC_SDCR1_NR_0     // 12 bit row address
+                         | 0;                 // 8 bit column address
 
     // 2. Memory device timings
-#ifdef SYSCLK_FREQ_216MHz
+    #ifdef SYSCLK_FREQ_216MHz
     // SDRAM timings. One clock cycle is 9.26ns
     FMC_Bank5_6->SDTR[0] =
-        (2 - 1) << FMC_SDTR1_TRCD_Pos     // 2 cycles TRCD (18.52ns > 18ns)
+          (2 - 1) << FMC_SDTR1_TRCD_Pos   // 2 cycles TRCD (18.52ns > 18ns)
         | (2 - 1) << FMC_SDTR1_TRP_Pos    // 2 cycles TRP  (18.52ns > 18ns)
         | (2 - 1) << FMC_SDTR1_TWR_Pos    // 2 cycles TWR  (18.52ns > 12ns)
         | (7 - 1) << FMC_SDTR1_TRC_Pos    // 7 cycles TRC  (64.82ns > 60ns)
         | (5 - 1) << FMC_SDTR1_TRAS_Pos   // 5 cycles TRAS (46.3ns  > 42ns)
         | (8 - 1) << FMC_SDTR1_TXSR_Pos   // 8 cycles TXSR (74.08ns > 70ns)
         | (2 - 1) << FMC_SDTR1_TMRD_Pos;  // 2 cycles TMRD (18.52ns > 12ns)
-#else
-#error No SDRAM timings for this clock
-#endif
+    #else
+    #error No SDRAM timings for this clock
+    #endif
 
     // 3. Enable the bank 1 clock
     FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_0   // Clock Configuration Enable
-                         | FMC_SDCMR_CTB1;  // Bank 1
+                       | FMC_SDCMR_CTB1;  // Bank 1
     sdramCommandWait();
 
     // 4. Wait during command execution
@@ -212,41 +214,42 @@ void configureSdram() {
 
     // 5. Issue a "Precharge All" command
     FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_1   // Precharge all
-                         | FMC_SDCMR_CTB1;  // Bank 1
+                       | FMC_SDCMR_CTB1;  // Bank 1
     sdramCommandWait();
 
     // 6. Issue Auto-Refresh commands
     FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_1 | FMC_SDCMR_MODE_0  // Auto-Refresh
-                         | FMC_SDCMR_CTB1                     // Bank 1
-                         | (8 - 1) << FMC_SDCMR_NRFS_Pos;     // 2 Auto-Refresh
+                       | FMC_SDCMR_CTB1                     // Bank 1
+                       | (8 - 1) << FMC_SDCMR_NRFS_Pos;     // 2 Auto-Refresh
     sdramCommandWait();
 
     // 7. Issue a Load Mode Register command
     FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_2               /// Load mode register
-                         | FMC_SDCMR_CTB1               // Bank 1
-                         | 0x220 << FMC_SDCMR_MRD_Pos;  // CAS = 2, burst = 1
+                       | FMC_SDCMR_CTB1               // Bank 1
+                       | 0x220 << FMC_SDCMR_MRD_Pos;  // CAS = 2, burst = 1
     sdramCommandWait();
 
     // 8. Program the refresh rate (4K / 64ms)
     // 64ms / 4096 = 15.625us
-#ifdef SYSCLK_FREQ_216MHz
+    #ifdef SYSCLK_FREQ_216MHz
     // 15.625us * 108MHz = 1687 - 20 = 1667
     FMC_Bank5_6->SDRTR = 1667 << FMC_SDRTR_COUNT_Pos;
-#else
-#error No SDRAM refresh timings for this clock
-#endif
+    #else
+    #error No SDRAM refresh timings for this clock
+    #endif
 }
 
-void IRQbspInit() {
-// If using SDRAM GPIOs are enabled by configureSdram(), else enable them here
-#ifndef __ENABLE_XRAM
+void IRQbspInit()
+{
+    //If using SDRAM GPIOs are enabled by configureSdram(), else enable them here
+    #ifndef __ENABLE_XRAM
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN |
                     RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN |
                     RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
                     RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_GPIOHEN |
                     RCC_AHB1ENR_GPIOIEN | RCC_AHB1ENR_GPIOJEN;
     RCC_SYNC();
-#endif  //__ENABLE_XRAM
+    #endif  //__ENABLE_XRAM
 
     userLed1::mode(Mode::OUTPUT);
     userLed2::mode(Mode::OUTPUT);
@@ -262,34 +265,36 @@ void IRQbspInit() {
         defaultSerial, defaultSerialSpeed, STM32Serial::NOFLOWCTRL)));
 }
 
-void bspInit2() {
-#ifdef WITH_FILESYSTEM
+void bspInit2()
+{
+    #ifdef WITH_FILESYSTEM
     basicFilesystemSetup(SDIODriver::instance());
-#endif  // WITH_FILESYSTEM
+    #endif  // WITH_FILESYSTEM
 }
 
 //
 // Shutdown and reboot
 //
 
-void shutdown() {
+void shutdown()
+{
     ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
 
-#ifdef WITH_FILESYSTEM
+    #ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-#endif  // WITH_FILESYSTEM
+    #endif  // WITH_FILESYSTEM
 
     disableInterrupts();
-    for (;;)
-        ;
+    for(;;) ;
 }
 
-void reboot() {
+void reboot()
+{
     ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
 
-#ifdef WITH_FILESYSTEM
+    #ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-#endif  // WITH_FILESYSTEM
+    #endif  // WITH_FILESYSTEM
 
     disableInterrupts();
     miosix_private::IRQsystemReboot();

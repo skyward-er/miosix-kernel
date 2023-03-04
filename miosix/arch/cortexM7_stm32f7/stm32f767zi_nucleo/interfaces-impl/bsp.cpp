@@ -57,7 +57,8 @@ namespace miosix {
 // Initialization
 //
 
-void IRQbspInit() {
+void IRQbspInit()
+{
     // Enable all gpios
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN |
                     RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN |
@@ -82,42 +83,42 @@ void IRQbspInit() {
     ledOn();
     delayMs(100);
     ledOff();
-    auto tx = Gpio<GPIOD_BASE, 8>::getPin();
-    tx.alternateFunction(7);
-    auto rx = Gpio<GPIOD_BASE, 9>::getPin();
-    rx.alternateFunction(7);
+    auto tx=Gpio<GPIOD_BASE,8>::getPin(); tx.alternateFunction(7);
+    auto rx=Gpio<GPIOD_BASE,9>::getPin(); rx.alternateFunction(7);
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(3, defaultSerialSpeed, tx, rx)));
 }
 
-void bspInit2() {
-#ifdef WITH_FILESYSTEM
+void bspInit2()
+{
+    #ifdef WITH_FILESYSTEM
     basicFilesystemSetup(SDIODriver::instance());
-#endif  // WITH_FILESYSTEM
+    #endif  //WITH_FILESYSTEM
 }
 
 //
 // Shutdown and reboot
 //
 
-void shutdown() {
-    ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
+void shutdown()
+{
+    ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
 
-#ifdef WITH_FILESYSTEM
+    #ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-#endif  // WITH_FILESYSTEM
+    #endif  //WITH_FILESYSTEM
 
     disableInterrupts();
-    for (;;)
-        ;
+    for(;;) ;
 }
 
-void reboot() {
-    ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
+void reboot()
+{
+    ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
 
-#ifdef WITH_FILESYSTEM
+    #ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-#endif  // WITH_FILESYSTEM
+    #endif  //WITH_FILESYSTEM
 
     disableInterrupts();
     miosix_private::IRQsystemReboot();

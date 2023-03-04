@@ -98,21 +98,35 @@
                                    This value must be a multiple of 0x200. */
 /******************************************************************************/
 
-// By Alberto Nidasio -- begin
+// By Alberto Nidasio and TFT -- begin
+#if (HSE_VALUE % 2000000) == 0
 
-// Divide the input clock
-#define PLL_M (HSE_VALUE/1000000)
-
+//PLL input frequency set to 2MHz to reduce jitter as suggested by the datasheet.
+const unsigned int PLL_M=HSE_VALUE/2000000;
 #ifdef SYSCLK_FREQ_216MHz
-#define PLL_Q      9
-#define PLL_R      7
-#define PLL_N      432
-#define PLL_P      2
+const unsigned int PLL_Q=9;
+const unsigned int PLL_R=7;
+const unsigned int PLL_N=216;
+const unsigned int PLL_P=2;
 #else
 #error Clock not selected
 #endif
 
-// By Alberto Nidasio -- end
+#else // HSE_VALUE not divisible by 2MHz
+
+//PLL Input frequency set to 1MHz
+const unsigned int PLL_M=HSE_VALUE/1000000;
+#ifdef SYSCLK_FREQ_216MHz
+const unsigned int PLL_Q=9;
+const unsigned int PLL_R=7;
+const unsigned int PLL_N=432;
+const unsigned int PLL_P=2;
+#else
+#error Clock not selected
+#endif
+
+#endif // HSE_VALUE divisibility check
+// By Alberto Nidasio and TFT -- end
 
 /**
   * @}
@@ -253,7 +267,7 @@ void SystemInit(void)
   */
 void SystemCoreClockUpdate(void)
 {
-  uint32_t tmp = 0, pllvco = 0, pllp = 2, pllSource = 0, pllm = 2;
+  uint32_t tmp = 0, pllvco = 0, pllp = 2, pllsource = 0, pllm = 2;
   
   /* Get SYSCLK source -------------------------------------------------------*/
   tmp = RCC->CFGR & RCC_CFGR_SWS;
@@ -271,10 +285,10 @@ void SystemCoreClockUpdate(void)
       /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N
          SYSCLK = PLL_VCO / PLL_P
          */    
-      pllSource = (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> 22;
+      pllsource = (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> 22;
       pllm = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
       
-      if (pllSource != 0)
+      if (pllsource != 0)
       {
         /* HSE used as PLL clock source */
         pllvco = (HSE_VALUE / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> 6);
@@ -302,7 +316,7 @@ void SystemCoreClockUpdate(void)
 //By TFT: added PLL initialization that was not present in the CMSIS code
 void SetSysClk(void)
 {
-  register uint32_t tmpReg = 0, timeout = 0xFFFF;
+  register uint32_t tmpreg = 0, timeout = 0xFFFF;
   
 /******************************************************************************/
 /*            PLL (clocked by HSE) used as System clock source                */
@@ -320,8 +334,8 @@ void SetSysClk(void)
   /* Wait till HSE is ready and if Time out is reached exit */
   do
   {
-    tmpReg = RCC->CR & RCC_CR_HSERDY;
-  } while((tmpReg != RCC_CR_HSERDY) && (timeout-- > 0));
+    tmpreg = RCC->CR & RCC_CR_HSERDY;
+  } while((tmpreg != RCC_CR_HSERDY) && (timeout-- > 0));
   
   if(timeout != 0)
   {  
@@ -337,8 +351,8 @@ void SetSysClk(void)
     /* Wait till ODR is ready and if Time out is reached exit */
     do
     {
-      tmpReg = PWR->CSR1 & PWR_CSR1_ODRDY;
-    } while((tmpReg != PWR_CSR1_ODRDY) && (timeout-- > 0));
+      tmpreg = PWR->CSR1 & PWR_CSR1_ODRDY;
+    } while((tmpreg != PWR_CSR1_ODRDY) && (timeout-- > 0));
     
     /* Enable ODSW */
     PWR->CR1 |= 0x00020000;
@@ -346,8 +360,8 @@ void SetSysClk(void)
     /* Wait till ODR is ready and if Time out is reached exit */
     do
     {
-      tmpReg = PWR->CSR1 & PWR_CSR1_ODSWRDY;
-    } while((tmpReg != PWR_CSR1_ODSWRDY) && (timeout-- > 0)); 
+      tmpreg = PWR->CSR1 & PWR_CSR1_ODSWRDY;
+    } while((tmpreg != PWR_CSR1_ODSWRDY) && (timeout-- > 0));
    
     /* HCLK = SYSCLK / 1*/
     RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
@@ -369,8 +383,8 @@ void SetSysClk(void)
   timeout = 0xFFFF;
   do
   {
-    tmpReg = (RCC->CR & RCC_CR_PLLRDY); 
-  } while((tmpReg != RCC_CR_PLLRDY) && (timeout-- > 0));
+    tmpreg = (RCC->CR & RCC_CR_PLLRDY);
+  } while((tmpreg != RCC_CR_PLLRDY) && (timeout-- > 0));
   
   if(timeout != 0)
   {
@@ -384,8 +398,8 @@ void SetSysClk(void)
     timeout = 0xFFFF;
     do
     {
-      tmpReg = (RCC->CFGR & RCC_CFGR_SWS); 
-    } while((tmpReg != RCC_CFGR_SWS) && (timeout-- > 0));
+      tmpreg = (RCC->CFGR & RCC_CFGR_SWS);
+    } while((tmpreg != RCC_CFGR_SWS) && (timeout-- > 0));
   }   
 }
 

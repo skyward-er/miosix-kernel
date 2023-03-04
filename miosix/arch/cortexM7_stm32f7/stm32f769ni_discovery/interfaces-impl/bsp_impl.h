@@ -54,19 +54,21 @@ void configureSdram();
  * \internal
  * Board pin definition
  */
-typedef Gpio<GPIOJ_BASE, 13> userLed1;
-typedef Gpio<GPIOJ_BASE, 5> userLed2;
-typedef Gpio<GPIOA_BASE, 12> userLed3;
-typedef Gpio<GPIOA_BASE, 0> userBtn;
-typedef Gpio<GPIOI_BASE, 15> sdCardDetect;
+typedef Gpio<GPIOJ_BASE,13> userLed1;
+typedef Gpio<GPIOJ_BASE,5> userLed2;
+typedef Gpio<GPIOA_BASE,12> userLed3;
+typedef Gpio<GPIOA_BASE,0> userBtn;
+typedef Gpio<GPIOI_BASE,15> sdCardDetect;
 
-inline void ledOn() {
+inline void ledOn()
+{
     userLed1::high();
     userLed2::high();
     userLed3::high();
 }
 
-inline void ledOff() {
+inline void ledOff()
+{
     userLed1::low();
     userLed2::low();
     userLed3::low();

@@ -47,18 +47,20 @@ namespace miosix {
  * \internal
  * Board pin definition
  */
-typedef Gpio<GPIOB_BASE, 0> userLed1;
-typedef Gpio<GPIOB_BASE, 7> userLed2;
-typedef Gpio<GPIOB_BASE, 14> userLed3;
-typedef Gpio<GPIOC_BASE, 13> userBtn;
+typedef Gpio<GPIOB_BASE,0> userLed1;
+typedef Gpio<GPIOB_BASE,7> userLed2;
+typedef Gpio<GPIOB_BASE,14> userLed3;
+typedef Gpio<GPIOC_BASE,13> userBtn;
 
-inline void ledOn() {
+inline void ledOn()
+{
     userLed1::high();
     userLed2::high();
     userLed3::high();
 }
 
-inline void ledOff() {
+inline void ledOff()
+{
     userLed1::low();
     userLed2::low();
     userLed3::low();
@@ -94,4 +96,4 @@ inline bool sdCardSense() { return true; }
 
 }  // namespace miosix
 
-#endif  // BSP_IMPL_H
+#endif //BSP_IMPL_H
