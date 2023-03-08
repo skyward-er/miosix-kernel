@@ -263,13 +263,13 @@ namespace miosix
         timers::tim11ch1::mode(Mode::ALTERNATE);
         timers::tim3ch1::mode(Mode::ALTERNATE);
         timers::tim10ch1::mode(Mode::ALTERNATE);
-        timers::tim2ch2::mode(Mode::ALTERNATE);
+        timers::tim8ch1::mode(Mode::ALTERNATE);
 
         timers::tim4ch2::alternateFunction(2);
         timers::tim11ch1::alternateFunction(3);
         timers::tim3ch1::alternateFunction(2);
         timers::tim10ch1::alternateFunction(3);
-        timers::tim2ch2::alternateFunction(1);
+        timers::tim8ch1::alternateFunction(3);
 
         using namespace sensors;
         ADS131_1::cs::mode(Mode::OUTPUT);
@@ -282,15 +282,15 @@ namespace miosix
         MAX31855::cs::high();
 
         using namespace relays;
-        relay1::mode(Mode::OUTPUT);
-        relay2::mode(Mode::OUTPUT);
-        relay3::mode(Mode::OUTPUT);
-        relay4::mode(Mode::OUTPUT);
+        ignition::mode(Mode::OUTPUT);
+        ledLamp::mode(Mode::OUTPUT);
+        nitrogen::mode(Mode::OUTPUT);
+        generalPurpose::mode(Mode::OUTPUT);
 
-        relay1::high();
-        relay2::high();
-        relay3::high();
-        relay4::high();
+        ignition::high();
+        ledLamp::high();
+        nitrogen::high();
+        generalPurpose::high();
 
         using namespace radio;
         cs::mode(Mode::OUTPUT);
