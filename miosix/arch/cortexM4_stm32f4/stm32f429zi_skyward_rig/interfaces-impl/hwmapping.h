@@ -142,10 +142,10 @@ using servo5 = interfaces::timers::tim2ch2;
 
 namespace relays
 {
-using relay1 = Gpio<GPIOC_BASE, 14>;  // Ignition
-using relay2 = Gpio<GPIOE_BASE, 3>;   // Faro LED
-using relay3 = Gpio<GPIOC_BASE, 13>;  // Nitrogen
-using relay4 = Gpio<GPIOA_BASE, 15>;
+using ignition       = Gpio<GPIOC_BASE, 14>;
+using ledLamp        = Gpio<GPIOE_BASE, 3>;
+using nitrogen       = Gpio<GPIOC_BASE, 13>;
+using generalPurpose = Gpio<GPIOA_BASE, 15>;
 }  // namespace relays
 
 namespace radio

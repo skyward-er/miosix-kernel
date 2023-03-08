@@ -282,15 +282,15 @@ namespace miosix
         MAX31855::cs::high();
 
         using namespace relays;
-        relay1::mode(Mode::OUTPUT);
-        relay2::mode(Mode::OUTPUT);
-        relay3::mode(Mode::OUTPUT);
-        relay4::mode(Mode::OUTPUT);
+        ignition::mode(Mode::OUTPUT);
+        ledLamp::mode(Mode::OUTPUT);
+        nitrogen::mode(Mode::OUTPUT);
+        generalPurpose::mode(Mode::OUTPUT);
 
-        relay1::high();
-        relay2::high();
-        relay3::high();
-        relay4::high();
+        ignition::high();
+        ledLamp::high();
+        nitrogen::high();
+        generalPurpose::high();
 
         using namespace radio;
         cs::mode(Mode::OUTPUT);
