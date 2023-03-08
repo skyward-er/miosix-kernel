@@ -83,7 +83,7 @@ using tim4ch2  = Gpio<GPIOB_BASE, 7>;  // Servo 1
 using tim11ch1 = Gpio<GPIOB_BASE, 9>;  // Servo 2
 using tim3ch1  = Gpio<GPIOB_BASE, 4>;  // Servo 3
 using tim10ch1 = Gpio<GPIOB_BASE, 8>;  // Servo 4
-using tim2ch2  = Gpio<GPIOB_BASE, 3>;  // Servo 5
+using tim8ch1  = Gpio<GPIOC_BASE, 6>;  // Servo 5
 }  // namespace timers
 
 }  // namespace interfaces
@@ -137,7 +137,7 @@ using servo1 = interfaces::timers::tim4ch2;
 using servo2 = interfaces::timers::tim11ch1;
 using servo3 = interfaces::timers::tim3ch1;
 using servo4 = interfaces::timers::tim10ch1;
-using servo5 = interfaces::timers::tim2ch2;
+using servo5 = interfaces::timers::tim8ch1;
 }  // namespace servos
 
 namespace relays

@@ -263,13 +263,13 @@ namespace miosix
         timers::tim11ch1::mode(Mode::ALTERNATE);
         timers::tim3ch1::mode(Mode::ALTERNATE);
         timers::tim10ch1::mode(Mode::ALTERNATE);
-        timers::tim2ch2::mode(Mode::ALTERNATE);
+        timers::tim8ch1::mode(Mode::ALTERNATE);
 
         timers::tim4ch2::alternateFunction(2);
         timers::tim11ch1::alternateFunction(3);
         timers::tim3ch1::alternateFunction(2);
         timers::tim10ch1::alternateFunction(3);
-        timers::tim2ch2::alternateFunction(1);
+        timers::tim8ch1::alternateFunction(3);
 
         using namespace sensors;
         ADS131_1::cs::mode(Mode::OUTPUT);
