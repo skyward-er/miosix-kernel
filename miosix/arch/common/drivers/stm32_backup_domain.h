@@ -23,51 +23,62 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
-#define PRESERVE __attribute__((section(".preserve"))) 
+#include "board_settings.h"
 
-namespace miosix {
+#define PRESERVE __attribute__((section(".preserve")))
+
+namespace miosix
+{
 
 /**
  * Possible causes for an STM32 reset
  */
-enum ResetReason
+enum class ResetReason
 {
-    RST_LOW_PWR=0,
-    RST_WINDOW_WDG=1,
-    RST_INDEPENDENT_WDG=2,
-    RST_SW=3,
-    RST_POWER_ON=4,
-    RST_PIN=5,
-    RST_UNKNOWN=6,
+    RST_LOW_PWR         = 0,  // Low power
+    RST_WINDOW_WDG      = 1,  // Reset from the windows watchdog
+    RST_INDEPENDENT_WDG = 2,  // Reset from the independent watchdog
+    RST_SW              = 3,  // Sofware reset
+    RST_POWER_ON        = 4,  // System power on
+    RST_PIN             = 5,  // Reset pin
+    RST_UNKNOWN         = 6,  // Unknown
 };
 
 /**
- * Driver for the STM32F2 and STM32F4 backup SRAM, here used as
- * SafeGuard Memory, that is, a memory whose value is preseved across resets.
+ * Driver for the backup SRAM.
+ *
+ * @warning Tested only on stm32f2, stm32f4 and stm32f7 microcontrollers.
  */
-class SGM 
+class BackupDomain
 {
 public:
     /**
-     * \return an instance of this class (singleton)
+     * @return An instance of this class (singleton).
      */
-    static SGM& instance();
+    static BackupDomain& instance();
 
     /**
-     * Temporarily disable writing to the safeguard memory.
-     * By deafult, from reset to when the contrsuctor of this class is called
-     * the safeguard memory is not writable. After the constructor is called,
-     * the safeguard memory is writable.
+     * Enables the backup domain clock and write access.
      */
-    void disableWrite();
+    void enable();
 
     /**
-     * Make the safeguard memory writable again, after a call to disableWrite()
+     * Disable the backup domain clock and write access.
      */
-    void enableWrite();
-    
+    void disable();
+
+    /**
+     * Enable the backup SRAM.
+     */
+    void enableBackupSRAM();
+
+    /**
+     * Disable the backup SRAM.
+     */
+    void disableBackupSRAM();
+
     /**
      * Return the cause of the last reset of the microcontroller
      */
@@ -76,12 +87,12 @@ public:
 private:
     ResetReason lastReset;
 
-    SGM(const SGM&)=delete;
-    SGM& operator=(const SGM&)=delete;
+    BackupDomain(const BackupDomain&)            = delete;
+    BackupDomain& operator=(const BackupDomain&) = delete;
 
-    SGM();
+    BackupDomain();
     void readResetRegister();
     void clearResetFlag();
 };
 
-}
+}  // namespace miosix

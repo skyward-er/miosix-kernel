@@ -1695,7 +1695,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
         )
@@ -1730,7 +1730,6 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -1766,7 +1765,6 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -1802,7 +1800,6 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -1972,7 +1969,6 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
         )
@@ -2007,7 +2003,6 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp

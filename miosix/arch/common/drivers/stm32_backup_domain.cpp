@@ -23,107 +23,115 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
-#include "stm32_sgm.h"
+#include "stm32_backup_domain.h"
+
 #include <string.h>
+
+#include "board_settings.h"
 #include "miosix.h"
 
-namespace miosix {
+#if defined(_ARCH_CORTEXM3_STM32F2) || defined(_ARCH_CORTEXM4_STM32F4)
+#define PWR_CR1 PWR->CR
+#define PWR_CR1_DBP PWR_CR_DBP
+#define PWR_CSR1 PWR->CSR
+#define PWR_CSR1_BRE PWR_CSR_BRE
+#define PWR_CSR1_BRR PWR_CSR_BRR
+#define RCC_CSR_IWDGRSTF RCC_CSR_WDGRSTF
+#define RCC_CSR_PINRSTF RCC_CSR_PADRSTF
+#elif defined(_ARCH_CORTEXM7_STM32F7)
+#define PWR_CSR1 PWR->CSR1
+#define PWR_CR1 PWR->CR1
+#endif
 
-extern unsigned char _preserve_start asm("_preserve_start");
-extern unsigned char _preserve_end asm("_preserve_end");
-
-static unsigned char *preserve_start=&_preserve_start;
-static unsigned char *preserve_end=&_preserve_end;
-
-SGM& SGM::instance()
+namespace miosix
 {
-    static SGM singleton;
+
+BackupDomain &BackupDomain::instance()
+{
+    static BackupDomain singleton;
     return singleton;
 }
 
-SGM::SGM()
+void BackupDomain::enable()
 {
-    /* Enable PWR clock */
+    // Enable PWR clock
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-    
-    /* Enable backup SRAM Clock */
+
+    // Enable access to the backup domain
+    PWR_CR1 |= PWR_CR1_DBP;
+}
+
+void BackupDomain::disable()
+{
+    // Disable PWR clock
+    RCC->APB1ENR &= ~RCC_APB1ENR_PWREN;
+
+    // Disable access to the backup domain
+    PWR_CR1 &= ~PWR_CR1_DBP;
+}
+
+void BackupDomain::enableBackupSRAM()
+{
+    // Enable backup SRAM Clock
     RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN;
 
-    enableWrite();
+    // Enable Backup regulator
+    PWR_CSR1 |= PWR_CSR1_BRE;
+}
 
-    /* Enable Backup regulator */
-    PWR->CSR |= PWR_CSR_BRE;  
+void BackupDomain::disableBackupSRAM()
+{
+    // Disable backup SRAM Clock
+    RCC->AHB1ENR &= ~RCC_AHB1ENR_BKPSRAMEN;
 
-    /* Enable the Backup SRAM low power Regulator */
-    PWR->CSR |= PWR_CSR_BRE;
+    // Disable Backup regulator
+    PWR_CSR1 &= ~PWR_CSR1_BRE;
+}
 
-    /* Wait for backup regulator */
-    while (!(PWR->CSR & (PWR_CSR_BRR)));
-
-    /* Retrive last reset reason and clear the pending flag */
+BackupDomain::BackupDomain()
+{
+    // Retrive last reset reason and clear the pending flag
     readResetRegister();
-
-    /* 
-     * If the reset wasn't caused by software failure we cannot trust
-     * the content of the backup memory and we need to clear it.
-     */
-    if(lastReset != RST_SW)
-    {
-        memset(preserve_start, 0, preserve_end-preserve_start);
-    }
 }
 
-void SGM::disableWrite()
-{
-    /* Enable Backup Domain write protection */
-    PWR->CR &= ~PWR_CR_DBP;
-}
+void BackupDomain::clearResetFlag() { RCC->CSR |= RCC_CSR_RMVF; }
 
-void SGM::enableWrite()
-{
-    /* Disable Backup Domain write protection */
-     PWR->CR |= PWR_CR_DBP; 
-}
-
-void SGM::clearResetFlag()
-{
-    RCC->CSR |= RCC_CSR_RMVF;
-}
-
-void SGM::readResetRegister()
+void BackupDomain::readResetRegister()
 {
     uint32_t resetReg = RCC->CSR;
+
     clearResetFlag();
-    if(resetReg & RCC_CSR_LPWRRSTF)
+
+    if (resetReg & RCC_CSR_LPWRRSTF)
     {
-        lastReset = RST_LOW_PWR;
+        lastReset = ResetReason::RST_LOW_PWR;
     }
-    else if( resetReg & RCC_CSR_WWDGRSTF)
+    else if (resetReg & RCC_CSR_WWDGRSTF)
     {
-        lastReset = RST_WINDOW_WDG;
+        lastReset = ResetReason::RST_WINDOW_WDG;
     }
-    else if( resetReg & RCC_CSR_WDGRSTF)
+    else if (resetReg & RCC_CSR_IWDGRSTF)
     {
-        lastReset = RST_INDEPENDENT_WDG;
+        lastReset = ResetReason::RST_INDEPENDENT_WDG;
     }
-    else if( resetReg & RCC_CSR_SFTRSTF)
+    else if (resetReg & RCC_CSR_SFTRSTF)
     {
-        lastReset = RST_SW;
+        lastReset = ResetReason::RST_SW;
     }
-    else if( resetReg & RCC_CSR_PORRSTF)
+    else if (resetReg & RCC_CSR_PORRSTF)
     {
-        lastReset = RST_POWER_ON;
+        lastReset = ResetReason::RST_POWER_ON;
     }
-    else if( resetReg & RCC_CSR_PADRSTF)
+    else if (resetReg & RCC_CSR_PINRSTF)
     {
-        lastReset = RST_PIN;
+        lastReset = ResetReason::RST_PIN;
     }
     else
     {
-        lastReset = RST_UNKNOWN;
+        lastReset = ResetReason::RST_UNKNOWN;
     }
 }
 
-} // namespace miosix
+}  // namespace miosix
