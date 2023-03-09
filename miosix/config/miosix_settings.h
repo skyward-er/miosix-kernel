@@ -137,7 +137,9 @@ const unsigned char MAX_OPEN_FILES=8;
 /// By default it is defined (error information is printed)
 #define WITH_ERRLOG
 
-
+/// \def WITH_SGM
+/// Uncomment to enable the Backup SRAM at boot.
+#define WITH_BACKUP_SRAM
 
 //
 // Kernel related options (stack sizes, priorities)

@@ -61,6 +61,7 @@ MEMORY
 {
     sram(wx)  : ORIGIN = 0x20020000, LENGTH = 384K
     dtcm(wx)  : ORIGIN = 0x20000000, LENGTH = 128K    /* Used for main stack */
+    bram(rw)  : ORIGIN = 0x40024000, LENGTH =   4K    /* Bakup SRAM */
     flash(rx) : ORIGIN = 0x08000000, LENGTH =   2M
 }
 
@@ -175,4 +176,14 @@ SECTIONS
 
     _end = .;
     PROVIDE(end = .);
+    
+    .preserve(NOLOAD) : ALIGN(4)
+    {
+        _preserve_start = .;
+        . = ALIGN(4);
+        *(.preserve);
+        *(.preserve*);
+        . = ALIGN(4);
+        _preserve_end = .;
+    } > bram
 }

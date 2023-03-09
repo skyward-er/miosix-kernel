@@ -2024,7 +2024,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
         )
@@ -2127,7 +2127,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
         )
@@ -2292,7 +2292,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -2328,7 +2328,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -2364,7 +2364,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -2400,7 +2400,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -2535,7 +2535,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32f4)
         set(ARCH_SRC
             ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
             ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/arch/common/drivers/stm32_sgm.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
             ${KPATH}/arch/common/drivers/stm32_wd.cpp
             ${KPATH}/arch/common/drivers/servo_stm32.cpp
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
@@ -3141,7 +3141,10 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
-        set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
+        set(ARCH_SRC
+            ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
+            ${KPATH}/arch/common/drivers/stm32_backup_domain.cpp
+        )
 
         ## Add a #define to allow querying board name
         list(APPEND CFLAGS_BASE -D_BOARD_STM32F767ZI_COMPUTE_UNIT)

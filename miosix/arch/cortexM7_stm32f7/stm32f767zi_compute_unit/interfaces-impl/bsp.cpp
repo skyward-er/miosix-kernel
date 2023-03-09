@@ -42,6 +42,7 @@
 #include "drivers/sd_stm32f2_f4_f7.h"
 #include "drivers/serial.h"
 #include "drivers/serial_stm32.h"
+#include "drivers/stm32_backup_domain.h"
 #include "filesystem/console/console_device.h"
 #include "filesystem/file_access.h"
 #include "interfaces/arch_registers.h"
@@ -235,6 +236,37 @@ void bspInit2() {
     #ifdef WITH_FILESYSTEM
     basicFilesystemSetup(SDIODriver::instance());
     #endif // WITH_FILESYSTEM
+
+    #ifdef WITH_BACKUP_SRAM
+    BackupDomain::instance().enable();
+    BackupDomain::instance().enableBackupSRAM();
+    #endif
+
+    // Print the reset reason
+    bootlog("Reset reson: ");
+    switch(BackupDomain::instance().lastResetReason()) {
+        case ResetReason::RST_LOW_PWR:
+            bootlog("low power\n");
+            break;
+        case ResetReason::RST_WINDOW_WDG:
+            bootlog("window watchdog\n");
+            break;
+        case ResetReason::RST_INDEPENDENT_WDG:
+            bootlog("indeendent watchdog\n");
+            break;
+        case ResetReason::RST_SW:
+            bootlog("software reset\n");
+            break;
+        case ResetReason::RST_POWER_ON:
+            bootlog("power on\n");
+            break;
+        case ResetReason::RST_PIN:
+            bootlog("reset pin\n");
+            break;
+        case ResetReason::RST_UNKNOWN:
+            bootlog("unknown\n");
+            break;
+    }
 }
 
 //
