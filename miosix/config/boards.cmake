@@ -59,6 +59,7 @@ set(BOARDS
     stm32h753xi_eval
     stm32f407vg_thermal_test_chip
     stm32f205_generic
+    stm32f205rc_skyward_ciuti
     stm32f103cx_generic
     stm32f072rb_stm32f0discovery
     stm32f100cx_generic
