@@ -38,7 +38,7 @@
 using namespace std;
 using namespace miosix;
 
-static const int numPorts=3; //Supporting only USART1, USART2, USART3
+static const int numPorts=4; //Supporting only USART1, USART2, USART3
 
 //A nice feature of the stm32 is that the USART are connected to the same
 //GPIOS in all families, stm32f1, f2, f4 and l1. Additionally, USART1 is
@@ -59,21 +59,24 @@ typedef Gpio<GPIOB_BASE,11> u3rx;
 typedef Gpio<GPIOB_BASE,13> u3cts;
 typedef Gpio<GPIOB_BASE,14> u3rts;
 
+typedef Gpio<GPIOA_BASE, 0> u4tx;
+typedef Gpio<GPIOA_BASE, 1> u4rx;
+
 /// Pointer to serial port classes to let interrupts access the classes
-static STM32Serial *ports[numPorts]={0};
+miosix::STM32Serial *miosix::STM32Serial::ports[MAX_SERIAL_PORTS];
 
 /**
  * \internal interrupt routine for usart1 actual implementation
  */
 void __attribute__((noinline)) usart1irqImpl()
 {
-   if(ports[0]) ports[0]->IRQhandleInterrupt();
+   if(miosix::STM32Serial::ports[0]) miosix::STM32Serial::ports[0]->IRQhandleInterrupt();
 }
 
 /**
  * \internal interrupt routine for usart1
  */
-void __attribute__((naked)) USART1_IRQHandler()
+void __attribute__((naked, weak)) USART1_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart1irqImplv");
@@ -87,13 +90,13 @@ void __attribute__((naked)) USART1_IRQHandler()
  */
 void __attribute__((noinline)) usart2irqImpl()
 {
-   if(ports[1]) ports[1]->IRQhandleInterrupt();
+   if(miosix::STM32Serial::ports[1]) miosix::STM32Serial::ports[1]->IRQhandleInterrupt();
 }
 
 /**
  * \internal interrupt routine for usart2
  */
-void __attribute__((naked)) USART2_IRQHandler()
+void __attribute__((naked, weak)) USART2_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart2irqImplv");
@@ -106,27 +109,45 @@ void __attribute__((naked)) USART2_IRQHandler()
  */
 void __attribute__((noinline)) usart3irqImpl()
 {
-   if(ports[2]) ports[2]->IRQhandleInterrupt();
+   if(miosix::STM32Serial::ports[2]) miosix::STM32Serial::ports[2]->IRQhandleInterrupt();
 }
 
 /**
  * \internal interrupt routine for usart3
  */
 #if !defined(STM32F072xB)
-void __attribute__((naked)) USART3_IRQHandler()
+void __attribute__((naked, weak)) USART3_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart3irqImplv");
     restoreContext();
 }
 #else  //!defined(STM32F072xB)
-void __attribute__((naked)) USART3_4_IRQHandler()
+void __attribute__((naked, weak)) USART3_4_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart3irqImplv");
     restoreContext();
 }
 #endif //!defined(STM32F072xB)
+
+/**
+ * \internal interrupt routine for usart3 actual implementation
+ */
+void __attribute__((noinline)) uart4irqImpl()
+{
+   if(miosix::STM32Serial::ports[3]) miosix::STM32Serial::ports[3]->IRQhandleInterrupt();
+}
+
+/**
+ * \internal interrupt routine for usart3
+ */
+void __attribute__((naked, weak)) UART4_IRQHandler()
+{
+    saveContext();
+    asm volatile("bl _Z12uart4irqImplv");
+    restoreContext();
+}
 #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
 #endif //!defined(STM32_NO_SERIAL_2_3)
 
@@ -147,7 +168,7 @@ void __attribute__((noinline)) usart1txDmaImpl()
               | DMA_HIFCR_CDMEIF7
               | DMA_HIFCR_CFEIF7;
     #endif
-    if(ports[0]) ports[0]->IRQhandleDMAtx();
+    if(miosix::STM32Serial::ports[0]) miosix::STM32Serial::ports[0]->IRQhandleDMAtx();
 }
 
 /**
@@ -155,7 +176,7 @@ void __attribute__((noinline)) usart1txDmaImpl()
  */
 void __attribute__((noinline)) usart1rxDmaImpl()
 {
-    if(ports[0]) ports[0]->IRQhandleDMArx();
+    if(miosix::STM32Serial::ports[0]) miosix::STM32Serial::ports[0]->IRQhandleDMArx();
 }
 
 #if defined(_ARCH_CORTEXM3_STM32F1) || defined (_ARCH_CORTEXM4_STM32F3) \
@@ -221,7 +242,7 @@ void __attribute__((noinline)) usart2txDmaImpl()
               | DMA_HIFCR_CDMEIF6
               | DMA_HIFCR_CFEIF6;
     #endif
-    if(ports[1]) ports[1]->IRQhandleDMAtx();
+    if(miosix::STM32Serial::ports[1]) miosix::STM32Serial::ports[1]->IRQhandleDMAtx();
 }
 
 /**
@@ -229,7 +250,7 @@ void __attribute__((noinline)) usart2txDmaImpl()
  */
 void __attribute__((noinline)) usart2rxDmaImpl()
 {
-    if(ports[1]) ports[1]->IRQhandleDMArx();
+    if(miosix::STM32Serial::ports[1]) miosix::STM32Serial::ports[1]->IRQhandleDMArx();
 }
 
 #if defined(_ARCH_CORTEXM3_STM32F1) || defined (_ARCH_CORTEXM4_STM32F3) \
@@ -295,7 +316,7 @@ void __attribute__((noinline)) usart3txDmaImpl()
               | DMA_LIFCR_CDMEIF3
               | DMA_LIFCR_CFEIF3;
     #endif
-    if(ports[2]) ports[2]->IRQhandleDMAtx();
+    if(miosix::STM32Serial::ports[2]) miosix::STM32Serial::ports[2]->IRQhandleDMAtx();
 }
 
 /**
@@ -303,7 +324,7 @@ void __attribute__((noinline)) usart3txDmaImpl()
  */
 void __attribute__((noinline)) usart3rxDmaImpl()
 {
-    if(ports[2]) ports[2]->IRQhandleDMArx();
+    if(miosix::STM32Serial::ports[2]) miosix::STM32Serial::ports[2]->IRQhandleDMArx();
 }
 
 #if defined(_ARCH_CORTEXM3_STM32F1) || defined (_ARCH_CORTEXM4_STM32F3) \
@@ -448,6 +469,10 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             }
             #endif //!defined(_ARCH_CORTEXM0_STM32F0)            
             break;
+        case 4:
+            u4tx::alternateFunction(8);
+            u4rx::alternateFunction(8);      
+            break;
     }
     #endif //_ARCH_CORTEXM3_STM32
     
@@ -463,6 +488,10 @@ STM32Serial::STM32Serial(int id, int baudrate, FlowCtrl flowControl)
             break;
         case 3:
             commonInit(id,baudrate,u3tx::getPin(),u3rx::getPin(),
+                       u3rts::getPin(),u3cts::getPin());
+            break;
+        case 4:
+            commonInit(id,baudrate,u4tx::getPin(),u4rx::getPin(),
                        u3rts::getPin(),u3cts::getPin());
             break;
     }
@@ -493,8 +522,8 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     dmaTxInProgress=false;
     #endif //SERIAL_DMA
     InterruptDisableLock dLock;
-    if(id<1|| id>numPorts || ports[id-1]!=0) errorHandler(UNEXPECTED);
-    ports[id-1]=this;
+    if(id<1|| id>numPorts || miosix::STM32Serial::ports[id-1]!=0) errorHandler(UNEXPECTED);
+    miosix::STM32Serial::ports[id-1]=this;
     unsigned int freq=SystemCoreClock;
     //Quirk the position of the PPRE1 and PPRE2 bitfields in RCC->CFGR changes
     //STM32F0 does not have ppre1 and ppre2, in this case the variables are not
@@ -698,6 +727,37 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                 freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
             #endif //_ARCH_CORTEXM7_STM32H7
             break;
+        case 4:
+            port=UART4;
+            #ifndef _ARCH_CORTEXM7_STM32H7
+            #ifndef _ARCH_CORTEXM4_STM32L4
+            RCC->APB1ENR |= RCC_APB1ENR_UART4EN;
+            #else  //_ARCH_CORTEXM4_STM32L4
+            RCC->APB1ENR1 |= RCC_APB1ENR1_UART4EN;
+            #endif //_ARCH_CORTEXM4_STM32L4
+            #else  //_ARCH_CORTEXM7_STM32H7
+            RCC->APB1LENR |= RCC_APB1LENR_UART4EN;
+            #endif //_ARCH_CORTEXM7_STM32H7
+            RCC_SYNC();
+			
+			NVIC_SetPriority(UART4_IRQn,15);//Lowest priority for serial
+            NVIC_EnableIRQ(UART4_IRQn);
+            #if !defined(_ARCH_CORTEXM7_STM32H7) && !defined(_ARCH_CORTEXM0_STM32)
+            if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>ppre1) & 0x3)+1);
+            #elif defined(_ARCH_CORTEXM0_STM32)
+            // STM32F0 family has only PPRE2 register
+            if(RCC->CFGR & RCC_CFGR_PPRE_2) freq/=1<<(((RCC->CFGR>>8) & 0x3)+1);
+            #else //_ARCH_CORTEXM7_STM32H7
+            //rcc_hclk3 = SystemCoreClock / HPRE
+            //rcc_pclk1 = rcc_hclk1 / D2PPRE1
+            //NOTE: are rcc_hclk3 and rcc_hclk1 the same signal?
+            //usart2 clock is rcc_pclk1
+            if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+            if(RCC->D2CFGR & RCC_D2CFGR_D2PPRE1_2)
+                freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
+            #endif //_ARCH_CORTEXM7_STM32H7
+            break;
         #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
         #endif //!defined(STM32_NO_SERIAL_2_3)
     }
@@ -721,7 +781,7 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     else port->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
     //Enabled, 8 data bit, no parity, interrupt on character rx
     #ifdef SERIAL_DMA
-    if(dmaTx)
+    if(dmaTx && id<4)
     {
         port->CR1 = USART_CR1_UE     //Enable port
                   | USART_CR1_IDLEIE //Interrupt on idle line
@@ -744,7 +804,6 @@ ssize_t STM32Serial::readBlock(void *buffer, size_t size, off_t where)
     char *buf=reinterpret_cast<char*>(buffer);
     size_t result=0;
     FastInterruptDisableLock dLock;
-    DeepSleepLock dpLock;
     for(;;)
     {
         //Try to get data from the queue
@@ -772,7 +831,6 @@ ssize_t STM32Serial::readBlock(void *buffer, size_t size, off_t where)
 ssize_t STM32Serial::writeBlock(const void *buffer, size_t size, off_t where)
 {
     Lock<FastMutex> l(txMutex);
-    DeepSleepLock dpLock;
     const char *buf=reinterpret_cast<const char*>(buffer);
     #ifdef SERIAL_DMA
     if(dmaTx)
@@ -982,7 +1040,7 @@ STM32Serial::~STM32Serial()
         InterruptDisableLock dLock;
         port->CR1=0;
         int id=getId();
-        ports[id-1]=0;
+        miosix::STM32Serial::ports[id-1]=0;
         switch(id)
         {
             case 1:
@@ -1069,6 +1127,19 @@ STM32Serial::~STM32Serial()
                 RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
                 #endif //_ARCH_CORTEXM7_STM32H7
                 break;
+            case 4:
+                NVIC_SetPriority(UART4_IRQn,15);//Lowest priority for serial
+                NVIC_EnableIRQ(UART4_IRQn);
+                #ifndef _ARCH_CORTEXM7_STM32H7
+                #ifdef _ARCH_CORTEXM4_STM32L4
+                RCC->APB1ENR1 &= ~RCC_APB1ENR1_UART4EN;
+                #else
+                RCC->APB1ENR &= ~RCC_APB1ENR_UART4EN;
+                #endif
+                #else //_ARCH_CORTEXM7_STM32H7
+                RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
+                #endif //_ARCH_CORTEXM7_STM32H7
+                break;
             #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
             #endif //!defined(STM32_NO_SERIAL_2_3)
         }
@@ -1107,7 +1178,6 @@ void STM32Serial::writeDma(const char *buffer, size_t size)
     //and the race condition is eliminated). This is the purpose of this
     //instruction, it reads SR. When we start the DMA, the DMA controller
     //writes to DR and completes the TC clear sequence.
-    DeepSleepLock dpLock;
     #if !defined(_ARCH_CORTEXM7_STM32F7) && !defined(_ARCH_CORTEXM7_STM32H7) \
      && !defined(_ARCH_CORTEXM0_STM32F0)   && !defined(_ARCH_CORTEXM4_STM32F3) \
      && !defined(_ARCH_CORTEXM4_STM32L4)
