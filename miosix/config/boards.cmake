@@ -42,6 +42,7 @@ set(BOARDS
     stm32f411re_nucleo
     stm32f429zi_skyward_anakin
     stm32f429zi_skyward_death_stack_v2
+    stm32f429zi_skyward_death_stack_v2_parafoil
     stm32f100rc_solertegiard
     stm32f205rc_skyward_stormtrooper
     stm32f401vc_stm32f4discovery
