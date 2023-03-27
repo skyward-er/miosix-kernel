@@ -53,6 +53,7 @@ set(BOARDS
     stm32f100c8_microboard
     stm32f469ni_stm32f469i-disco
     stm32f429zi_skyward_homeone
+    stm32f429zi_skyward_pyxis_auxiliary
     stm32f401re_nucleo
     stm32f746zg_nucleo
     stm32h753xi_eval
