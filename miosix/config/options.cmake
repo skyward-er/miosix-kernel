@@ -703,6 +703,12 @@ endif()
 # No options
 
 ##---------------------------------------------------------------------------
+## stm32f205rc_skyward_ciuti
+##
+
+# No options
+
+##---------------------------------------------------------------------------
 ## stm32f103cx_generic
 ##
 
@@ -919,6 +925,8 @@ elseif(${OPT_BOARD} STREQUAL stm32h753xi_eval)
 elseif(${OPT_BOARD} STREQUAL stm32f407vg_thermal_test_chip)
     set(ARCH cortexM4_stm32f4)
 elseif(${OPT_BOARD} STREQUAL stm32f205_generic)
+    set(ARCH cortexM3_stm32f2)
+elseif(${OPT_BOARD} STREQUAL stm32f205rc_skyward_ciuti)
     set(ARCH cortexM3_stm32f2)
 elseif(${OPT_BOARD} STREQUAL stm32f103cx_generic)
     set(ARCH cortexM3_stm32f1)
@@ -2411,6 +2419,34 @@ elseif(${ARCH} STREQUAL cortexM3_stm32f2)
         ## error message saying that 'make program' is not supported for that
         ## board.
         set(PROGRAM_CMDLINE stm32flash -w main.hex -v /dev/ttyUSB0)
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f205rc_skyward_ciuti
+    ##
+    elseif(${OPT_BOARD} STREQUAL stm32f205rc_skyward_ciuti)
+
+        ## Base directory with header files for this board
+        set(BOARD_INC arch/cortexM3_stm32f2/stm32f205rc_skyward_ciuti)
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_512k+128k_rom.ld)
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        set(ARCH_SRC
+            ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
+            ${KPATH}/${BOARD_INC}/interfaces-impl/delays.cpp
+            ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
+        )
+
+        ## Add a #define to allow querying board name
+        list(APPEND CFLAGS_BASE -D_BOARD_STM32F205RC_SKYWARD_CIUTI)
+        list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F205RC_SKYWARD_CIUTI)
+
+        ## Clock frequency
+        set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000)
 
     ##-------------------------------------------------------------------------
     ## End of board list
