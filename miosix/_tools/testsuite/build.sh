@@ -43,7 +43,7 @@ declare -a defs
 # Build
 cmake \
     -Bbuild \
-    -DCMAKE_TOOLCHAIN_FILE=miosix/_tools/toolchain.cmake \
+    -DCMAKE_TOOLCHAIN_FILE=_tools/toolchain.cmake \
     -DCMAKE_BUILD_TYPE=Release \
     "${defs[@]}"
     .
