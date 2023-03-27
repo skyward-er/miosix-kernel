@@ -56,6 +56,7 @@ set(BOARDS
     stm32f429zi_skyward_pyxis_auxiliary
     stm32f401re_nucleo
     stm32f746zg_nucleo
+    stm32f767zi_compute_unit
     stm32h753xi_eval
     stm32f407vg_thermal_test_chip
     stm32f205_generic
