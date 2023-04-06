@@ -67,7 +67,10 @@ const unsigned int defaultSerialSpeed = 115200;
 const bool defaultSerialFlowctrl      = false;
 
 // SD card driver
-static const unsigned char sdVoltage = 30;  // Board powered @ 3.0V
+static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
+
+/// Analog supply voltage for ADC, DAC, Reset blocks, RCs and PLL
+#define V_DDA_VOLTAGE 3.3f
 
 /**
  * \}

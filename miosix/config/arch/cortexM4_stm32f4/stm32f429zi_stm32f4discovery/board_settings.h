@@ -77,6 +77,9 @@ const bool defaultSerialFlowctrl      = false;
 static const unsigned char sdVoltage = 30;  // Board powered @ 3.0V
 #define SD_ONE_BIT_DATABUS  // Can't use 4 bit databus due to pin conflicts
 
+/// Analog supply voltage for ADC, DAC, Reset blocks, RCs and PLL
+#define V_DDA_VOLTAGE 3.0f
+
 /**
  * \}
  */

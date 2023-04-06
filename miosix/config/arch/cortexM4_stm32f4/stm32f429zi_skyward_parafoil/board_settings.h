@@ -67,8 +67,11 @@ const bool defaultSerialFlowctrl      = false;
 //#define SERIAL_3_DMA
 
 // SD card driver
-static const unsigned char sdVoltage = 30;  // Board powered @ 3.0V
+static const unsigned char sdVoltage = 30;  // Board powered @ 3.3V
 #define SD_ONE_BIT_DATABUS  // Can't use 4 bit databus due to pin conflicts
+
+/// Analog supply voltage for ADC, DAC, Reset blocks, RCs and PLL
+#define V_DDA_VOLTAGE 3.0f
 
 }  // namespace miosix
 

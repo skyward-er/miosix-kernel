@@ -76,6 +76,9 @@ const bool defaultSerialFlowctrl      = false;
 static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
 // #define SD_ONE_BIT_DATABUS // This board supports 4 bit data bus to SD card
 
+/// Analog supply voltage for ADC, DAC, Reset blocks, RCs and PLL
+#define V_DDA_VOLTAGE 3.3f
+
 /**
  * \}
  */

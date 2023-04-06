@@ -73,12 +73,15 @@ const bool defaultSerialFlowctrl=false;
 //#define I2C_WITH_DMA
 
 //SD card driver
-static const unsigned char sdVoltage=30; //Board powered @ 3.0V
+static const unsigned char sdVoltage=33; //Board powered @ 3.3V
 #ifdef __ENABLE_XRAM
 //Reduce SD clock to ~4.8MHz
 #define OVERRIDE_SD_CLOCK_DIVIDER_MAX 8
 #endif //__ENABLE_XRAM
 //#define SD_ONE_BIT_DATABUS //This board supports 4 bit databus to SD card
+
+/// Analog supply voltage for ADC, DAC, Reset blocks, RCs and PLL
+#define V_DDA_VOLTAGE 3.3f
 
 /**
  * \}
