@@ -68,6 +68,7 @@ foreach(OPT_BOARD ${BOARDS})
         kernel/process_pool.cpp
         kernel/timeconversion.cpp
         kernel/SystemMap.cpp
+        kernel/intrusive.cpp
         kernel/scheduler/priority/priority_scheduler.cpp
         kernel/scheduler/control/control_scheduler.cpp
         kernel/scheduler/edf/edf_scheduler.cpp

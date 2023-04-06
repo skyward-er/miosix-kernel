@@ -62,7 +62,7 @@ volatile Thread *cur=NULL;///<\internal Thread currently running
 ///\internal True if there are threads in the DELETED status. Used by idle thread
 static volatile bool exist_deleted=false;
 
-static SleepData *sleeping_list=NULL;///<\internal list of sleeping threads
+static IntrusiveList<SleepData> sleeping_list;///<\internal list of sleeping threads
 
 static volatile long long tick=0;///<\internal Kernel tick
 
@@ -228,38 +228,29 @@ long long getTick()
 
 /**
  * \internal
- * Used by Thread::sleep() to add a thread to sleeping list. The list is sorted
- * by the wakeup_time field to reduce time required to wake threads during
- * context switch.
+ * Used by Thread::sleep() to add a thread to
+ * sleeping list. The list is sorted by the wakeupTime field to reduce time
+ * required to wake threads during context switch.
  * Also sets thread SLEEP_FLAG. It is labeled IRQ not because it is meant to be
  * used inside an IRQ, but because interrupts must be disabled prior to calling
  * this function.
  */
 void IRQaddToSleepingList(SleepData *x)
 {
-    x->p->flags.IRQsetSleep(true);
-    if((sleeping_list==NULL)||(x->wakeup_time <= sleeping_list->wakeup_time))
+    x->thread->flags.IRQsetSleep(true);
+    if(sleeping_list.empty() || sleeping_list.front()->wakeupTime>=x->wakeupTime)
     {
-        x->next=sleeping_list;
-        sleeping_list=x;   
+        sleeping_list.push_front(x);
     } else {
-       SleepData *cur=sleeping_list;
-       for(;;)
-       {
-           if((cur->next==NULL)||(x->wakeup_time <= cur->next->wakeup_time))
-           {
-               x->next=cur->next;
-               cur->next=x;
-               break;
-           }
-           cur=cur->next;
-       }
+        auto it=sleeping_list.begin();
+        while(it!=sleeping_list.end() && (*it)->wakeupTime<x->wakeupTime) ++it;
+        sleeping_list.insert(it,x);
     }
 }
 
 /**
  * \internal
- * Called @ every tick to check if it's time to wake some thread.
+ * Called to check if it's time to wake some thread.
  * Also increases the system tick.
  * Takes care of clearing SLEEP_FLAG.
  * It is used by the kernel, and should not be used by end users.
@@ -268,15 +259,17 @@ void IRQaddToSleepingList(SleepData *x)
 bool IRQwakeThreads()
 {
     tick++;//Increment tick
+
+    if(sleeping_list.empty()) return false; //If no item in list, return
+    
     bool result=false;
-    for(;;)
+    //Since list is sorted, if we don't need to wake the first element
+    //we don't need to wake the other too
+    for(auto it=sleeping_list.begin();it!=sleeping_list.end();)
     {
-        if(sleeping_list==NULL) break;//If no item in list, return
-        //Since list is sorted, if we don't need to wake the first element
-        //we don't need to wake the other too
-        if(tick != sleeping_list->wakeup_time) break;
-        sleeping_list->p->flags.IRQsetSleep(false);//Wake thread
-        sleeping_list=sleeping_list->next;//Remove from list
+        if(tick<(*it)->wakeupTime) break;
+        (*it)->thread->flags.IRQsetSleep(false); //Wake thread
+        it=sleeping_list.erase(it);
         result=true;
     }
     return result;
@@ -353,10 +346,10 @@ void Thread::sleep(unsigned int ms)
     //the tick isr will wake threads, modifying the sleeping_list
     {
         FastInterruptDisableLock lock;
-        d.p=const_cast<Thread*>(cur);
-        if(((ms*TICK_FREQ)/1000)>0) d.wakeup_time=getTick()+(ms*TICK_FREQ)/1000;
+        d.thread=const_cast<Thread*>(cur);
+        if(((ms*TICK_FREQ)/1000)>0) d.wakeupTime=getTick()+(ms*TICK_FREQ)/1000;
         //If tick resolution is too low, wait one tick
-        else d.wakeup_time=getTick()+1;
+        else d.wakeupTime=getTick()+1;
         IRQaddToSleepingList(&d);//Also sets SLEEP_FLAG
     }
     Thread::yield();
@@ -373,8 +366,8 @@ void Thread::sleepUntil(long long absoluteTime)
     {
         FastInterruptDisableLock lock;
         if(absoluteTime<=getTick()) return; //Wakeup time in the past, return
-        d.p=const_cast<Thread*>(cur);
-        d.wakeup_time=absoluteTime;
+        d.thread=const_cast<Thread*>(cur);
+        d.wakeupTime=absoluteTime;
         IRQaddToSleepingList(&d);//Also sets SLEEP_FLAG
     }
     Thread::yield();
