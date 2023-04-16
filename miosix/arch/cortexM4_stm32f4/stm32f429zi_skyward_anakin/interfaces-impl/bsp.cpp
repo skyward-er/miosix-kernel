@@ -45,7 +45,6 @@
 #include "filesystem/console/console_device.h"
 #include "drivers/serial.h"
 #include "drivers/sd_stm32f2_f4_f7.h"
-#include "drivers/stm32_sgm.h"
 #include "board_settings.h"
 
 namespace miosix {
@@ -188,10 +187,6 @@ void configureSdram()
 
 void IRQbspInit()
 {
-
-    /* force Safe Guard Memory constructor call */
-    SGM::instance();
-    
     /*If using SDRAM GPIOs are enabled by configureSdram(), else enable them here */
     #ifndef __ENABLE_XRAM
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN |

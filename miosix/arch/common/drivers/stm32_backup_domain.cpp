@@ -45,6 +45,12 @@
 #define PWR_CR1 PWR->CR1
 #endif
 
+extern unsigned char _preserve_start asm("_preserve_start");
+extern unsigned char _preserve_end asm("_preserve_end");
+
+static unsigned char *preserve_start = &_preserve_start;
+static unsigned char *preserve_end   = &_preserve_end;
+
 namespace miosix
 {
 
@@ -90,9 +96,14 @@ void BackupDomain::disableBackupSRAM()
     PWR_CSR1 &= ~PWR_CSR1_BRE;
 }
 
+void clearBackupSRAM()
+{
+    memset(preserve_start, 0, preserve_end - preserve_start);
+}
+
 BackupDomain::BackupDomain()
 {
-    // Retrive last reset reason and clear the pending flag
+    // Retrieve last reset reason and clear the pending flag
     readResetRegister();
 }
 

@@ -40,7 +40,7 @@ enum class ResetReason
     RST_LOW_PWR         = 0,  // Low power
     RST_WINDOW_WDG      = 1,  // Reset from the windows watchdog
     RST_INDEPENDENT_WDG = 2,  // Reset from the independent watchdog
-    RST_SW              = 3,  // Sofware reset
+    RST_SW              = 3,  // Software reset
     RST_POWER_ON        = 4,  // System power on
     RST_PIN             = 5,  // Reset pin
     RST_UNKNOWN         = 6,  // Unknown
@@ -80,7 +80,12 @@ public:
     void disableBackupSRAM();
 
     /**
-     * Return the cause of the last reset of the microcontroller
+     * Clear the backup SRAM.
+     */
+    void clearBackupSRAM();
+
+    /**
+     * Return the cause of the last reset of the micro controller
      */
     ResetReason lastResetReason() { return lastReset; }
 
