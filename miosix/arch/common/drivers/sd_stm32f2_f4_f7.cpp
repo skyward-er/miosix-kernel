@@ -100,11 +100,11 @@
 #define SDIO_POWER_PWRCTRL_1 SDMMC_POWER_PWRCTRL_1
 #define SDIO_POWER_PWRCTRL_0 SDMMC_POWER_PWRCTRL_0
 
-constexpr int ICR_FLAGS_CLR=0x5ff;
+constexpr int ICR_FLAGS_CLR=0x4005ff;
 
 #else  //defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
 
-constexpr int ICR_FLAGS_CLR=0x7ff;
+constexpr int ICR_FLAGS_CLR=0xc007ff;
 
 #endif //defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
 
@@ -1271,11 +1271,7 @@ static void initSDIOPeripheral()
     SDIO->CLKCR=0;
     SDIO->CMD=0;
     SDIO->DCTRL=0;
-    #if defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
-    SDIO->ICR=0x4005ff;
-    #else
-    SDIO->ICR=0xc007ff;
-    #endif
+    SDIO->ICR=ICR_FLAGS_CLR;
     SDIO->POWER=SDIO_POWER_PWRCTRL_1 | SDIO_POWER_PWRCTRL_0; //Power on state
     //This delay is particularly important: when setting the POWER register a
     //glitch on the CMD pin happens. This glitch has a fast fall time and a slow
