@@ -250,6 +250,19 @@ void IRQaddToSleepingList(SleepData *x)
 
 /**
  * \internal
+ * Used by condvar timed waits to remove a thread from sleeping list in case that it
+ * is woke up by a signal or broadcast.
+ * It is labeled IRQ not because it is meant to be
+ * used inside an IRQ, but because interrupts must be disabled prior to calling
+ * this function.
+ */
+void IRQremoveFromSleepingList(SleepData *x)
+{
+    sleeping_list.removeFast(x);
+}
+
+/**
+ * \internal
  * Called to check if it's time to wake some thread.
  * Also increases the system tick.
  * Takes care of clearing SLEEP_FLAG.
@@ -269,6 +282,8 @@ bool IRQwakeThreads()
     {
         if(tick<(*it)->wakeupTime) break;
         (*it)->thread->flags.IRQsetSleep(false); //Wake thread
+        //Reset cond wait flag to wakeup threads in condvar timed waits too
+        (*it)->thread->flags.IRQsetCondWait(false);
         it=sleeping_list.erase(it);
         result=true;
     }

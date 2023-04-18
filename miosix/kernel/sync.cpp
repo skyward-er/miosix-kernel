@@ -37,6 +37,9 @@ using namespace std;
 
 namespace miosix {
 
+void IRQaddToSleepingList(SleepData *x);
+void IRQremoveFromSleepingList(SleepData *x);
+
 //
 // class Mutex
 //
@@ -361,27 +364,20 @@ unsigned int Mutex::PKunlockAllDepthLevels(PauseKernelLock& dLock)
 // class ConditionVariable
 //
 
-ConditionVariable::ConditionVariable(): first(0), last(0) {}
+ConditionVariable::ConditionVariable(): condList() {}
 
 void ConditionVariable::wait(Mutex& m)
 {
     PauseKernelLock dLock;
+    Thread *t=Thread::IRQgetCurrentThread();
     
-    WaitingData w;
-    w.p=Thread::getCurrentThread();
-    w.next=0; 
-    //Add entry to tail of list
-    if(first==0)
-    {
-        first=last=&w;
-    } else {
-       last->next=&w;
-       last=&w;
-    }
+    WaitToken listItem(t);
+    condList.push_back(&listItem); //Add entry to tail of list
+
     //Unlock mutex and wait
     {
         FastInterruptDisableLock l;
-        w.p->flags.IRQsetCondWait(true);
+        t->flags.IRQsetCondWait(true);
     }
 
     unsigned int depth=m.PKunlockAllDepthLevels(dLock);
@@ -395,21 +391,13 @@ void ConditionVariable::wait(Mutex& m)
 void ConditionVariable::wait(FastMutex& m)
 {
     FastInterruptDisableLock dLock;
+    Thread *t=Thread::IRQgetCurrentThread();
     
-    WaitingData w;
-    w.p=Thread::getCurrentThread();
-    w.next=0;
-    //Add entry to tail of list
-    if(first==0)
-    {
-        first=last=&w;
-    } else {
-       last->next=&w;
-       last=&w;
-    }
-    //Unlock mutex and wait
-    w.p->flags.IRQsetCondWait(true);
+    WaitToken listItem(t);
+    condList.push_back(&listItem); //Add entry to tail of list
+    t->flags.IRQsetCondWait(true);
 
+    //Unlock mutex and wait
     unsigned int depth=IRQdoMutexUnlockAllDepthLevels(m.get());
     {
         FastInterruptEnableLock eLock(dLock);
@@ -418,22 +406,96 @@ void ConditionVariable::wait(FastMutex& m)
     IRQdoMutexLockToDepth(m.get(),dLock,depth);
 }
 
+TimedWaitResult ConditionVariable::timedWait(Mutex& m, long long absTime)
+{
+    //Disallow absolute sleeps with negative or too low values (< 1ms)
+    absTime=std::max(absTime,1LL);
+
+    PauseKernelLock dLock;
+    Thread *t=Thread::getCurrentThread();
+
+    WaitToken listItem(t);
+    condList.push_back(&listItem); //Add entry to tail of list
+
+    SleepData sleepData(t, absTime);
+    {
+        FastInterruptDisableLock l;
+        IRQaddToSleepingList(&sleepData); //Putting this thread on the sleeping list too
+        t->flags.IRQsetCondWait(true);
+    }
+
+    //Unlock mutex and wait
+    unsigned int depth=m.PKunlockAllDepthLevels(dLock);
+    {
+        RestartKernelLock eLock(dLock);
+        Thread::yield(); //Here the wait becomes effective
+    }
+
+    //Ensure that the thread is removed from both list, as it can be woken by
+    //either a signal/broadcast (that removes it from condList) or by
+    //IRQwakeThreads (that removes it from sleeping list).
+    bool removed = condList.removeFast(&listItem);
+    {
+        FastInterruptDisableLock l;
+        IRQremoveFromSleepingList(&sleepData);
+    }
+
+    m.PKlockToDepth(dLock,depth);
+
+    //If the thread was still in the cond variable list, it was woken up by a timeout
+    return removed ? TimedWaitResult::Timeout : TimedWaitResult::NoTimeout;
+}
+
+TimedWaitResult ConditionVariable::timedWait(FastMutex& m, long long absTime)
+{
+    //Disallow absolute sleeps with negative or too low values (< 1ms)
+    absTime=std::max(absTime,1LL);
+
+    FastInterruptDisableLock dLock;
+    Thread *t=Thread::IRQgetCurrentThread();
+    
+    WaitToken listItem(t);
+    condList.push_back(&listItem); //Putting this thread last on the list (lifo policy)
+
+    SleepData sleepData(t,absTime);
+    IRQaddToSleepingList(&sleepData); //Putting this thread on the sleeping list too
+    t->flags.IRQsetCondWait(true);
+
+    //Unlock mutex and wait
+    unsigned int depth=IRQdoMutexUnlockAllDepthLevels(m.get());
+    {
+        FastInterruptEnableLock eLock(dLock);
+        Thread::yield(); //Here the wait becomes effective
+    }
+    //Ensure that the thread is removed from both list, as it can be woken by
+    //either a signal/broadcast (that removes it from condList) or by
+    //IRQwakeThreads (that removes it from sleeping list).
+    bool removed=condList.removeFast(&listItem);
+    IRQremoveFromSleepingList(&sleepData);
+
+    IRQdoMutexLockToDepth(m.get(),dLock,depth);
+
+    //If the thread was still in the cond variable list, it was woken up by a timeout
+    return removed ? TimedWaitResult::Timeout : TimedWaitResult::NoTimeout;
+}
+
 void ConditionVariable::signal()
 {
     bool hppw=false;
     {
         //Using interruptDisableLock because we need to call IRQsetCondWait
-        //that can only be called with irq disabled, othrwise we would use
+        //that can only be called with irq disabled, otherwise we would use
         //PauseKernelLock
         FastInterruptDisableLock lock;
-        if(first==0) return;
-        //Wakeup
-        first->p->flags.IRQsetCondWait(false);
+        if(condList.empty()) return;
+        //Remove from list and wakeup
+        Thread *t=condList.front()->thread;
+        condList.pop_front();
+        t->flags.IRQsetCondWait(false);
+        t->flags.IRQsetSleep(false); //Needed due to timedwait
         //Check for priority issues
-        if(first->p->IRQgetPriority() >
-                Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-        //Remove from list
-        first=first->next;
+        if(t->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+            hppw=true;
     }
     //If the woken thread has higher priority than our priority, yield
     if(hppw) Thread::yield();
@@ -447,15 +509,16 @@ void ConditionVariable::broadcast()
         //that can only be called with irq disabled, othrwise we would use
         //PauseKernelLock
         FastInterruptDisableLock lock;
-        while(first!=0)
+        while(!condList.empty())
         {
-            //Wakeup
-            first->p->flags.IRQsetCondWait(false);
+            //Remove from list and wakeup
+            Thread *t=condList.front()->thread;
+            condList.pop_front();
+            t->flags.IRQsetCondWait(false);
+            t->flags.IRQsetSleep(false); //Needed due to timedwait
             //Check for priority issues
-            if(first->p->IRQgetPriority() >
-                Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-            //Remove from list
-            first=first->next;
+            if(t->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+                hppw=true;
         }
     }
     //If at least one of the woken thread has higher priority than our priority,

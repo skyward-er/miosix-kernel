@@ -387,6 +387,27 @@ private:
 };
 
 /**
+ * \internal
+ * This class is used to make a list of threads that are waiting on a condition
+ * variable. It is used by the kernel, and should not be used by end users.
+ */
+class WaitToken : public IntrusiveListItem
+{
+public:
+    WaitToken(Thread *thread) : thread(thread) {}
+    Thread *thread; ///<\internal Thread that is waiting
+};
+
+/**
+ * Possible return values of timedWait
+ */
+enum class TimedWaitResult
+{
+    NoTimeout,
+    Timeout
+};
+
+/**
  * A condition variable class for thread synchronization, available from
  * Miosix 1.53.<br>
  * One or more threads can wait on the condition variable, and the signal()
@@ -417,6 +438,20 @@ public:
     }
 
     /**
+     * Unlock the mutex and wait until woken up or timeout occurs.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param l A Lock instance that locked a Mutex
+     * \param absTime absolute timeout time in milliseconds
+     * \return whether the return was due to a timout or wakeup
+     */
+    template<typename T>
+    TimedWaitResult timedWait(Lock<T>& l, long long absTime)
+    {
+        return timedWait(l.get(),absTime);
+    }
+
+    /**
      * Unlock the Mutex and wait.
      * If more threads call wait() they must do so specifying the same mutex,
      * otherwise the behaviour is undefined.
@@ -433,8 +468,28 @@ public:
     void wait(FastMutex& m);
 
     /**
+     * Unlock the Mutex and wait until woken up or timeout occurs.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param m a locked Mutex
+     * \param absTime absolute timeout time in milliseconds
+     * \return whether the return was due to a timout or wakeup
+     */
+    TimedWaitResult timedWait(Mutex& m, long long absTime);
+
+    /**
+     * Unlock the FastMutex and wait until woken up or timeout occurs.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param m a locked Mutex
+     * \param absTime absolute timeout time in milliseconds
+     * \return whether the return was due to a timout or wakeup
+     */
+    TimedWaitResult timedWait(FastMutex& m, long long absTime);
+
+    /**
      * Wakeup one waiting thread.
-     * Currently implemented policy is fifo.
+     * Currently implemented policy is fifo.C
      */
     void signal();
 
@@ -448,19 +503,8 @@ private:
     ConditionVariable(const ConditionVariable& );
     ConditionVariable& operator= (const ConditionVariable& );
 
-    /**
-     * \internal
-     * \struct WaitingData
-     * This struct is used to make a list of waiting threads.
-     */
-    struct WaitingData
-    {
-        Thread *p;///<\internal Thread that is waiting
-        WaitingData *next;///<\internal Next thread in the list
-    };
-
-    WaitingData *first;///<Pointer to first element of waiting fifo
-    WaitingData *last;///<Pointer to last element of waiting fifo
+    // The list of threads waiting on this condition variable
+    IntrusiveList<WaitToken> condList;
 };
 
 /**

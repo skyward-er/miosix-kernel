@@ -999,6 +999,8 @@ private:
     friend void miosix_private::IRQstackOverflowCheck();
     //Need access to status
     friend void IRQaddToSleepingList(SleepData *x);
+    //Need access to status
+    friend void IRQremoveFromSleepingList(SleepData *);
     //Needs access to status
     friend bool IRQwakeThreads();
     //Needs access to watermark, status, next
