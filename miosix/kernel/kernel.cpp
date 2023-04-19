@@ -572,6 +572,18 @@ void Thread::IRQwait()
     const_cast<Thread*>(cur)->flags.IRQsetWait(true);
 }
 
+void Thread::IRQyield(InterruptDisableLock& dLock)
+{
+    InterruptEnableLock eLock(dLock);
+    Thread::yield();
+}
+
+void Thread::IRQyield(FastInterruptDisableLock& dLock)
+{
+    FastInterruptEnableLock eLock(dLock);
+    Thread::yield();
+}
+
 void Thread::IRQwakeup()
 {
     this->flags.IRQsetWait(false);
