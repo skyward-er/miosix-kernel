@@ -42,7 +42,7 @@ namespace miosix {
 
 /// Size of stack for main().
 /// The C standard library is stack-heavy (iprintf requires 1KB)
-const unsigned int MAIN_STACK_SIZE=4*1024;
+const unsigned int MAIN_STACK_SIZE=16*1024;
 
 /// Frequency of tick (in Hz). For the priority scheduler this is also the
 /// context switch frequency
