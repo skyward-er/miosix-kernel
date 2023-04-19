@@ -452,6 +452,28 @@ public:
     }
 
     /**
+     * Unlock the mutex and wait until woken up or the given number of
+     * milliseconds have passed.
+     * If more threads call wait() they must do so specifying the same mutex,
+     * otherwise the behaviour is undefined.
+     * \param l A Lock instance that locked a Mutex
+     * \param ms the number of milliseconds to wait
+     * \return whether the return was due to a timout or wakeup
+     */
+    template<typename T>
+    TimedWaitResult timedWaitFor(Lock<T>& l, long long ms)
+    {
+        if (ms <= 0)
+            return TimedWaitResult::Timeout;
+
+        long long tickDelay = ((ms * TICK_FREQ) / 1000);
+        // If tick resolution is too low, wait one tick
+        tickDelay = std::max(tickDelay, 1LL);
+
+        return timedWait(l.get(),getTick()+tickDelay);
+    }
+
+    /**
      * Unlock the Mutex and wait.
      * If more threads call wait() they must do so specifying the same mutex,
      * otherwise the behaviour is undefined.
