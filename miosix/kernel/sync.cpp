@@ -38,7 +38,7 @@ using namespace std;
 namespace miosix {
 
 void IRQaddToSleepingList(SleepData *x);
-void IRQremoveFromSleepingList(SleepData *x);
+bool IRQremoveFromSleepingList(SleepData *x);
 
 //
 // class Mutex

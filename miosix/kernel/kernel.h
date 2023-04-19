@@ -394,6 +394,7 @@ struct SleepData;
 class MemoryProfiling;
 class Mutex;
 class ConditionVariable;
+enum class TimedWaitResult;
 #ifdef WITH_PROCESSES
 class ProcessBase;
 #endif //WITH_PROCESSES
@@ -589,6 +590,17 @@ public:
     static void wait();
 
     /**
+     * This method stops the thread until another thread calls wakeup() on this
+     * thread, or the given number of milliseconds have passed. <br>Calls to
+     * wait are not cumulative. If wait() is called two times, only one call to
+     * wakeup() is needed to wake the thread.<br>CANNOT be called when the
+     * kernel is paused.
+     * \param ms the number of millisecond. If it is ==0 this method will
+     * return immediately
+     */
+    static TimedWaitResult timedWaitFor(long long ms);
+
+    /**
      * Wakeup a thread.
      * <br>CANNOT be called when the kernel is paused.
      */
@@ -675,6 +687,24 @@ public:
      * \endcode
      */
     static void IRQwait();
+
+    /**
+     * Same as timedWait(), but is meant to be used only inside an IRQ or when
+     * interrupts are disabled.<br>
+     * Note: this method is meant to put the current thread in wait status in a
+     * piece of code where interrupts are disabled.
+     * Note: as opposed to IRQwait(), it does not return immediately! Any action
+     * that must be done before putting the thread in wait status must be done
+     * before calling this method.
+     *
+     * \code
+     * disableInterrupts();
+     * ...
+     * Thread::IRQtimedWait(disableInterruptLock, 1000);
+     * \endcode
+     */
+    template<typename InterruptDisableType>
+    static TimedWaitResult IRQtimedWaitFor(InterruptDisableType& dLock, long long ms);
 
     /**
      * Same as wakeup(), but is meant to be used only inside an IRQ or when
@@ -1014,7 +1044,7 @@ private:
     //Need access to status
     friend void IRQaddToSleepingList(SleepData *x);
     //Need access to status
-    friend void IRQremoveFromSleepingList(SleepData *);
+    friend bool IRQremoveFromSleepingList(SleepData *);
     //Needs access to status
     friend bool IRQwakeThreads();
     //Needs access to watermark, status, next

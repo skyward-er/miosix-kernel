@@ -255,10 +255,11 @@ void IRQaddToSleepingList(SleepData *x)
  * It is labeled IRQ not because it is meant to be
  * used inside an IRQ, but because interrupts must be disabled prior to calling
  * this function.
+ * \return true if the item was removed from the sleeping list, false otherwise
  */
-void IRQremoveFromSleepingList(SleepData *x)
+bool IRQremoveFromSleepingList(SleepData *x)
 {
-    sleeping_list.removeFast(x);
+    return sleeping_list.removeFast(x);
 }
 
 /**
@@ -284,6 +285,8 @@ bool IRQwakeThreads()
         (*it)->thread->flags.IRQsetSleep(false); //Wake thread
         //Reset cond wait flag to wakeup threads in condvar timed waits too
         (*it)->thread->flags.IRQsetCondWait(false);
+        // Reset wait flag to wakeup threads in timed waits too
+        (*it)->thread->flags.IRQsetWait(false);
         it=sleeping_list.erase(it);
         result=true;
     }
@@ -460,13 +463,20 @@ void Thread::wait()
     Thread::yield();
     //Return here after wakeup
 }
-	
+
+TimedWaitResult Thread::timedWaitFor(long long ms)
+{
+    FastInterruptDisableLock dLock;
+    return Thread::IRQtimedWaitFor(dLock, ms);
+}
+
 void Thread::wakeup()
 {
     //pausing the kernel is not enough because of IRQwait and IRQwakeup
     {
         FastInterruptDisableLock lock;
         this->flags.IRQsetWait(false);
+        this->flags.IRQsetSleep(false);
     }
     #ifdef SCHED_TYPE_EDF
     yield();//The other thread might have a closer deadline
@@ -478,6 +488,7 @@ void Thread::PKwakeup()
     //pausing the kernel is not enough because of IRQwait and IRQwakeup
     FastInterruptDisableLock lock;
     this->flags.IRQsetWait(false);
+    this->flags.IRQsetSleep(false);
 }
 
 void Thread::detach()
@@ -584,9 +595,45 @@ void Thread::IRQyield(FastInterruptDisableLock& dLock)
     Thread::yield();
 }
 
+template<typename InterruptDisableType>
+TimedWaitResult Thread::IRQtimedWaitFor(InterruptDisableType& dLock, long long ms)
+{
+    if (ms <= 0)
+        return TimedWaitResult::Timeout;
+
+    Thread *thread = Thread::IRQgetCurrentThread();
+    SleepData sleepData;
+
+    sleepData.thread = thread;
+    if (((ms * TICK_FREQ) / 1000) > 0)
+    {
+        sleepData.wakeupTime = getTick() + (ms * TICK_FREQ) / 1000;
+    }
+    else
+    {
+        // If tick resolution is too low, wait one tick
+        sleepData.wakeupTime = getTick() + 1;
+    }
+
+    IRQaddToSleepingList(&sleepData); // Also sets SLEEP_FLAG
+    thread->flags.IRQsetWait(true);
+
+    Thread::IRQyield(dLock);
+
+    // Ensure that the thread is removed from the sleeping list, as it may have
+    // been woken up by a call to wakeup()
+    bool removed_from_sleep_list = IRQremoveFromSleepingList(&sleepData);
+
+    // If the thread was still in the sleeping list, it was woken up by a call
+    // to wakeup()
+    return removed_from_sleep_list ? TimedWaitResult::NoTimeout
+                                   : TimedWaitResult::Timeout;
+}
+
 void Thread::IRQwakeup()
 {
     this->flags.IRQsetWait(false);
+    this->flags.IRQsetSleep(false);
 }
 
 bool Thread::IRQexists(Thread* p)
