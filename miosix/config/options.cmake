@@ -1187,6 +1187,8 @@ elseif(${OPT_BOARD} STREQUAL stm32f769ni_discovery)
     set(ARCH cortexM7_stm32f7)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_rig)
     set(ARCH cortexM4_stm32f4)
+elseif(${OPT_BOARD} STREQUAL stm32l4r9zi_sensortile)
+    set(ARCH cortexM4_stm32l4)
 else()
     message(FATAL_ERROR "no board specified in miosix/config/options.cmake")
 endif()
@@ -3461,9 +3463,55 @@ elseif(${ARCH} STREQUAL cortexM4_stm32l4)
     set(ARCH_INC arch/cortexM4_stm32l4/common)
 
     ##-------------------------------------------------------------------------
+    ## BOARD: stm32l4r9zi_sensortile
+    ##
+    if(${OPT_BOARD} STREQUAL stm32l4r9zi_sensortile)
+
+        ## Base directory with header files for this board
+        set(BOARD_INC arch/cortexM4_stm32l4/stm32l4r9zi_sensortile)
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+640k_rom.ld)
+
+        ## Select clock frequency
+        ## Not defining any of these results in the internal 4MHz clock (MSI) to be used
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_24MHz=24000000)
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_36MHz=36000000)
+        set(CLOCK_FREQ -DSYSCLK_FREQ_48MHz=48000000)
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_56MHz=56000000)
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_80MHz=80000000 -DRUN_WITH_HSE)
+    
+        ## Same as above, but using 16MHz HSI as clock source
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_24MHz=24000000 -DRUN_WITH_HSI)
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_36MHz=36000000 -DRUN_WITH_HSI)
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_48MHz=48000000 -DRUN_WITH_HSI)
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_56MHz=56000000 -DRUN_WITH_HSI)
+        #set(CLOCK_FREQ -DSYSCLK_FREQ_80MHz=80000000 -DRUN_WITH_HSI)
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        set(ARCH_SRC
+            ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
+        )
+
+        ## Add a #define to allow querying board name
+        list(APPEND CFLAGS_BASE -D_BOARD_STM32L4R9ZI_SENSORTILE)
+        list(APPEND CXXFLAGS_BASE -D_BOARD_STM32L4R9ZI_SENSORTILE)
+
+        ## Specify a custom flash command
+        ## This is the program that is invoked when the flash flag (-f or --flash)
+        ## is used with the Miosix Build System.
+        ## Use $binary or $hex as placeolders, they will be replaced by the build
+        ## systems with the binary or hex file repectively.
+        ## If a command is not specified, the build system will use st-flash if found
+        # set(PROGRAM_CMDLINE "here your custom flash command")
+
+    ##-------------------------------------------------------------------------
     ## BOARD: stm32l476rg_nucleo
     ##
-    if(${OPT_BOARD} STREQUAL stm32l476rg_nucleo)
+    elseif(${OPT_BOARD} STREQUAL stm32l476rg_nucleo)
 
         ## Base directory with header files for this board
         set(BOARD_INC arch/cortexM4_stm32l4/stm32l476rg_nucleo)
@@ -3502,7 +3550,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32l4)
 
     ## Select architecture specific files
     ## These are the files in arch/<arch name>/common
-    set(ARCH_SRC
+    list(APPEND ARCH_SRC
         ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
         ${KPATH}/arch/common/drivers/serial_stm32.cpp
         ${KPATH}/${ARCH_INC}/interfaces-impl/portability.cpp

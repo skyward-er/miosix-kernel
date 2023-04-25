@@ -79,4 +79,5 @@ set(BOARDS
     stm32f767zi_compute_unit
     stm32f767zi_nucleo
     stm32f769ni_discovery
+    stm32l4r9zi_sensortile
 )
