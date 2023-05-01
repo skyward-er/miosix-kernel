@@ -3358,6 +3358,36 @@ else ifeq ($(ARCH),cortexM4_stm32l4)
         ## error message saying that 'make program' is not supported for that
         ## board.
         PROGRAM_CMDLINE := echo 'make program not supported.'
+    
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32l4r9zi_sensortile
+    ##
+    else ifeq ($(OPT_BOARD),stm32l4r9zi_sensortile)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM4_stm32l4/stm32l4r9zi_sensortile
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        BOOT_FILE := $(BOARD_INC)/core/stage_1_boot.o
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_2m+640k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp         \
+        arch/common/drivers/sd_stm32l4.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32L4R9ZI_SENSORTILE
+        CXXFLAGS_BASE += -D_BOARD_STM32L4R9ZI_SENSORTILE
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROGRAM_CMDLINE := st-flash --reset write "main.bin" 0x8000000
 
     ##-------------------------------------------------------------------------
     ## End of board list

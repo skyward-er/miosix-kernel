@@ -3494,6 +3494,7 @@ elseif(${ARCH} STREQUAL cortexM4_stm32l4)
         ## These are the files in arch/<arch name>/<board name>
         set(ARCH_SRC
             ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
+            ${KPATH}/arch/common/drivers/sd_stm32l4.cpp
         )
 
         ## Add a #define to allow querying board name
