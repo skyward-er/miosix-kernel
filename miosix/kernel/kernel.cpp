@@ -583,16 +583,30 @@ void Thread::IRQwait()
     const_cast<Thread*>(cur)->flags.IRQsetWait(true);
 }
 
-void Thread::IRQyield(InterruptDisableLock& dLock)
+template<typename InterruptDisableType>
+void Thread::IRQyield(InterruptDisableType& dLock)
 {
-    InterruptEnableLock eLock(dLock);
-    Thread::yield();
-}
+    (void)dLock; // Unused by the implementation
 
-void Thread::IRQyield(FastInterruptDisableLock& dLock)
-{
-    FastInterruptEnableLock eLock(dLock);
+    // Since this function is called with interrupts disabled, the interrupt
+    // nesting level is unknown, but always >= 1. We need to save it, reset it
+    // to 0 before the yield, and restore it after the yield. If we yielded
+    // unconditionally, the next thread might be started with interrupts
+    // disabled.
+
+    // Save the current interrupt nesting level to restore it after the yield
+    auto savedNesting = interruptDisableNesting; //For InterruptDisableLock
+    // Reset the interrupt nesting level to 0
+    interruptDisableNesting = 0;
+
+    miosix_private::doEnableInterrupts();
     Thread::yield();
+    miosix_private::doDisableInterrupts();
+
+    if (interruptDisableNesting != 0)
+        errorHandler(UNEXPECTED);
+    // Restore the interrupt nesting level to the previous value
+    interruptDisableNesting = savedNesting;
 }
 
 template<typename InterruptDisableType>

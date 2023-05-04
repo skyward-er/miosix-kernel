@@ -661,14 +661,8 @@ public:
      * Internally, this function re-enables interrupts before yielding.
      * <br>CANNOT be called when the kernel is paused.
      */
-    static void IRQyield(InterruptDisableLock& dLock);
-
-    /**
-     * Same as yield(), but meant to be used when interrupts are disabled.
-     * Internally, this function re-enables interrupts before yielding.
-     * <br>CANNOT be called when the kernel is paused.
-     */
-    static void IRQyield(FastInterruptDisableLock& dLock);
+    template<typename InterruptDisableType>
+    static void IRQyield(InterruptDisableType& dLock);
 
     /**
      * Same as wait(), but is meant to be used only inside an IRQ or when
