@@ -27,19 +27,33 @@
 #include "angel.h"
 #include "filesystem/ioctl.h"
 
-using namespace miosix;
+namespace miosix {
 
-miosix::AngelSerial::AngelSerial() : Device(DeviceType::TTY), handle(angel::sys_open_stdout()) {}
+AngelSerial::AngelSerial(Stream stream) : 
+    Device(DeviceType::TTY), 
+    handle(stream == Stream::Stdout ? angel::sys_open_stdout() : angel::sys_open_stderr()) {}
 
-ssize_t miosix::AngelSerial::readBlock(void *buffer, size_t size, off_t where) {
+AngelSerial::~AngelSerial() {
+    if(handle != -1) {
+        angel::sys_close(handle);
+    }
+}
+
+ssize_t AngelSerial::readBlock(void *buffer, size_t size, off_t where) {
+    if(handle == -1)
+        return -EIO;
+
     return size - angel::sys_read(handle, buffer, size);
 }
 
-ssize_t miosix::AngelSerial::writeBlock(const void *buffer, size_t size, off_t where) {
+ssize_t AngelSerial::writeBlock(const void *buffer, size_t size, off_t where) {
+    if(handle == -1)
+        return -EIO;
+
     return size - angel::sys_write(handle, buffer, size);
 }
 
-int miosix::AngelSerial::ioctl(int cmd, void *arg) {
+int AngelSerial::ioctl(int cmd, void *arg) {
     if(reinterpret_cast<unsigned>(arg) & 0b11) 
         return -EFAULT; // Unaligned
     
@@ -64,4 +78,6 @@ int miosix::AngelSerial::ioctl(int cmd, void *arg) {
         default:
             return -ENOTTY; // Means the operation does not apply to this descriptor
     }
+}
+
 }
