@@ -22,24 +22,18 @@
 
 #pragma once
 
-#include <filesystem/devfs/devfs.h>
+#include "filesystem/file.h"
 
 namespace miosix {
-    class AngelSerial : public miosix::Device {
+    class AngelFs : public FilesystemBase {
     public:
-        enum class Stream {
-            Stdout,
-            Stderr,
-        };
+        AngelFs();
 
-        AngelSerial(Stream stream);
-        ~AngelSerial();
-
-        ssize_t readBlock(void *buffer, size_t size, off_t where) override;
-        ssize_t writeBlock(const void *buffer, size_t size, off_t where) override;
-        int ioctl(int cmd, void *arg) override;
-
-    private:
-        int handle;
+        int open(intrusive_ref_ptr<FileBase>& file, StringPart &name, int flags, int mode) override;
+        int lstat(StringPart& name, struct stat *pstat) override;
+        int unlink(StringPart& name) override;
+        int rename(StringPart& oldName, StringPart& newName) override;
+        int mkdir(StringPart& name, int mode) override;
+        int rmdir(StringPart& name) override;
     };
 }

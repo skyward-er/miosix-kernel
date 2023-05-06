@@ -91,8 +91,9 @@ foreach(OPT_BOARD ${BOARDS})
         util/version.cpp
         util/crc16.cpp
         util/lcd44780.cpp
-        util/angel/angel_serial.cpp
         util/angel/angel.cpp
+        util/angel/angel_serial.cpp
+        util/angel/angel_fs.cpp
         ${ARCH_SRC}
     )
     add_library(Miosix::Miosix::${OPT_BOARD} ALIAS ${MIOSIX_LIBRARY})
