@@ -68,7 +68,7 @@ const unsigned int defaultSerialSpeed = 115200;
 // #define SERIAL_3_DMA
 
 // SD card driver
-static const unsigned char sdVoltage = 33;  // Board powered @ 3.3V
+static const unsigned char sdVoltage = 29;  // Micro SD powered at 2.9V
 // #define SD_ONE_BIT_DATABUS //All data lines are connected
 
 /// Analog supply voltage for ADC, DAC, Reset blocks, RCs and PLL

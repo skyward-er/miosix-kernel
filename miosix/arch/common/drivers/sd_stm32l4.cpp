@@ -1,3 +1,29 @@
+/***************************************************************************
+ *   Copyright (C) 2010, 2011, 2012, 2013, 2014 by Terraneo Federico       *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   As a special exception, if other files instantiate templates or use   *
+ *   macros or inline functions from this file, or you compile this file   *
+ *   and link it with other works to produce a work based on this file,    *
+ *   this file does not by itself cause the resulting work to be covered   *
+ *   by the GNU General Public License. However the source code for this   *
+ *   file must still be made available in accordance with the GNU General  *
+ *   Public License. This exception does not invalidate any other reasons  *
+ *   why a work based on this file might be covered by the GNU General     *
+ *   Public License.                                                       *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
+ ***************************************************************************/
 
 #include "sd_stm32l4.h"
 #include "interfaces/bsp.h"
@@ -10,8 +36,6 @@
 #include <cstdio>
 #include <cstring>
 #include <errno.h>
-
-
 
 //Note: enabling debugging might cause deadlock when using sleep() or reboot()
 //The bug won't be fixed because debugging is only useful for driver development
@@ -29,8 +53,6 @@ void __attribute__((naked)) SDMMC1_IRQHandler()
     restoreContext();
 }
 
-
-
 namespace miosix {
 
 static volatile bool transferError; ///< \internal DMA or SDIO transfer error
@@ -38,11 +60,9 @@ static Thread *waiting;             ///< \internal Thread waiting for transfer
 static unsigned int dmaFlags;       ///< \internal DMA status flags
 static unsigned int sdioFlags;      ///< \internal SDIO status flags
 
-
-
 /**
  * \internal
- * DMA2 Stream3 interrupt handler actual implementation
+ * SDMMC interrupt handler interrupt handler actual implementation
  */
 void __attribute__((used)) SDMMCirqImpl()
 {
@@ -94,6 +114,13 @@ typedef Gpio<GPIOC_BASE,10> sdD2;
 typedef Gpio<GPIOC_BASE,11> sdD3;
 typedef Gpio<GPIOC_BASE,12> sdCLK;
 typedef Gpio<GPIOD_BASE,2>  sdCMD;
+#ifdef _BOARD_STM32L4R9ZI_SENSORTILE
+typedef Gpio<GPIOB_BASE,8> sdCLK_F;
+typedef Gpio<GPIOC_BASE,6> sdDAT0_DIR;
+typedef Gpio<GPIOC_BASE,7> sdDAT123_DIR;
+typedef Gpio<GPIOB_BASE,9> sdCMD_DIR;
+typedef Gpio<GPIOE_BASE,4> sdEN;
+#endif
 
 //
 // Class CmdResult
@@ -370,12 +397,12 @@ CmdResult Command::send(CommandType cmd, unsigned int arg)
 
     //Send command
     cc &= 0x3f;
-    unsigned int command= SDMMC_CMD_CPSMEN | static_cast<unsigned int>(cc);
+    unsigned int command=SDMMC_CMD_CPSMEN | static_cast<unsigned int>(cc);
     if(cc!=CMD0) command |= SDMMC_CMD_WAITRESP_0; //CMD0 has no response
     if(cc==CMD2) command |= SDMMC_CMD_WAITRESP_1; //CMD2 has long response
     if(cc==CMD9) command |= SDMMC_CMD_WAITRESP_1; //CMD9 has long response
-    SDMMC1->ARG = arg;
-    SDMMC1->CMD = command;
+    SDMMC1->ARG=arg;
+    SDMMC1->CMD=command;
 
     //CMD0 has no response, so wait until it is sent
     if(cc==CMD0)
@@ -389,7 +416,7 @@ CmdResult Command::send(CommandType cmd, unsigned int arg)
             }
             delayUs(1);
         }
-        SDMMC1->ICR = 0x1fe00fff;//Clear flags
+        SDMMC1->ICR=0x1fe00fff;//Clear flags
         return CmdResult(cc,CmdResult::Timeout);
     }
 
@@ -502,7 +529,7 @@ private:
     static const unsigned int CLKCR_FLAGS= SDMMC_CLKCR_PWRSAV;
     #else //SD_ONE_BIT_DATABUS
     ///\internal Clock enabled, bus width 4bit, clock powersave enabled.
-    static const unsigned int CLKCR_FLAGS= //SDIO_CLKCR_CLKEN |
+    static const unsigned int CLKCR_FLAGS=
         SDMMC_CLKCR_WIDBUS_0 | SDMMC_CLKCR_PWRSAV;
     #endif //SD_ONE_BIT_DATABUS
 
@@ -521,7 +548,6 @@ private:
 
 void ClockController::calibrateClockSpeed(SDIODriver *sdio)
 {
-
     //During calibration we call readBlock() which will call reduceClockSpeed()
     //so not to invalidate calibration clock reduction must not be available
     clockReductionAvailable=0;
@@ -577,13 +603,13 @@ bool ClockController::reduceClockSpeed()
 
 void ClockController::setClockSpeed(unsigned int clkdiv)
 {
-    SDMMC1->CLKCR = clkdiv | CLKCR_FLAGS;
+    SDMMC1->CLKCR=clkdiv | CLKCR_FLAGS;
     //Timeout 600ms expressed in SD_CK cycles
-    SDMMC1-> DTIMER = (6*SDIOCLK)/((clkdiv == 0 ? 1 : 2 * clkdiv)*10);
+    SDMMC1-> DTIMER=(6*SDIOCLK)/((clkdiv==0?1:2*clkdiv)*10);
 }
 
-unsigned char ClockController::clockReductionAvailable = false;
-unsigned char ClockController::retries = ClockController::MAX_RETRY;
+unsigned char ClockController::clockReductionAvailable=false;
+unsigned char ClockController::retries=ClockController::MAX_RETRY;
 
 //
 // Data send/receive functions
@@ -671,13 +697,13 @@ static bool multipleBlockRead(unsigned char *buffer, unsigned int nblk,
     //Data transfer is considered complete once the DMA transfer complete
     //interrupt occurs, that happens when the last data was written in the
     //buffer. Both SDIO and DMA error interrupts are active to catch errors
-    SDMMC1->MASK= SDMMC_MASK_DATAENDIE  |
-               SDMMC_MASK_RXOVERRIE  | //Interrupt on rx underrun
-               SDMMC_MASK_TXUNDERRIE | //Interrupt on tx underrun
-               SDMMC_MASK_DCRCFAILIE | //Interrupt on data CRC fail
-               SDMMC_MASK_DTIMEOUTIE | //Interrupt on data timeout
-               SDMMC_MASK_IDMABTCIE  | //Interrupt on IDMA events
-               SDMMC_MASK_DABORTIE;    //Interrupt on aborted
+    SDMMC1->MASK=SDMMC_MASK_DATAENDIE  |
+                   SDMMC_MASK_RXOVERRIE  | //Interrupt on rx underrun
+                   SDMMC_MASK_TXUNDERRIE | //Interrupt on tx underrun
+                 SDMMC_MASK_DCRCFAILIE | //Interrupt on data CRC fail
+                 SDMMC_MASK_DTIMEOUTIE | //Interrupt on data timeout
+                 SDMMC_MASK_IDMABTCIE  | //Interrupt on IDMA events
+                 SDMMC_MASK_DABORTIE;    //Interrupt on aborted
     SDMMC1->DLEN=nblk*512;
 
     if(waiting==0)
@@ -689,9 +715,7 @@ static bool multipleBlockRead(unsigned char *buffer, unsigned int nblk,
     if(cr.validateR1Response())
     {
         //Block size 512 bytes, block data xfer, from card to controller
-        //DTMode set to 00 - Block Data Transfer (Not shown here)
         SDMMC1->DCTRL=(9<<4) | SDMMC_DCTRL_DTDIR | SDMMC_DCTRL_DTEN;
-        DBG("READ STARTED! WAITING FOR INTERRUPT...\n");
         FastInterruptDisableLock dLock;
         while(waiting)
         {
@@ -701,11 +725,7 @@ static bool multipleBlockRead(unsigned char *buffer, unsigned int nblk,
                 Thread::yield();
             }
         }
-
-    } else {
-        transferError=true;
-        DBG("TRANSFER ERROR\n");
-    }
+    } else transferError=true;
     SDMMC1->DCTRL=0; //Disable data path state machine
     SDMMC1->MASK=0;
 
@@ -764,12 +784,13 @@ static bool multipleBlockWrite(const unsigned char *buffer, unsigned int nblk,
     //interrupt occurs, that happens when the last data was written to the SDIO
     //Both SDIO and DMA error interrupts are active to catch errors
     SDMMC1->MASK=SDMMC_MASK_DATAENDIE  | //Interrupt on data end
-               SDMMC_MASK_RXOVERRIE  | //Interrupt on rx underrun
-               SDMMC_MASK_TXUNDERRIE | //Interrupt on tx underrun
-               SDMMC_MASK_DCRCFAILIE | //Interrupt on data CRC fail
-               SDMMC_MASK_DTIMEOUTIE | //Interrupt on data timeout
-               SDMMC_MASK_IDMABTCIE  | //Interrupt on IDMA events
-               SDMMC_MASK_DABORTIE;
+                 SDMMC_MASK_RXOVERRIE  | //Interrupt on rx underrun
+                 SDMMC_MASK_TXUNDERRIE | //Interrupt on tx underrun
+                 SDMMC_MASK_DCRCFAILIE | //Interrupt on data CRC fail
+                 SDMMC_MASK_DTIMEOUTIE | //Interrupt on data timeout
+                 SDMMC_MASK_IDMABTCIE  | //Interrupt on IDMA events
+                 SDMMC_MASK_DABORTIE;
+
     SDMMC1->DLEN=nblk*512;
     if(waiting==0)
     {
@@ -780,7 +801,7 @@ static bool multipleBlockWrite(const unsigned char *buffer, unsigned int nblk,
     if(cr.validateR1Response())
     {
         //Block size 512 bytes, block data xfer, from card to controller
-        SDMMC1->DCTRL= ((9<<4) | SDMMC_DCTRL_DTEN) & ~(SDMMC_DCTRL_DTDIR);
+        SDMMC1->DCTRL=((9<<4) | SDMMC_DCTRL_DTEN) & ~(SDMMC_DCTRL_DTDIR);
         FastInterruptDisableLock dLock;
         while(waiting)
         {
@@ -863,11 +884,10 @@ static void initSDIOPeripheral()
         RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN  
                       | RCC_AHB2ENR_GPIODEN
                       | RCC_AHB2ENR_SDMMC1EN;
-
+        RCC_SYNC();
         //RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         RCC->CCIPR |= RCC_CCIPR_CLK48SEL_1;
-        //RCC_SYNC();
-        //RCC_SYNC();
+        RCC_SYNC();
         sdD0::mode(Mode::ALTERNATE);
         sdD0::alternateFunction(12);
         #ifndef SD_ONE_BIT_DATABUS
@@ -877,24 +897,37 @@ static void initSDIOPeripheral()
         sdD2::alternateFunction(12);
         sdD3::mode(Mode::ALTERNATE);
         sdD3::alternateFunction(12);
-        #endif //SD_ONE_BIT_DATABUS
+        #endif // SD_ONE_BIT_DATABUS
         sdCLK::mode(Mode::ALTERNATE);
         sdCLK::alternateFunction(12);
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(12);
+        #ifdef _BOARD_STM32L4R9ZI_SENSORTILE
+        sdCLK_F::mode(Mode::ALTERNATE);
+        sdCLK_F::alternateFunction(8);
+        sdDAT0_DIR::mode(Mode::ALTERNATE);
+        sdDAT0_DIR::alternateFunction(8);
+        sdDAT123_DIR::mode(Mode::ALTERNATE);
+        sdDAT123_DIR::alternateFunction(8);
+        sdCMD_DIR::mode(Mode::ALTERNATE);
+        sdCMD_DIR::alternateFunction(8);
+        sdEN::mode(Mode::OUTPUT);
+        sdEN::high();
+        #endif
     }
     NVIC_SetPriority(SDMMC1_IRQn,15);//Low priority for SDIO
     NVIC_EnableIRQ(SDMMC1_IRQn);
     
     SDMMC1->POWER=0; //Power off state
     delayUs(1);
+    #ifdef _BOARD_STM32L4R9ZI_SENSORTILE
+    SDMMC1->POWER|=SDMMC_POWER_DIRPOL;
+    #endif
     SDMMC1->CLKCR=0;
     SDMMC1->CMD=0;
     SDMMC1->DCTRL=0;
-    SDMMC1->ICR=0x1fe007ff; //Interrupt  //0xc007ff
-    SDMMC1->POWER=SDMMC_POWER_PWRCTRL_1 | SDMMC_POWER_PWRCTRL_0; //Power on state
-    DBG("\nIDMACTRL: 0x%x\n", SDMMC1->IDMACTRL);
-    
+    SDMMC1->ICR=0x1fe007ff;
+    SDMMC1->POWER|=SDMMC_POWER_PWRCTRL_1 | SDMMC_POWER_PWRCTRL_0; //Power on state
     //This delay is particularly important: when setting the POWER register a
     //glitch on the CMD pin happens. This glitch has a fast fall time and a slow
     //rise time resembling an RC charge with a ~6us rise time. If the clock is
@@ -996,6 +1029,9 @@ static CardType detectCardType()
     }
 }
 
+//
+// class SDIODriver
+//
 
 intrusive_ref_ptr<SDIODriver> SDIODriver::instance()
 {
@@ -1014,7 +1050,7 @@ ssize_t SDIODriver::readBlock(void* buffer, size_t size, off_t where)
     Lock<FastMutex> l(mutex);
     DBG("SDIODriver::readBlock(): nSectors=%d\n",nSectors);
     
-    for(int i=0;i < ClockController::getRetryCount();i++)
+    for(int i=0;i<ClockController::getRetryCount();i++)
     {
         CardSelector selector;
         if(selector.succeded()==false) continue;
@@ -1068,7 +1104,6 @@ int SDIODriver::ioctl(int cmd, void* arg)
 
 SDIODriver::SDIODriver() : Device(Device::BLOCK)
 {
-
     initSDIOPeripheral();
 
     // This is more important than it seems, since CMD55 requires the card's RCA
@@ -1133,8 +1168,7 @@ SDIODriver::SDIODriver() : Device(Device::BLOCK)
     // possible read/write speed. This as a side effect enables 4bit bus width.
     ClockController::calibrateClockSpeed(this);
 
-
     DBG("SDIO init: Success\n");
+}
 
-}
-}
+} //namespace miosix

@@ -187,7 +187,7 @@ void __attribute__((used)) SDDMAirqImpl()
 
 /**
  * \internal
- * DMA2 Stream3 interrupt handler actual implementation
+ * SDIO interrupt handler handler actual implementation
  */
 void __attribute__((used)) SDirqImpl()
 {

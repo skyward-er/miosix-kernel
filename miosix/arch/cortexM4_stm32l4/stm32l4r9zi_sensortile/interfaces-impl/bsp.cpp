@@ -90,7 +90,6 @@ void IRQbspInit()
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
         new STM32Serial(defaultSerial,defaultSerialSpeed,
         u2tx::getPin(), u2rx::getPin())));
-
 }
 
 
