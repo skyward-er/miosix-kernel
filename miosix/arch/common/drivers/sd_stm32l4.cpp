@@ -471,6 +471,7 @@ public:
         // width, no clock bypass, no powersave.
         // Set low clock speed 400KHz
         SDMMC1->CLKCR=CLOCK_400KHz;
+        delayUs(185); // 74 clock cycles
         SDMMC1->DTIMER=240000; //Timeout 600ms expressed in SD_CK cycles
     }
 
@@ -919,7 +920,6 @@ static void initSDIOPeripheral()
     NVIC_EnableIRQ(SDMMC1_IRQn);
     
     SDMMC1->POWER=0; //Power off state
-    delayUs(1);
     #ifdef _BOARD_STM32L4R9ZI_SENSORTILE
     SDMMC1->POWER|=SDMMC_POWER_DIRPOL;
     #endif
@@ -927,14 +927,8 @@ static void initSDIOPeripheral()
     SDMMC1->CMD=0;
     SDMMC1->DCTRL=0;
     SDMMC1->ICR=0x1fe007ff;
+    delayUs(1000); // at least 1ms delay 
     SDMMC1->POWER|=SDMMC_POWER_PWRCTRL_1 | SDMMC_POWER_PWRCTRL_0; //Power on state
-    //This delay is particularly important: when setting the POWER register a
-    //glitch on the CMD pin happens. This glitch has a fast fall time and a slow
-    //rise time resembling an RC charge with a ~6us rise time. If the clock is
-    //started too soon, the card sees a clock pulse while CMD is low, and
-    //interprets it as a start bit. No, setting POWER to powerup does not
-    //eliminate the glitch.
-    delayUs(10);
     ClockController::setLowSpeedClock(); 
 }
 
