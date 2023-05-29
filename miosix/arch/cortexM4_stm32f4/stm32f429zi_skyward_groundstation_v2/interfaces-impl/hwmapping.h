@@ -64,7 +64,7 @@ namespace pc13
 {
 using cs   = Gpio<GPIOC_BASE, 13>;
 using dio0 = Gpio<GPIOF_BASE, 6>;
-using dio1 = Gpio<GPIOA_BASE, 2>;
+using dio1 = Gpio<GPIOA_BASE, 4>;
 using dio3 = Gpio<GPIOC_BASE, 11>;
 using nrst = Gpio<GPIOC_BASE, 14>;
 }  // namespace pc13
