@@ -1187,6 +1187,8 @@ elseif(${OPT_BOARD} STREQUAL stm32f769ni_discovery)
     set(ARCH cortexM7_stm32f7)
 elseif(${OPT_BOARD} STREQUAL stm32f429zi_skyward_rig)
     set(ARCH cortexM4_stm32f4)
+elseif(${OPT_BOARD} STREQUAL stm32f756zg_nucleo)
+    set(ARCH cortexM7_stm32f7)
 else()
     message(FATAL_ERROR "no board specified in miosix/config/options.cmake")
 endif()
@@ -3106,6 +3108,45 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ## Add a #define to allow querying board name
         list(APPEND CFLAGS_BASE -D_BOARD_STM32F746ZG_NUCLEO)
         list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F746ZG_NUCLEO)
+
+        ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
+        set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_216MHz=216000000)
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        set(PROGRAM_CMDLINE echo "make program not supported.")
+
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32f756zg_nucleo
+    ##
+    elseif(${OPT_BOARD} STREQUAL stm32f756zg_nucleo)
+        ## Select appropriate compiler flags for both ASM/C/C++/linker
+        ## Not all stm32f7 have the double precision FPU. Those that only
+        ## support single precision are built as cortex m4
+        set(ARCHOPTS -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16)
+
+        ## Base directory with header files for this board
+        set(BOARD_INC arch/cortexM7_stm32f7/stm32f756zg_nucleo)
+
+        ## Select linker script and boot file
+        ## Their path must be relative to the miosix directory.
+        set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_1m+256k_rom.ld)
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        set(ARCH_SRC
+            ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
+            ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
+        )
+
+        ## Add a #define to allow querying board name
+        list(APPEND CFLAGS_BASE -D_BOARD_STM32F756ZG_NUCLEO)
+        list(APPEND CXXFLAGS_BASE -D_BOARD_STM32F756ZG_NUCLEO)
 
         ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
         set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_216MHz=216000000)

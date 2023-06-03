@@ -7,7 +7,7 @@
   *          This file contains:
   *           - Data structures and the address mapping for all peripherals
   *           - Peripheral's registers declarations and bits definition
-  *           - Macros to access peripheral’s registers hardware
+  *           - Macros to access peripheralï¿½s registers hardware
   *
   ******************************************************************************
   * @attention
@@ -10800,6 +10800,9 @@ typedef struct
 #define RCC_APB1ENR_LPTIM1EN_Pos           (9U)                                
 #define RCC_APB1ENR_LPTIM1EN_Msk           (0x1U << RCC_APB1ENR_LPTIM1EN_Pos)  /*!< 0x00000200 */
 #define RCC_APB1ENR_LPTIM1EN               RCC_APB1ENR_LPTIM1EN_Msk            
+#define RCC_APB1ENR_RTCEN_Pos              (10U)                               
+#define RCC_APB1ENR_RTCEN_Msk              (0x1U << RCC_APB1ENR_RTCEN_Pos)     /*!< 0x00000400 */
+#define RCC_APB1ENR_RTCEN                  RCC_APB1ENR_RTCEN_Msk
 #define RCC_APB1ENR_WWDGEN_Pos             (11U)                               
 #define RCC_APB1ENR_WWDGEN_Msk             (0x1U << RCC_APB1ENR_WWDGEN_Pos)    /*!< 0x00000800 */
 #define RCC_APB1ENR_WWDGEN                 RCC_APB1ENR_WWDGEN_Msk              
