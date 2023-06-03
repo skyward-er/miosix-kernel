@@ -23,8 +23,7 @@
 void program_startup() __attribute__((noreturn));
 void program_startup()
 {
-    // Cortex M7 core appears to get out of reset with interrupts already
-    // enabled
+    //Cortex M7 core appears to get out of reset with interrupts already enabled
     __disable_irq();
 
     miosix::IRQconfigureCache((const unsigned int*)0xc0000000, 16 * 1024 * 1024);
@@ -420,8 +419,8 @@ void (*const __Vectors[])() __attribute__((section(".isr_vector"))) =
 #pragma weak SDMMC1_IRQHandler = Default_Handler
 #pragma weak TIM5_IRQHandler = Default_Handler
 #pragma weak SPI3_IRQHandler = Default_Handler
-#pragma weak UART4_IRQHandler = Default_Handler
-#pragma weak UART5_IRQHandler = Default_Handler
+// #pragma weak UART4_IRQHandler = Default_Handler
+// #pragma weak UART5_IRQHandler = Default_Handler
 #pragma weak TIM6_DAC_IRQHandler = Default_Handler
 #pragma weak TIM7_IRQHandler = Default_Handler
 #pragma weak DMA2_Stream0_IRQHandler = Default_Handler
@@ -439,7 +438,7 @@ void (*const __Vectors[])() __attribute__((section(".isr_vector"))) =
 #pragma weak DMA2_Stream5_IRQHandler = Default_Handler
 #pragma weak DMA2_Stream6_IRQHandler = Default_Handler
 #pragma weak DMA2_Stream7_IRQHandler = Default_Handler
-#pragma weak USART6_IRQHandler = Default_Handler
+// #pragma weak USART6_IRQHandler = Default_Handler
 #pragma weak I2C3_EV_IRQHandler = Default_Handler
 #pragma weak I2C3_ER_IRQHandler = Default_Handler
 #pragma weak OTG_HS_EP1_OUT_IRQHandler = Default_Handler
@@ -450,8 +449,8 @@ void (*const __Vectors[])() __attribute__((section(".isr_vector"))) =
 #pragma weak CRYP_IRQHandler = Default_Handler
 #pragma weak RNG_IRQHandler = Default_Handler
 #pragma weak FPU_IRQHandler = Default_Handler
-#pragma weak UART7_IRQHandler = Default_Handler
-#pragma weak UART8_IRQHandler = Default_Handler
+// #pragma weak UART7_IRQHandler = Default_Handler
+// #pragma weak UART8_IRQHandler = Default_Handler
 #pragma weak SPI4_IRQHandler = Default_Handler
 #pragma weak SPI5_IRQHandler = Default_Handler
 #pragma weak SPI6_IRQHandler = Default_Handler

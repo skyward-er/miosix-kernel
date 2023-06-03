@@ -1,9 +1,11 @@
-
-#include "interfaces/arch_registers.h"
-#include "core/interrupts.h" //For the unexpected interrupt call
-#include "core/cache_cortexMx.h"
-#include "kernel/stage_2_boot.h"
 #include <string.h>
+
+#include "core/cache_cortexMx.h"
+#include "core/interrupts.h"  //For the unexpected interrupt call
+#include "core/interrupts_cortexMx.h"
+#include "interfaces/arch_registers.h"
+#include "interfaces/bsp.h"
+#include "kernel/stage_2_boot.h"
 
 /*
  * startup.cpp
@@ -21,7 +23,7 @@
 void program_startup() __attribute__((noreturn));
 void program_startup()
 {
-    //Cortex M3 core appears to get out of reset with interrupts already enabled
+    //Cortex M7 core appears to get out of reset with interrupts already enabled
     __disable_irq();
 
 	//SystemInit() is called *before* initializing .data and zeroing .bss
@@ -38,12 +40,12 @@ void program_startup()
 
 	miosix::IRQconfigureCache();
 
-	//These are defined in the linker script
-	extern unsigned char _etext asm("_etext");
-	extern unsigned char _data asm("_data");
-	extern unsigned char _edata asm("_edata");
-	extern unsigned char _bss_start asm("_bss_start");
-	extern unsigned char _bss_end asm("_bss_end");
+    //These are defined in the linker script
+    extern unsigned char _etext asm("_etext");
+    extern unsigned char _data asm("_data");
+    extern unsigned char _edata asm("_edata");
+    extern unsigned char _bss_start asm("_bss_start");
+    extern unsigned char _bss_end asm("_bss_end");
 
     //Initialize .data section, clear .bss section
     unsigned char *etext=&_etext;
@@ -54,11 +56,11 @@ void program_startup()
     memcpy(data, etext, edata-data);
     memset(bss_start, 0, bss_end-bss_start);
 
-	//Move on to stage 2
-	_init();
+    //Move on to stage 2
+    _init();
 
-	//If main returns, reboot
-	NVIC_SystemReset();
+    //If main returns, reboot
+    NVIC_SystemReset();
     for(;;) ;
 }
 
@@ -87,15 +89,12 @@ void Reset_Handler()
 /**
  * All unused interrupts call this function.
  */
-extern "C" void Default_Handler() 
-{
-    unexpectedInterrupt();
-}
+extern "C" void Default_Handler() { unexpectedInterrupt(); }
 
-//System handlers
-void /*__attribute__((weak))*/ Reset_Handler();     //These interrupts are not
-void /*__attribute__((weak))*/ NMI_Handler();       //weak because they are
-void /*__attribute__((weak))*/ HardFault_Handler(); //surely defined by Miosix
+// System handlers
+void /*__attribute__((weak))*/ Reset_Handler();      // These interrupts are not
+void /*__attribute__((weak))*/ NMI_Handler();        // weak because they are
+void /*__attribute__((weak))*/ HardFault_Handler();  // surely defined by Miosix
 void /*__attribute__((weak))*/ MemManage_Handler();
 void /*__attribute__((weak))*/ BusFault_Handler();
 void /*__attribute__((weak))*/ UsageFault_Handler();
@@ -104,7 +103,7 @@ void /*__attribute__((weak))*/ DebugMon_Handler();
 void /*__attribute__((weak))*/ PendSV_Handler();
 void /*__attribute__((weak))*/ SysTick_Handler();
 
-//Interrupt handlers
+// Interrupt handlers
 void __attribute__((weak)) WWDG_IRQHandler();
 void __attribute__((weak)) PVD_IRQHandler();
 void __attribute__((weak)) TAMP_STAMP_IRQHandler();
@@ -203,130 +202,130 @@ void __attribute__((weak)) I2C4_EV_IRQHandler();
 void __attribute__((weak)) I2C4_ER_IRQHandler();
 void __attribute__((weak)) SPDIF_RX_IRQHandler();
 
-//Stack top, defined in the linker script
+// Stack top, defined in the linker script
 extern char _main_stack_top asm("_main_stack_top");
 
-//Interrupt vectors, must be placed @ address 0x00000000
-//The extern declaration is required otherwise g++ optimizes it out
-extern void (* const __Vectors[])();
-void (* const __Vectors[])() __attribute__ ((section(".isr_vector"))) =
+// Interrupt vectors, must be placed @ address 0x00000000
+// The extern declaration is required otherwise g++ optimizes it out
+extern void (*const __Vectors[])();
+void (*const __Vectors[])() __attribute__((section(".isr_vector"))) =
 {
-    reinterpret_cast<void (*)()>(&_main_stack_top),/* Stack pointer*/
-    Reset_Handler,              /* Reset Handler */
-    NMI_Handler,                /* NMI Handler */
-    HardFault_Handler,          /* Hard Fault Handler */
-    MemManage_Handler,          /* MPU Fault Handler */
-    BusFault_Handler,           /* Bus Fault Handler */
-    UsageFault_Handler,         /* Usage Fault Handler */
-    0,                          /* Reserved */
-    0,                          /* Reserved */
-    0,                          /* Reserved */
-    0,                          /* Reserved */
-    SVC_Handler,                /* SVCall Handler */
-    DebugMon_Handler,           /* Debug Monitor Handler */
-    0,                          /* Reserved */
-    PendSV_Handler,             /* PendSV Handler */
-    SysTick_Handler,            /* SysTick Handler */
+    reinterpret_cast<void (*)()>(&_main_stack_top), /* Stack pointer*/
+    Reset_Handler,                                  /* Reset Handler */
+    NMI_Handler,                                    /* NMI Handler */
+    HardFault_Handler,                              /* Hard Fault Handler */
+    MemManage_Handler,                              /* MPU Fault Handler */
+    BusFault_Handler,                               /* Bus Fault Handler */
+    UsageFault_Handler,                             /* Usage Fault Handler */
+    0,                                              /* Reserved */
+    0,                                              /* Reserved */
+    0,                                              /* Reserved */
+    0,                                              /* Reserved */
+    SVC_Handler,                                    /* SVCall Handler */
+    DebugMon_Handler,                               /* Debug Monitor Handler */
+    0,                                              /* Reserved */
+    PendSV_Handler,                                 /* PendSV Handler */
+    SysTick_Handler,                                /* SysTick Handler */
 
     /* External Interrupts */
-	WWDG_IRQHandler,
-	PVD_IRQHandler,
-	TAMP_STAMP_IRQHandler,
-	RTC_WKUP_IRQHandler,
-	FLASH_IRQHandler,
-	RCC_IRQHandler,
-	EXTI0_IRQHandler,
-	EXTI1_IRQHandler,
-	EXTI2_IRQHandler,
-	EXTI3_IRQHandler,
-	EXTI4_IRQHandler,
-	DMA1_Stream0_IRQHandler,
-	DMA1_Stream1_IRQHandler,
-	DMA1_Stream2_IRQHandler,
-	DMA1_Stream3_IRQHandler,
-	DMA1_Stream4_IRQHandler,
-	DMA1_Stream5_IRQHandler,
-	DMA1_Stream6_IRQHandler,
-	ADC_IRQHandler,
-	CAN1_TX_IRQHandler,
-	CAN1_RX0_IRQHandler,
-	CAN1_RX1_IRQHandler,
-	CAN1_SCE_IRQHandler,
-	EXTI9_5_IRQHandler,
-	TIM1_BRK_TIM9_IRQHandler,
-	TIM1_UP_TIM10_IRQHandler,
-	TIM1_TRG_COM_TIM11_IRQHandler,
-	TIM1_CC_IRQHandler,
-	TIM2_IRQHandler,
-	TIM3_IRQHandler,
-	TIM4_IRQHandler,
-	I2C1_EV_IRQHandler,
-	I2C1_ER_IRQHandler,
-	I2C2_EV_IRQHandler,
-	I2C2_ER_IRQHandler,
-	SPI1_IRQHandler,
-	SPI2_IRQHandler,
-	USART1_IRQHandler,
-	USART2_IRQHandler,
-	USART3_IRQHandler,
-	EXTI15_10_IRQHandler,
-	RTC_Alarm_IRQHandler,
-	OTG_FS_WKUP_IRQHandler,
-	TIM8_BRK_TIM12_IRQHandler,
-	TIM8_UP_TIM13_IRQHandler,
-	TIM8_TRG_COM_TIM14_IRQHandler,
-	TIM8_CC_IRQHandler,
-	DMA1_Stream7_IRQHandler,
-	FMC_IRQHandler,
-	SDMMC1_IRQHandler,
-	TIM5_IRQHandler,
-	SPI3_IRQHandler,
-	UART4_IRQHandler,
-	UART5_IRQHandler,
-	TIM6_DAC_IRQHandler,
-	TIM7_IRQHandler,
-	DMA2_Stream0_IRQHandler,
-	DMA2_Stream1_IRQHandler,
-	DMA2_Stream2_IRQHandler,
-	DMA2_Stream3_IRQHandler,
-	DMA2_Stream4_IRQHandler,
-	ETH_IRQHandler,
-	ETH_WKUP_IRQHandler,
-	CAN2_TX_IRQHandler,
-	CAN2_RX0_IRQHandler,
-	CAN2_RX1_IRQHandler,
-	CAN2_SCE_IRQHandler,
-	OTG_FS_IRQHandler,
-	DMA2_Stream5_IRQHandler,
-	DMA2_Stream6_IRQHandler,
-	DMA2_Stream7_IRQHandler,
-	USART6_IRQHandler,
-	I2C3_EV_IRQHandler,
-	I2C3_ER_IRQHandler,
-	OTG_HS_EP1_OUT_IRQHandler,
-	OTG_HS_EP1_IN_IRQHandler,
-	OTG_HS_WKUP_IRQHandler,
-	OTG_HS_IRQHandler,
-	DCMI_IRQHandler,
-	0,
-	RNG_IRQHandler,
-	FPU_IRQHandler,
-	UART7_IRQHandler,
-	UART8_IRQHandler,
-	SPI4_IRQHandler,
-	SPI5_IRQHandler,
-	SPI6_IRQHandler,
-	SAI1_IRQHandler,
-	LTDC_IRQHandler,
-	LTDC_ER_IRQHandler,
-	DMA2D_IRQHandler,
-	SAI2_IRQHandler,
-	QUADSPI_IRQHandler,
-	LPTIM1_IRQHandler,
-	CEC_IRQHandler,
-	I2C4_EV_IRQHandler,
-	I2C4_ER_IRQHandler,
-	SPDIF_RX_IRQHandler,
+    WWDG_IRQHandler,
+    PVD_IRQHandler,
+    TAMP_STAMP_IRQHandler,
+    RTC_WKUP_IRQHandler,
+    FLASH_IRQHandler,
+    RCC_IRQHandler,
+    EXTI0_IRQHandler,
+    EXTI1_IRQHandler,
+    EXTI2_IRQHandler,
+    EXTI3_IRQHandler,
+    EXTI4_IRQHandler,
+    DMA1_Stream0_IRQHandler,
+    DMA1_Stream1_IRQHandler,
+    DMA1_Stream2_IRQHandler,
+    DMA1_Stream3_IRQHandler,
+    DMA1_Stream4_IRQHandler,
+    DMA1_Stream5_IRQHandler,
+    DMA1_Stream6_IRQHandler,
+    ADC_IRQHandler,
+    CAN1_TX_IRQHandler,
+    CAN1_RX0_IRQHandler,
+    CAN1_RX1_IRQHandler,
+    CAN1_SCE_IRQHandler,
+    EXTI9_5_IRQHandler,
+    TIM1_BRK_TIM9_IRQHandler,
+    TIM1_UP_TIM10_IRQHandler,
+    TIM1_TRG_COM_TIM11_IRQHandler,
+    TIM1_CC_IRQHandler,
+    TIM2_IRQHandler,
+    TIM3_IRQHandler,
+    TIM4_IRQHandler,
+    I2C1_EV_IRQHandler,
+    I2C1_ER_IRQHandler,
+    I2C2_EV_IRQHandler,
+    I2C2_ER_IRQHandler,
+    SPI1_IRQHandler,
+    SPI2_IRQHandler,
+    USART1_IRQHandler,
+    USART2_IRQHandler,
+    USART3_IRQHandler,
+    EXTI15_10_IRQHandler,
+    RTC_Alarm_IRQHandler,
+    OTG_FS_WKUP_IRQHandler,
+    TIM8_BRK_TIM12_IRQHandler,
+    TIM8_UP_TIM13_IRQHandler,
+    TIM8_TRG_COM_TIM14_IRQHandler,
+    TIM8_CC_IRQHandler,
+    DMA1_Stream7_IRQHandler,
+    FMC_IRQHandler,
+    SDMMC1_IRQHandler,
+    TIM5_IRQHandler,
+    SPI3_IRQHandler,
+    UART4_IRQHandler,
+    UART5_IRQHandler,
+    TIM6_DAC_IRQHandler,
+    TIM7_IRQHandler,
+    DMA2_Stream0_IRQHandler,
+    DMA2_Stream1_IRQHandler,
+    DMA2_Stream2_IRQHandler,
+    DMA2_Stream3_IRQHandler,
+    DMA2_Stream4_IRQHandler,
+    ETH_IRQHandler,
+    ETH_WKUP_IRQHandler,
+    CAN2_TX_IRQHandler,
+    CAN2_RX0_IRQHandler,
+    CAN2_RX1_IRQHandler,
+    CAN2_SCE_IRQHandler,
+    OTG_FS_IRQHandler,
+    DMA2_Stream5_IRQHandler,
+    DMA2_Stream6_IRQHandler,
+    DMA2_Stream7_IRQHandler,
+    USART6_IRQHandler,
+    I2C3_EV_IRQHandler,
+    I2C3_ER_IRQHandler,
+    OTG_HS_EP1_OUT_IRQHandler,
+    OTG_HS_EP1_IN_IRQHandler,
+    OTG_HS_WKUP_IRQHandler,
+    OTG_HS_IRQHandler,
+    DCMI_IRQHandler,
+    0,
+    RNG_IRQHandler,
+    FPU_IRQHandler,
+    UART7_IRQHandler,
+    UART8_IRQHandler,
+    SPI4_IRQHandler,
+    SPI5_IRQHandler,
+    SPI6_IRQHandler,
+    SAI1_IRQHandler,
+    LTDC_IRQHandler,
+    LTDC_ER_IRQHandler,
+    DMA2D_IRQHandler,
+    SAI2_IRQHandler,
+    QUADSPI_IRQHandler,
+    LPTIM1_IRQHandler,
+    CEC_IRQHandler,
+    I2C4_EV_IRQHandler,
+    I2C4_ER_IRQHandler,
+    SPDIF_RX_IRQHandler,
 };
 
 #pragma weak WWDG_IRQHandler = Default_Handler
