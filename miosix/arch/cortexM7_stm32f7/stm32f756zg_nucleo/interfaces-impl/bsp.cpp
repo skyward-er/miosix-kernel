@@ -61,7 +61,7 @@ void IRQbspInit() {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN |
                     RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN |
                     RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
-                    RCC_AHB1ENR_GPIOHEN;
+                    RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_GPIOHEN;
     RCC_SYNC();
     GPIOA->OSPEEDR = 0xaaaaaaaa;  // Default to 50MHz speed for all GPIOS
     GPIOB->OSPEEDR = 0xaaaaaaaa;
@@ -69,6 +69,7 @@ void IRQbspInit() {
     GPIOD->OSPEEDR = 0xaaaaaaaa;
     GPIOE->OSPEEDR = 0xaaaaaaaa;
     GPIOF->OSPEEDR = 0xaaaaaaaa;
+    GPIOG->OSPEEDR = 0xaaaaaaaa;
     GPIOH->OSPEEDR = 0xaaaaaaaa;
 
     userLed1::mode(Mode::OUTPUT);

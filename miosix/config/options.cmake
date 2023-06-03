@@ -3127,7 +3127,7 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ## Select appropriate compiler flags for both ASM/C/C++/linker
         ## Not all stm32f7 have the double precision FPU. Those that only
         ## support single precision are built as cortex m4
-        set(ARCHOPTS -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16)
+        set(ARCHOPTS -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
         ## Base directory with header files for this board
         set(BOARD_INC arch/cortexM7_stm32f7/stm32f756zg_nucleo)
@@ -3139,10 +3139,7 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
-        set(ARCH_SRC
-            ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
-            ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp
-        )
+        set(ARCH_SRC ${KPATH}/${BOARD_INC}/interfaces-impl/bsp.cpp)
 
         ## Add a #define to allow querying board name
         list(APPEND CFLAGS_BASE -D_BOARD_STM32F756ZG_NUCLEO)
