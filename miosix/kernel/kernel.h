@@ -645,8 +645,10 @@ public:
     Priority IRQgetPriority();
 
     /**
-     * Same as wait(), but is meant to be used only inside an IRQ or when
-     * interrupts are disabled.<br>
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
      * Note: this method is meant to put the current thread in wait status in a
      * piece of code where interrupts are disbled; it returns immediately, so
      * the user is responsible for re-enabling interrupts and calling yield to
@@ -655,12 +657,65 @@ public:
      * \code
      * disableInterrupts();
      * ...
-     * Thread::IRQwait();//Return immediately
+     * Thread::IRQwait(); //Return immediately
      * enableInterrupts();
-     * Thread::yield();//After this, thread is in wait status
+     * Thread::yield(); //After this, thread is in wait status
      * \endcode
+     *
+     * Consider using IRQenableIrqAndWait() instead.
      */
     static void IRQwait();
+
+    /**
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where the kernel is paused (preemption disabled).
+     * Preemption will be enabled during the waiting period, and disabled back
+     * before this method returns.
+     *
+     * \param dLock the PauseKernelLock object that was used to disable
+     * preemption in the current context.
+     */
+    static void PKrestartKernelAndWait(PauseKernelLock& dLock);
+
+    /**
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where interrupts are disbled, interrupts will be enabled
+     * during the waiting period, and disabled back before this method returns.
+     *
+     * \param dLock the InterruptDisableLock object that was used to disable
+     * interrupts in the current context.
+     */
+    static void IRQenableIrqAndWait(InterruptDisableLock& dLock)
+    {
+        (void)dLock; //Common implementation doesn't need it
+        return IRQenableIrqAndWaitImpl();
+    }
+
+    /**
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where interrupts are disbled, interrupts will be enabled
+     * during the waiting period, and disabled back before this method returns.
+     *
+     * \param dLock the FastInterruptDisableLock object that was used to disable
+     * interrupts in the current context.
+     */
+    static void IRQenableIrqAndWait(FastInterruptDisableLock& dLock)
+    {
+        (void)dLock; //Common implementation doesn't need it
+        return IRQenableIrqAndWaitImpl();
+    }
 
     /**
      * Same as wakeup(), but is meant to be used only inside an IRQ or when
@@ -943,6 +998,11 @@ private:
      * \param argv argument passed to the entry point
      */
     static void threadLauncher(void *(*threadfunc)(void*), void *argv);
+
+    /**
+     * Common implementation of all IRQenableIrqAndWait calls
+     */
+    static void IRQenableIrqAndWaitImpl();
     
     /**
      * Allocates the idle thread and makes cur point to it

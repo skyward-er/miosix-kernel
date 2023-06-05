@@ -557,6 +557,18 @@ void Thread::IRQwait()
     const_cast<Thread*>(cur)->flags.IRQsetWait(true);
 }
 
+void Thread::PKrestartKernelAndWait(PauseKernelLock& dLock)
+{
+    (void)dLock;
+    //Implemented by upgrading the lock to an interrupt disable one
+    FastInterruptDisableLock dLockIrq;
+    auto savedNesting=kernel_running;
+    kernel_running=0;
+    IRQenableIrqAndWaitImpl();
+    if(kernel_running!=0) errorHandler(UNEXPECTED);
+    kernel_running=savedNesting;
+}
+
 void Thread::IRQwakeup()
 {
     this->flags.IRQsetWait(false);
@@ -691,6 +703,18 @@ void Thread::threadLauncher(void *(*threadfunc)(void*), void *argv)
     Thread::yield();//Since the thread is now deleted, yield immediately.
     //Will never reach here
     errorHandler(UNEXPECTED);
+}
+
+void Thread::IRQenableIrqAndWaitImpl()
+{
+    const_cast<Thread*>(cur)->flags.IRQsetWait(true);
+    auto savedNesting=interruptDisableNesting; //For InterruptDisableLock
+    interruptDisableNesting=0;
+    miosix_private::doEnableInterrupts();
+    Thread::yield(); //Here the wait becomes effective
+    miosix_private::doDisableInterrupts();
+    if(interruptDisableNesting!=0) errorHandler(UNEXPECTED);
+    interruptDisableNesting=savedNesting;
 }
 
 Thread *Thread::allocateIdleThread()
