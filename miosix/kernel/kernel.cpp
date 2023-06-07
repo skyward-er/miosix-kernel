@@ -266,8 +266,7 @@ bool IRQwakeThreads()
     {
         if(tick<(*it)->wakeupTime) break;
         //Wake both threads doing absoluteSleep() and timedWait()
-        (*it)->thread->flags.IRQsetSleep(false);
-        (*it)->thread->flags.IRQsetWait(false);
+        (*it)->thread->flags.IRQclearSleepAndWait();
         it=sleeping_list.erase(it);
         result=true;
     }
@@ -889,6 +888,12 @@ void Thread::ThreadFlags::IRQsetCondWait(bool waiting)
 void Thread::ThreadFlags::IRQsetSleep(bool sleeping)
 {
     if(sleeping) flags |= SLEEP; else flags &= ~SLEEP;
+    Scheduler::IRQwaitStatusHook();
+}
+
+void Thread::ThreadFlags::IRQclearSleepAndWait()
+{
+    flags &= ~(WAIT | SLEEP);
     Scheduler::IRQwaitStatusHook();
 }
 

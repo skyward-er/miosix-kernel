@@ -917,6 +917,12 @@ private:
         void IRQsetSleep(bool sleeping);
 
         /**
+         * Used by IRQwakeThreads to clear both the sleep and wait flags,
+         * waking threads doing absoluteSleep() as well as timedWait()
+         */
+        void IRQclearSleepAndWait();
+
+        /**
          * Set the deleted flag of the thread. This flag can't be cleared.
          * Can only be called with interrupts disabled or within an interrupt.
          */
