@@ -231,13 +231,10 @@ long long getTick()
  * Used by Thread::sleep() to add a thread to
  * sleeping list. The list is sorted by the wakeupTime field to reduce time
  * required to wake threads during context switch.
- * Also sets thread SLEEP_FLAG. It is labeled IRQ not because it is meant to be
- * used inside an IRQ, but because interrupts must be disabled prior to calling
- * this function.
+ * Interrupts must be disabled prior to calling this function.
  */
-void IRQaddToSleepingList(SleepData *x)
+static void IRQaddToSleepingList(SleepData *x)
 {
-    x->thread->flags.IRQsetSleep(true);
     if(sleeping_list.empty() || sleeping_list.front()->wakeupTime>=x->wakeupTime)
     {
         sleeping_list.push_front(x);
@@ -268,7 +265,9 @@ bool IRQwakeThreads()
     for(auto it=sleeping_list.begin();it!=sleeping_list.end();)
     {
         if(tick<(*it)->wakeupTime) break;
-        (*it)->thread->flags.IRQsetSleep(false); //Wake thread
+        //Wake both threads doing absoluteSleep() and timedWait()
+        (*it)->thread->flags.IRQsetSleep(false);
+        (*it)->thread->flags.IRQsetWait(false);
         it=sleeping_list.erase(it);
         result=true;
     }
@@ -350,7 +349,8 @@ void Thread::sleep(unsigned int ms)
         if(((ms*TICK_FREQ)/1000)>0) d.wakeupTime=getTick()+(ms*TICK_FREQ)/1000;
         //If tick resolution is too low, wait one tick
         else d.wakeupTime=getTick()+1;
-        IRQaddToSleepingList(&d);//Also sets SLEEP_FLAG
+        d.thread->flags.IRQsetSleep(true); //Sleeping thread: set sleep flag
+        IRQaddToSleepingList(&d);
     }
     Thread::yield();
 }
@@ -368,7 +368,8 @@ void Thread::sleepUntil(long long absoluteTime)
         if(absoluteTime<=getTick()) return; //Wakeup time in the past, return
         d.thread=const_cast<Thread*>(cur);
         d.wakeupTime=absoluteTime;
-        IRQaddToSleepingList(&d);//Also sets SLEEP_FLAG
+        d.thread->flags.IRQsetSleep(true); //Sleeping thread: set sleep flag
+        IRQaddToSleepingList(&d);
     }
     Thread::yield();
 }
@@ -569,6 +570,30 @@ void Thread::PKrestartKernelAndWait(PauseKernelLock& dLock)
     kernel_running=savedNesting;
 }
 
+TimedWaitResult Thread::timedWaitMs(long long ms)
+{
+    if (ms <= 0) return TimedWaitResult::Timeout;
+
+    FastInterruptDisableLock dLock;
+    long long ticks = std::max((ms * TICK_FREQ) / 1000, 1LL);
+    long long absoluteTime = getTick() + ticks;
+    return IRQenableIrqAndTimedWaitMsImpl(absoluteTime);
+}
+
+TimedWaitResult Thread::PKrestartKernelAndTimedWaitMs(PauseKernelLock& dLock,
+        long long absoluteTime)
+{
+    (void)dLock;
+    //Implemented by upgrading the lock to an interrupt disable one
+    FastInterruptDisableLock dLockIrq;
+    auto savedNesting=kernel_running;
+    kernel_running=0;
+    auto result=IRQenableIrqAndTimedWaitMsImpl(absoluteTime);
+    if(kernel_running!=0) errorHandler(UNEXPECTED);
+    kernel_running=savedNesting;
+    return result;
+}
+
 void Thread::IRQwakeup()
 {
     this->flags.IRQsetWait(false);
@@ -715,6 +740,25 @@ void Thread::IRQenableIrqAndWaitImpl()
     miosix_private::doDisableInterrupts();
     if(interruptDisableNesting!=0) errorHandler(UNEXPECTED);
     interruptDisableNesting=savedNesting;
+}
+
+TimedWaitResult Thread::IRQenableIrqAndTimedWaitMsImpl(long long absoluteTime)
+{
+    absoluteTime=std::max(absoluteTime,1LL);
+    Thread *t=const_cast<Thread*>(cur);
+    SleepData sleepData(t,absoluteTime);
+    t->flags.IRQsetWait(true); //timedWait thread: set wait flag
+    IRQaddToSleepingList(&sleepData);
+    auto savedNesting=interruptDisableNesting; //For InterruptDisableLock
+    interruptDisableNesting=0;
+    miosix_private::doEnableInterrupts();
+    Thread::yield(); //Here the wait becomes effective
+    miosix_private::doDisableInterrupts();
+    if(interruptDisableNesting!=0) errorHandler(UNEXPECTED);
+    interruptDisableNesting=savedNesting;
+    bool removed=sleeping_list.removeFast(&sleepData);
+    //If the thread was still in the sleeping list, it was woken up by a wakeup()
+    return removed ? TimedWaitResult::NoTimeout : TimedWaitResult::Timeout;
 }
 
 Thread *Thread::allocateIdleThread()
