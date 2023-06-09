@@ -3172,7 +3172,7 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ## Their path must be relative to the miosix directory.
         set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
         # set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+384k_ram.ld)
-        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+8m_xram.ld)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+16m_xram.ld)
 
         ## Enables the initialization of the external SDRAM memory
         set(XRAM -D__ENABLE_XRAM)
