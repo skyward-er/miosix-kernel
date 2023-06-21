@@ -45,6 +45,7 @@
 #include "drivers/stm32_backup_domain.h"
 #include "filesystem/console/console_device.h"
 #include "filesystem/file_access.h"
+#include "hwmapping.h"
 #include "interfaces/arch_registers.h"
 #include "interfaces/delays.h"
 #include "interfaces/portability.h"
@@ -52,7 +53,8 @@
 #include "kernel/logging.h"
 #include "kernel/sync.h"
 
-namespace miosix {
+namespace miosix
+{
 
 //
 // Initialization
@@ -60,12 +62,13 @@ namespace miosix {
 
 static void sdramCommandWait()
 {
-    for(int i=0;i<0xffff;i++)
-        if((FMC_Bank5_6->SDSR & FMC_SDSR_BUSY)==0)
+    for (int i = 0; i < 0xffff; i++)
+        if ((FMC_Bank5_6->SDSR & FMC_SDSR_BUSY) == 0)
             return;
 }
 
-void configureSdram() {
+void configureSdram()
+{
     // Enable gpios used by the ram
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
                     RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN |
@@ -76,7 +79,7 @@ void configureSdram() {
     // - PG8:  FMC_SDCLK  (sdram clock)
     // - PB5:  FMC_SDCKE1 (sdram bank 2 clock enable)
     // - PB6:  FMC_SDNE1  (sdram bank 2 chip enable)
-    // - PF0:  FMC_A0 
+    // - PF0:  FMC_A0
     // - PF1:  FMC_A1
     // - PF2:  FMC_A2
     // - PF3:  FMC_A3
@@ -159,29 +162,31 @@ void configureSdram() {
     // HCLK = 216MHz -> SDRAM clock = HCLK/2 = 133MHz
 
     // 1. Memory device features
-    FMC_Bank5_6->SDCR[0] = 0                   // 0 delay after CAS latency
-                         | FMC_SDCR1_RBURST    // Enable read bursts
-                         | FMC_SDCR1_SDCLK_1;  // SDCLK = HCLK / 2
-    FMC_Bank5_6->SDCR[1] = 0                   // Write accesses allowed
-                         | FMC_SDCR2_CAS_1     // 2 cycles CAS latency
-                         | FMC_SDCR2_NB        // 4 internal banks
-                         | FMC_SDCR2_MWID_0    // 16 bit data bus
-                         | FMC_SDCR2_NR_0      // 12 bit row address
-                         | 0;                  // 8 bit column address
+    FMC_Bank5_6->SDCR[0] = 0                     // 0 delay after CAS latency
+                           | FMC_SDCR1_RBURST    // Enable read bursts
+                           | FMC_SDCR1_SDCLK_1;  // SDCLK = HCLK / 2
+    FMC_Bank5_6->SDCR[1] = 0                     // Write accesses allowed
+                           | FMC_SDCR2_CAS_1     // 2 cycles CAS latency
+                           | FMC_SDCR2_NB        // 4 internal banks
+                           | FMC_SDCR2_MWID_0    // 16 bit data bus
+                           | FMC_SDCR2_NR_0      // 12 bit row address
+                           | 0;                  // 8 bit column address
 
-    // 2. Memory device timings
-    #ifdef SYSCLK_FREQ_216MHz
+// 2. Memory device timings
+#ifdef SYSCLK_FREQ_216MHz
     // SDRAM timings. One clock cycle is 9.26ns
-    FMC_Bank5_6->SDTR[0] = (2 - 1) << FMC_SDTR1_TRP_Pos   // 2 cycles TRP  (18.52ns > 18ns)
-                         | (7 - 1) << FMC_SDTR1_TRC_Pos;  // 7 cycles TRC  (64.82ns > 60ns)
-    FMC_Bank5_6->SDTR[1] = (2 - 1) << FMC_SDTR1_TRCD_Pos  // 2 cycles TRCD (18.52ns > 18ns)
-                         | (2 - 1) << FMC_SDTR1_TWR_Pos   // 2 cycles TWR  (min 2 clock cycles)
-                         | (5 - 1) << FMC_SDTR1_TRAS_Pos  // 5 cycles TRAS (46.3ns  > 42ns)
-                         | (7 - 1) << FMC_SDTR1_TXSR_Pos  // 7 cycles TXSR (74.08ns > 61.5ns)
-                         | (2 - 1) << FMC_SDTR1_TMRD_Pos; // 2 cycles TMRD (min 2 clock cycles)
-    #else
-    #error No SDRAM timings for this clock
-    #endif
+    FMC_Bank5_6->SDTR[0] =
+        (2 - 1) << FMC_SDTR1_TRP_Pos     // 2 cycles TRP  (18.52ns > 18ns)
+        | (7 - 1) << FMC_SDTR1_TRC_Pos;  // 7 cycles TRC  (64.82ns > 60ns)
+    FMC_Bank5_6->SDTR[1] =
+        (2 - 1) << FMC_SDTR1_TRCD_Pos     // 2 cycles TRCD (18.52ns > 18ns)
+        | (2 - 1) << FMC_SDTR1_TWR_Pos    // 2 cycles TWR  (min 2 clock cycles)
+        | (5 - 1) << FMC_SDTR1_TRAS_Pos   // 5 cycles TRAS (46.3ns  > 42ns)
+        | (7 - 1) << FMC_SDTR1_TXSR_Pos   // 7 cycles TXSR (74.08ns > 61.5ns)
+        | (2 - 1) << FMC_SDTR1_TMRD_Pos;  // 2 cycles TMRD (min 2 clock cycles)
+#else
+#error No SDRAM timings for this clock
+#endif
 
     // 3. Enable the bank 2 clock
     FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_0   // Clock Configuration Enable
@@ -218,7 +223,8 @@ void configureSdram() {
 #endif
 }
 
-void IRQbspInit() {
+void IRQbspInit()
+{
     // Enable USART1 pins port
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
@@ -228,23 +234,131 @@ void IRQbspInit() {
     userLed4::mode(Mode::OUTPUT);
     userSwitch::mode(Mode::INPUT);
 
+    using namespace interfaces;
+    spi1::sck::mode(Mode::ALTERNATE);
+    spi1::sck::alternateFunction(5);
+    spi1::miso::mode(Mode::ALTERNATE);
+    spi1::miso::alternateFunction(5);
+    spi1::mosi::mode(Mode::ALTERNATE);
+    spi1::mosi::alternateFunction(5);
+
+    spi3::sck::mode(Mode::ALTERNATE);
+    spi3::sck::alternateFunction(6);
+    spi3::miso::mode(Mode::ALTERNATE);
+    spi3::miso::alternateFunction(6);
+    spi3::mosi::mode(Mode::ALTERNATE);
+    spi3::mosi::alternateFunction(5);
+
+    spi4::sck::mode(Mode::ALTERNATE);
+    spi4::sck::alternateFunction(5);
+    spi4::miso::mode(Mode::ALTERNATE);
+    spi4::miso::alternateFunction(5);
+    spi4::mosi::mode(Mode::ALTERNATE);
+    spi4::mosi::alternateFunction(5);
+
+    spi6::sck::mode(Mode::ALTERNATE);
+    spi6::sck::alternateFunction(5);
+    spi6::miso::mode(Mode::ALTERNATE);
+    spi6::miso::alternateFunction(5);
+    spi6::mosi::mode(Mode::ALTERNATE);
+    spi6::mosi::alternateFunction(5);
+
+    i2c1::sda::mode(Mode::ALTERNATE);
+    i2c1::sda::alternateFunction(4);
+    i2c1::scl::mode(Mode::ALTERNATE);
+    i2c1::scl::alternateFunction(4);
+
+    can1::rx::mode(Mode::ALTERNATE);
+    can1::rx::alternateFunction(9);
+    can1::tx::mode(Mode::ALTERNATE);
+    can1::tx::alternateFunction(9);
+
+    can2::rx::mode(Mode::ALTERNATE);
+    can2::rx::alternateFunction(9);
+    can2::tx::mode(Mode::ALTERNATE);
+    can2::tx::alternateFunction(9);
+
+    usart1::tx::mode(Mode::ALTERNATE);
+    usart1::tx::alternateFunction(7);
+    usart1::rx::mode(Mode::ALTERNATE);
+    usart1::rx::alternateFunction(7);
+
+    usart2::tx::mode(Mode::ALTERNATE);
+    usart2::tx::alternateFunction(7);
+    usart2::rx::mode(Mode::ALTERNATE);
+    usart2::rx::alternateFunction(7);
+
+    uart4::tx::mode(Mode::ALTERNATE);
+    uart4::tx::alternateFunction(8);
+    uart4::rx::mode(Mode::ALTERNATE);
+    uart4::rx::alternateFunction(8);
+
+    using namespace timers;
+    tim3ch1::mode(Mode::ALTERNATE);
+    tim3ch1::alternateFunction(2);
+    tim3ch2::mode(Mode::ALTERNATE);
+    tim3ch2::alternateFunction(2);
+    tim1ch1::mode(Mode::ALTERNATE);
+    tim1ch1::alternateFunction(1);
+    tim1ch3::mode(Mode::ALTERNATE);
+    tim1ch3::alternateFunction(1);
+
+    using namespace sensors;
+    LSM6DSRX::cs::mode(Mode::OUTPUT);
+    LSM6DSRX::interrupt1::mode(Mode::INPUT);
+    LSM6DSRX::interrupt2::mode(Mode::INPUT);
+
+    H3LIS331DL::cs::mode(Mode::OUTPUT);
+    H3LIS331DL::interrupt::mode(Mode::INPUT);
+
+    LIS2MDL::cs::mode(Mode::OUTPUT);
+
+    LPS22DF::cs::mode(Mode::OUTPUT);
+    LPS22DF::interrupt::mode(Mode::INPUT);
+
+    GPS::cs::mode(Mode::OUTPUT);
+
+    VN100::cs::mode(Mode::OUTPUT);
+
+    ADS131::cs::mode(Mode::OUTPUT);
+
+    LPS28DFW_1::interrupt::mode(Mode::INPUT);
+    LPS28DFW_2::interrupt::mode(Mode::INPUT);
+
+    using namespace radio;
+    cs::mode(Mode::OUTPUT);
+    dio0::mode(Mode::INPUT);
+    dio1::mode(Mode::INPUT);
+    dio3::mode(Mode::INPUT);
+
+    using namespace gpios;
+    cut_trigger::mode(Mode::OUTPUT);
+    cut_sense::mode(Mode::INPUT);
+    exp_enable::mode(Mode::OUTPUT);
+    status_led::mode(Mode::OUTPUT);
+    camera_enable::mode(Mode::OUTPUT);
+    liftoff_detach::mode(Mode::INPUT);
+    nosecone_detach::mode(Mode::INPUT);
+
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(new STM32Serial(
         defaultSerial, defaultSerialSpeed, STM32Serial::NOFLOWCTRL)));
 }
 
-void bspInit2() {
-    #ifdef WITH_FILESYSTEM
+void bspInit2()
+{
+#ifdef WITH_FILESYSTEM
     basicFilesystemSetup(SDIODriver::instance());
-    #endif // WITH_FILESYSTEM
+#endif  // WITH_FILESYSTEM
 
-    #ifdef WITH_BACKUP_SRAM
+#ifdef WITH_BACKUP_SRAM
     BackupDomain::instance().enable();
     BackupDomain::instance().enableBackupSRAM();
-    #endif
+#endif
 
     // Print the reset reason
     bootlog("Reset reson: ");
-    switch(BackupDomain::instance().lastResetReason()) {
+    switch (BackupDomain::instance().lastResetReason())
+    {
         case ResetReason::RST_LOW_PWR:
             bootlog("low power\n");
             break;
@@ -277,24 +391,25 @@ void shutdown()
 {
     ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
 
-    #ifdef WITH_FILESYSTEM
+#ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-    #endif  // WITH_FILESYSTEM
+#endif  // WITH_FILESYSTEM
 
     disableInterrupts();
-    for(;;) ;
+    for (;;)
+        ;
 }
 
 void reboot()
 {
     ioctl(STDOUT_FILENO, IOCTL_SYNC, 0);
 
-    #ifdef WITH_FILESYSTEM
+#ifdef WITH_FILESYSTEM
     FilesystemManager::instance().umountAll();
-    #endif  // WITH_FILESYSTEM
+#endif  // WITH_FILESYSTEM
 
     disableInterrupts();
     miosix_private::IRQsystemReboot();
 }
 
-} // namespace miosix
+}  // namespace miosix
