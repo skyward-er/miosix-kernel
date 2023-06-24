@@ -1,9 +1,3 @@
-
-//
-// To build this example modify the Makefile so that
-// SRC := pthread_example.cpp
-//
-
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
@@ -24,6 +18,8 @@ void *threadfunc(void *argv)
         c=0;
     }
     pthread_mutex_unlock(&mutex);
+
+    return nullptr;
 }
 
 int main()
@@ -33,11 +29,11 @@ int main()
     pthread_t thread;
     pthread_create(&thread,NULL,threadfunc,(void*)strlen(str));
     pthread_mutex_lock(&mutex);
-    for(int i=0;i<strlen(str);i++)
+    for(int i=0;i<(int)strlen(str);i++)
     {
         c=str[i];
         pthread_cond_signal(&cond);
-        if(i<strlen(str)-1) pthread_cond_wait(&ack,&mutex);
+        if(i<(int)strlen(str)-1) pthread_cond_wait(&ack,&mutex);
     }
     pthread_mutex_unlock(&mutex);
     pthread_join(thread,NULL);

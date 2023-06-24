@@ -22,7 +22,7 @@ void printStat(struct dirent *de, struct stat *st)
             close(fd);
         }
     } else st2.st_ino=st->st_ino; //Can't fstat() an fd to a directory
-    printf("%13s iD=%d iS=%d iF=%d dev=%d mode=%#o size=%d\n",
+    printf("%13s iD=%ld iS=%ld iF=%ld dev=%d mode=%#lo size=%lld\n",
         de->d_name,de->d_ino,st->st_ino,st2.st_ino,st->st_dev,st->st_mode,st->st_size);
 }
 
@@ -40,7 +40,7 @@ int main()
         if(d==NULL) perror("opendir");
         else {
             struct dirent *de;
-            while(de=readdir(d))
+            while((de=readdir(d)))
             {
                 struct stat st;
                 if(stat(de->d_name,&st)<0) perror(de->d_name);

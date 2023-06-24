@@ -5,21 +5,22 @@ Required tools:
 Miosix compiler set up, a jtag adapter, a board running Miosix,
 openocd, scilab, CMake, boost libraries
 
-1) Select Miosix OPT_OPTIMIZATION := -O0 in miosix/config/Makefile.inc
+1) Select Miosix OPT_OPTIMIZATION := -O0 by building in debug mode
 to have precise breakpoints
 
-2) Copy test.cpp into base folder and modify Miosix' Makefile
-so that test.cpp is built
+2) Build target by running `./mbs -d -b feedforward`
 
-3) Build Miosix, build jtag_profiler and copy main.elf, jtag_profiler and
+3) Build jtag_profiler and copy main.elf, jtag_profiler and
 gdb_init.script to same folder
 
-5) start openocd
+4) Start openocd
 
-6) run
+5) Run
+```
 ./jtag_profiler > ff_on.txt
 With Miosix compiled with feedforward on and
 ./jtag_profiler > ff_off.txt
 With Miosix compiled with feedforward off
+```
 
-7) run ./plot.sh to see results
+6) run ./plot.sh to see results

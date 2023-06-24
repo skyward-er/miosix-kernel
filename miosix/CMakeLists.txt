@@ -1,107 +1,130 @@
-# Copyright (c) 2021-2022 Skyward Experimental Rocketry
-# Authors: Damiano Amatruda, Michele Scuttari
+# Copyright (C) 2023 by Skyward
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+# This program is free software; you can redistribute it and/or 
+# it under the terms of the GNU General Public License as published 
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# As a special exception, if other files instantiate templates or use
+# macros or inline functions from this file, or you compile this file
+# and link it with other works to produce a work based on this file,
+# this file does not by itself cause the resulting work to be covered
+# by the GNU General Public License. However the source code for this
+# file must still be made available in accordance with the GNU 
+# Public License. This exception does not invalidate any other 
+# why a work based on this file might be covered by the GNU General
+# Public License.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.25)
 project(Miosix C CXX ASM)
 
+# Get the kernel folder
 set(KPATH ${CMAKE_CURRENT_LIST_DIR})
 
-include(${KPATH}/config/boards.cmake)
+# Include board list
+include(${KPATH}/cmake/boards.cmake)
 
-foreach(OPT_BOARD ${BOARDS})
+# Function to configure a target to be built with kernel sources
+function(configure_target_for_kernel TARGET)
+    # Include kernel directories
+    target_include_directories(${TARGET} PUBLIC
+        ${KPATH}
+        ${KPATH}/config/${BOARD_INC}
+        ${KPATH}/arch/common
+        ${KPATH}/${ARCH_INC}
+        ${KPATH}/${BOARD_INC}
+    )
+
+    # Define COMPILING_MIOSIX
+    target_compile_definitions(${TARGET} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:COMPILING_MIOSIX>)
+
+    # Require cpp 14target_compile_features
+    target_compile_features(${TARGET} PUBLIC cxx_std_14)
+
+    # Configure compiler flags
     set(DFLAGS -MMD -MP)
-    include(${KPATH}/config/options.cmake)
-
-    function(set_miosix_properties TARGET)
-        target_include_directories(${TARGET} PUBLIC
-            ${KPATH}/config
-            ${KPATH}/config/${BOARD_INC}
-            ${KPATH}
-            ${KPATH}/arch/common
-            ${KPATH}/${ARCH_INC}
-            ${KPATH}/${BOARD_INC}
-        )
-        target_compile_definitions(${TARGET} PUBLIC $<$<CONFIG:Debug>:DEBUG> PRIVATE COMPILING_MIOSIX)
-        target_compile_features(${TARGET} PUBLIC cxx_std_14)
-        target_compile_options(${TARGET} PUBLIC
-            ${DFLAGS}
-            $<$<COMPILE_LANGUAGE:C>:${CFLAGS_BASE}>
-            $<$<COMPILE_LANGUAGE:CXX>:${CXXFLAGS_BASE}>
-            $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>
-        )
-        set_property(TARGET ${TARGET} PROPERTY INTERFACE_LINK_DEPENDS ${LINKER_SCRIPT})
-        target_link_options(${TARGET} INTERFACE ${LFLAGS_BASE})
-        target_link_libraries(${TARGET} INTERFACE stdc++ c m gcc atomic)
-    endfunction()
-
-    set(STAGE_1_BOOT stage_1_boot-${OPT_BOARD})
-    add_library(${STAGE_1_BOOT} OBJECT ${BOOT_FILE})
-    set_miosix_properties(${STAGE_1_BOOT})
-
-    set(MIOSIX_LIBRARY miosix-${OPT_BOARD})
-    add_library(${MIOSIX_LIBRARY} STATIC
-        kernel/kernel.cpp
-        kernel/sync.cpp
-        kernel/error.cpp
-        kernel/pthread.cpp
-        kernel/stage_2_boot.cpp
-        kernel/elf_program.cpp
-        kernel/process.cpp
-        kernel/process_pool.cpp
-        kernel/timeconversion.cpp
-        kernel/SystemMap.cpp
-        kernel/scheduler/priority/priority_scheduler.cpp
-        kernel/scheduler/control/control_scheduler.cpp
-        kernel/scheduler/edf/edf_scheduler.cpp
-        filesystem/file_access.cpp
-        filesystem/file.cpp
-        filesystem/stringpart.cpp
-        filesystem/console/console_device.cpp
-        filesystem/mountpointfs/mountpointfs.cpp
-        filesystem/devfs/devfs.cpp
-        filesystem/fat32/fat32.cpp
-        filesystem/fat32/ff.cpp
-        filesystem/fat32/diskio.cpp
-        filesystem/fat32/wtoupper.cpp
-        filesystem/fat32/ccsbcs.cpp
-        stdlib_integration/libc_integration.cpp
-        stdlib_integration/libstdcpp_integration.cpp
-        e20/e20.cpp
-        e20/unmember.cpp
-        util/util.cpp
-        util/unicode.cpp
-        util/version.cpp
-        util/crc16.cpp
-        util/lcd44780.cpp
-        ${ARCH_SRC}
+    target_compile_options(${TARGET} PUBLIC
+        $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>
+        $<$<COMPILE_LANGUAGE:C>:${DFLAGS} ${CFLAGS_BASE}>
+        $<$<COMPILE_LANGUAGE:CXX>:${DFLAGS} ${CXXFLAGS_BASE}>
     )
-    add_library(Miosix::Miosix::${OPT_BOARD} ALIAS ${MIOSIX_LIBRARY})
-    target_sources(${MIOSIX_LIBRARY} INTERFACE $<TARGET_OBJECTS:${STAGE_1_BOOT}>)
-    set_miosix_properties(${MIOSIX_LIBRARY})
-    add_custom_command(
-        TARGET ${MIOSIX_LIBRARY} POST_BUILD
-        COMMAND perl ${KPATH}/_tools/kernel_global_objects.pl $<TARGET_OBJECTS:${MIOSIX_LIBRARY}>
-        VERBATIM
-        COMMAND_EXPAND_LISTS
-    )
+endfunction()
+
+# Create a library for each board
+foreach(OPT_BOARD ${BOARDS})
+    # Use block to create a scope and avoid variable leaking between loops
+    block()
+        # Use options.cmake to get board specific variables
+        include(${KPATH}/config/options.cmake)
+
+        # Create a library for the boot file
+        set(BOOT_LIB boot-${OPT_BOARD})
+        add_library(${BOOT_LIB} OBJECT ${BOOT_FILE})
+        configure_target_for_kernel(${BOOT_LIB})
+
+        # Create a library for the rest of the kernel
+        set(KERNEL_LIB kernel-${OPT_BOARD})
+        add_library(${KERNEL_LIB} STATIC
+            kernel/kernel.cpp
+            kernel/sync.cpp
+            kernel/error.cpp
+            kernel/pthread.cpp
+            kernel/stage_2_boot.cpp
+            kernel/elf_program.cpp
+            kernel/process.cpp
+            kernel/process_pool.cpp
+            kernel/timeconversion.cpp
+            kernel/SystemMap.cpp
+            kernel/scheduler/priority/priority_scheduler.cpp
+            kernel/scheduler/control/control_scheduler.cpp
+            kernel/scheduler/edf/edf_scheduler.cpp
+            filesystem/file_access.cpp
+            filesystem/file.cpp
+            filesystem/stringpart.cpp
+            filesystem/console/console_device.cpp
+            filesystem/mountpointfs/mountpointfs.cpp
+            filesystem/devfs/devfs.cpp
+            filesystem/fat32/fat32.cpp
+            filesystem/fat32/ff.cpp
+            filesystem/fat32/diskio.cpp
+            filesystem/fat32/wtoupper.cpp
+            filesystem/fat32/ccsbcs.cpp
+            stdlib_integration/libc_integration.cpp
+            stdlib_integration/libstdcpp_integration.cpp
+            e20/e20.cpp
+            e20/unmember.cpp
+            util/util.cpp
+            util/unicode.cpp
+            util/version.cpp
+            util/crc16.cpp
+            util/lcd44780.cpp
+            ${ARCH_SRC}
+        )
+        configure_target_for_kernel(${KERNEL_LIB})
+        add_custom_command(
+            TARGET ${KERNEL_LIB} PRE_LINK
+            COMMAND perl ${KPATH}/_tools/kernel_global_objects.pl $<TARGET_OBJECTS:${KERNEL_LIB}>
+            VERBATIM
+            COMMAND_EXPAND_LISTS
+        )
+
+        # Configure linker file and options
+        set_property(TARGET ${KERNEL_LIB} PROPERTY INTERFACE_LINK_DEPENDS ${LINKER_SCRIPT})
+        target_link_options(${KERNEL_LIB} INTERFACE ${LFLAGS_BASE})
+
+        # Configure flash command
+        set_property(TARGET ${KERNEL_LIB} PROPERTY PROGRAM_CMDLINE ${PROGRAM_CMDLINE})
+
+        # Create nice aliases for the libraries
+        add_library(Miosix::Boot::${OPT_BOARD} ALIAS ${BOOT_LIB})
+        add_library(Miosix::Kernel::${OPT_BOARD} ALIAS ${KERNEL_LIB})
+    endblock()
 endforeach()
-
-add_subdirectory(_tools/testsuite EXCLUDE_FROM_ALL)

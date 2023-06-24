@@ -32,4 +32,4 @@ build:
   tags:
     - miosix
   script:
-    - ./miosix/_tools/testsuite/build.sh
+    - ./mbs

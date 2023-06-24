@@ -5,7 +5,7 @@
  * !!!WARNING!!! If you select to test the write speed this program will
  * write at random in the SD card, corrupting everything in it (i.e: all files
  * and even the filesystem itself). After testing write speed you WILL need to
- * FORMAT your SD card before you can use it again, losing everythin in it.
+ * FORMAT your SD card before you can use it again, losing everything in it.
  * 
  * NOTE: this program assumes the SD is larger than 1GByte, and you have
  * 32KByte available in your microcontroller for the disk buffer.

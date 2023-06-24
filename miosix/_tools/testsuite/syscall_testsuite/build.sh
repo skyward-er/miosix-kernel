@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 PREFIX="$1_"
 
 for i in $1_*/; do
@@ -11,9 +10,8 @@ for i in $1_*/; do
 		name=${i:0:len - 1}
 		
 		cd $i &&
-		make clean &&
 		make $2 "NAME=$name" &&
-		cp prog3.h "../$name.h" &&
+		mv prog3.h "../$name.h" &&
 		cd ..
 	fi
 done

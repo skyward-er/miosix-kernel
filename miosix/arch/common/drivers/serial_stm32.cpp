@@ -724,6 +724,7 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                 freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
             #endif //_ARCH_CORTEXM7_STM32H7
             break;
+        #ifdef RCC_APB1ENR_UART4EN
         case 4:
             port=UART4;
             #ifndef _ARCH_CORTEXM7_STM32H7
@@ -756,6 +757,7 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
             #endif //_ARCH_CORTEXM7_STM32H7
             
             break;
+        #endif //RCC_APB1ENR_UART4EN
         #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
         #endif //!defined(STM32_NO_SERIAL_2_3)
     }
@@ -1127,6 +1129,7 @@ STM32Serial::~STM32Serial()
                 RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
                 #endif //_ARCH_CORTEXM7_STM32H7
                 break;
+            #ifdef RCC_APB1ENR_UART4EN
             case 4:
                 NVIC_SetPriority(UART4_IRQn,15);//Lowest priority for serial
                 NVIC_EnableIRQ(UART4_IRQn);
@@ -1140,6 +1143,7 @@ STM32Serial::~STM32Serial()
                 RCC->APB1LENR &= ~RCC_APB1LENR_USART3EN;
                 #endif //_ARCH_CORTEXM7_STM32H7
                 break;
+            #endif //RCC_APB1ENR_UART4EN
             #endif //!defined(STM32F411xE) && !defined(STM32F401xE) && !defined(STM32F401xC)
             #endif //!defined(STM32_NO_SERIAL_2_3)
         }
