@@ -131,7 +131,7 @@ void configureSdram()
     GPIOE->AFR[1] = 0xcccccccc;
     GPIOF->AFR[0] = 0x00cccccc;
     GPIOF->AFR[1] = 0xccccc000;
-    GPIOG->AFR[0] = 0x00cc00cc;
+    GPIOG->AFR[0] = 0x00cc0ccc;
     GPIOG->AFR[1] = 0xc000000c;
 
     // Mode
@@ -140,7 +140,7 @@ void configureSdram()
     GPIOD->MODER = 0xa02a000a;
     GPIOE->MODER = 0xaaaa800a;
     GPIOF->MODER = 0xaa800aaa;
-    GPIOG->MODER = 0x80020a0a;
+    GPIOG->MODER = 0x80020a2a;
 
     // Speed (high speed for all, very high speed for SDRAM pins)
     GPIOB->OSPEEDR = 0x00003c00;
@@ -148,7 +148,7 @@ void configureSdram()
     GPIOD->OSPEEDR = 0xf03f000f;
     GPIOE->OSPEEDR = 0xffffc00f;
     GPIOF->OSPEEDR = 0xffc00fff;
-    GPIOG->OSPEEDR = 0xc0030f0f;
+    GPIOG->OSPEEDR = 0xc0030f3f;
 
     // Since we'we un-configured PB3 and PB4 (by default they are SWO and NJRST)
     // finish the job and remove the default pull-up
@@ -169,7 +169,7 @@ void configureSdram()
                            | FMC_SDCR2_CAS_1     // 2 cycles CAS latency
                            | FMC_SDCR2_NB        // 4 internal banks
                            | FMC_SDCR2_MWID_0    // 16 bit data bus
-                           | FMC_SDCR2_NR_0      // 12 bit row address
+                           | FMC_SDCR2_NR_1      // 13 bit row address
                            | 0;                  // 8 bit column address
 
 // 2. Memory device timings
@@ -180,10 +180,10 @@ void configureSdram()
         | (7 - 1) << FMC_SDTR1_TRC_Pos;  // 7 cycles TRC  (64.82ns > 60ns)
     FMC_Bank5_6->SDTR[1] =
         (2 - 1) << FMC_SDTR1_TRCD_Pos     // 2 cycles TRCD (18.52ns > 18ns)
-        | (2 - 1) << FMC_SDTR1_TWR_Pos    // 2 cycles TWR  (min 2 clock cycles)
+        | (2 - 1) << FMC_SDTR1_TWR_Pos    // 2 cycles TWR  (min 2cc > 12ns)
         | (5 - 1) << FMC_SDTR1_TRAS_Pos   // 5 cycles TRAS (46.3ns  > 42ns)
         | (7 - 1) << FMC_SDTR1_TXSR_Pos   // 7 cycles TXSR (74.08ns > 61.5ns)
-        | (2 - 1) << FMC_SDTR1_TMRD_Pos;  // 2 cycles TMRD (min 2 clock cycles)
+        | (2 - 1) << FMC_SDTR1_TMRD_Pos;  // 2 cycles TMRD (min 2cc > 12ns)
 #else
 #error No SDRAM timings for this clock
 #endif
@@ -214,10 +214,10 @@ void configureSdram()
     sdramCommandWait();
 
 // 8. Program the refresh rate (4K / 32ms)
-// 32ms / 4096 = 7.8125us
+// 64ms / 8192 = 7.8125us
 #ifdef SYSCLK_FREQ_216MHz
-    // 7.8125us * 108MHz = 843 - 20 = 823
-    FMC_Bank5_6->SDRTR = 823 << FMC_SDRTR_COUNT_Pos;
+    // 7.8125us * 133MHz = 1039 - 20 = 1019
+    FMC_Bank5_6->SDRTR = 1019 << FMC_SDRTR_COUNT_Pos;
 #else
 #error No SDRAM refresh timings for this clock
 #endif
@@ -230,7 +230,8 @@ void IRQbspInit()
 
     userLed1::mode(Mode::OUTPUT);
     userLed2::mode(Mode::OUTPUT);
-    userLed3::mode(Mode::OUTPUT);
+    userLed3_1::mode(Mode::OUTPUT);
+    userLed3_2::mode(Mode::OUTPUT);
     userLed4::mode(Mode::OUTPUT);
     userSwitch::mode(Mode::INPUT);
 

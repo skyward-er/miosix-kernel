@@ -57,7 +57,8 @@ void configureSdram();
  */
 typedef Gpio<GPIOB_BASE, 7> userLed1;
 typedef Gpio<GPIOE_BASE, 3> userLed2;
-typedef Gpio<GPIOC_BASE, 13> userLed3;
+typedef Gpio<GPIOC_BASE, 13> userLed3_1;
+typedef Gpio<GPIOG_BASE, 9> userLed3_2;
 typedef Gpio<GPIOC_BASE, 2> userLed4;
 typedef Gpio<GPIOB_BASE, 2> userSwitch;
 
@@ -65,7 +66,8 @@ inline void ledOn()
 {
     userLed1::high();
     userLed2::high();
-    userLed3::high();
+    userLed3_1::high();
+    userLed3_2::high();
     userLed4::high();
 }
 
@@ -73,7 +75,8 @@ inline void ledOff()
 {
     userLed1::low();
     userLed2::low();
-    userLed3::low();
+    userLed3_1::low();
+    userLed3_2::low();
     userLed4::low();
 }
 
@@ -85,9 +88,17 @@ inline void led2On() { userLed2::high(); }
 
 inline void led2Off() { userLed2::low(); }
 
-inline void led3On() { userLed3::high(); }
+inline void led3On()
+{
+    userLed3_1::high();
+    userLed3_2::high();
+}
 
-inline void led3Off() { userLed3::low(); }
+inline void led3Off()
+{
+    userLed3_1::low();
+    userLed3_2::low();
+}
 
 /**
  * Polls the SD card sense GPIO.
