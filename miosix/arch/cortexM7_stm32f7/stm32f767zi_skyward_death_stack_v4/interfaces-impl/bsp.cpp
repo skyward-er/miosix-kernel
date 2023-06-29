@@ -306,28 +306,36 @@ void IRQbspInit()
 
     using namespace sensors;
     LSM6DSRX::cs::mode(Mode::OUTPUT);
+    LSM6DSRX::cs::getPin().high();
     LSM6DSRX::interrupt1::mode(Mode::INPUT);
     LSM6DSRX::interrupt2::mode(Mode::INPUT);
 
     H3LIS331DL::cs::mode(Mode::OUTPUT);
+    H3LIS331DL::cs::getPin().high();
     H3LIS331DL::interrupt::mode(Mode::INPUT);
 
     LIS2MDL::cs::mode(Mode::OUTPUT);
+    LIS2MDL::cs::getPin().high();
 
     LPS22DF::cs::mode(Mode::OUTPUT);
+    LPS22DF::cs::getPin().high();
     LPS22DF::interrupt::mode(Mode::INPUT);
 
     GPS::cs::mode(Mode::OUTPUT);
+    GPS::cs::getPin().high();
 
     VN100::cs::mode(Mode::OUTPUT);
+    VN100::cs::getPin().high();
 
     ADS131::cs::mode(Mode::OUTPUT);
+    ADS131::cs::getPin().high();
 
     LPS28DFW_1::interrupt::mode(Mode::INPUT);
     LPS28DFW_2::interrupt::mode(Mode::INPUT);
 
     using namespace radio;
     cs::mode(Mode::OUTPUT);
+    cs::getPin().high();
     dio0::mode(Mode::INPUT);
     dio1::mode(Mode::INPUT);
     dio3::mode(Mode::INPUT);
