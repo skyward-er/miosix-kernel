@@ -197,9 +197,9 @@ using sck  = interfaces::spi6::sck;
 using miso = interfaces::spi6::miso;
 using mosi = interfaces::spi6::mosi;
 using cs   = Gpio<GPIOG_BASE, 11>;
-using dio0 = Gpio<GPIOC_BASE, 5>;
+using dio0 = Gpio<GPIOA_BASE, 13>;
 using dio1 = Gpio<GPIOD_BASE, 4>;
-using dio3 = Gpio<GPIOA_BASE, 13>;
+using dio3 = Gpio<GPIOC_BASE, 5>;
 }  // namespace radio
 
 namespace actuators

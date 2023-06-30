@@ -336,7 +336,7 @@ void IRQbspInit()
     using namespace radio;
     cs::mode(Mode::OUTPUT);
     cs::getPin().high();
-    dio0::mode(Mode::INPUT);
+    // dio0::mode(Mode::INPUT);
     dio1::mode(Mode::INPUT);
     dio3::mode(Mode::INPUT);
 
@@ -344,7 +344,7 @@ void IRQbspInit()
     cut_trigger::mode(Mode::OUTPUT);
     cut_sense::mode(Mode::INPUT);
     exp_enable::mode(Mode::OUTPUT);
-    status_led::mode(Mode::OUTPUT);
+    // status_led::mode(Mode::OUTPUT);
     camera_enable::mode(Mode::OUTPUT);
     liftoff_detach::mode(Mode::INPUT);
     nosecone_detach::mode(Mode::INPUT);
