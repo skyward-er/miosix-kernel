@@ -99,10 +99,10 @@ using rx = Gpio<GPIOA_BASE, 1>;
 
 namespace timers
 {
-using tim3ch1 = Gpio<GPIOC_BASE, 6>;   // Airbrakes servo
-using tim3ch2 = Gpio<GPIOC_BASE, 7>;   // Expulsion servo
+using tim3ch1 = Gpio<GPIOC_BASE, 6>;   // Airbrakes servo   - Servo1 Payload
+using tim3ch2 = Gpio<GPIOC_BASE, 7>;   // Auxiliary         - Servo2 Payload
 using tim1ch1 = Gpio<GPIOA_BASE, 8>;   // Buzzer
-using tim1ch3 = Gpio<GPIOB_BASE, 15>;  // Auxiliary
+using tim1ch3 = Gpio<GPIOB_BASE, 15>;  // Expulsion
 }  // namespace timers
 
 }  // namespace interfaces
@@ -179,14 +179,12 @@ namespace LPS28DFW_1
 {
 using sda       = interfaces::i2c1::sda;
 using scl       = interfaces::i2c1::scl;
-using interrupt = Gpio<GPIOC_BASE, 1>;
 }  // namespace LPS28DFW_1
 
 namespace LPS28DFW_2
 {
 using sda       = interfaces::i2c1::sda;
 using scl       = interfaces::i2c1::scl;
-using interrupt = Gpio<GPIOB_BASE, 0>;
 }  // namespace LPS28DFW_2
 
 }  // namespace sensors
@@ -200,13 +198,17 @@ using cs   = Gpio<GPIOG_BASE, 11>;
 using dio0 = Gpio<GPIOA_BASE, 13>;
 using dio1 = Gpio<GPIOD_BASE, 4>;
 using dio3 = Gpio<GPIOC_BASE, 5>;
+using rx_enable = Gpio<GPIOB_BASE, 0>;
+using tx_enable = Gpio<GPIOC_BASE, 1>;
 }  // namespace radio
 
 namespace actuators
 {
 using airbrakes = interfaces::timers::tim3ch1;
-using expulsion = interfaces::timers::tim3ch2;
+using expulsion = interfaces::timers::tim1ch3;
 using buzzer    = interfaces::timers::tim1ch1;
+using parafoil_servo1 = interfaces::timers::tim3ch1;
+using parafoil_servo2 = interfaces::timers::tim3ch2;
 }  // namespace actuators
 
 namespace gpios

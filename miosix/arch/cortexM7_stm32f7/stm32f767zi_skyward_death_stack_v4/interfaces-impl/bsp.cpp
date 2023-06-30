@@ -330,15 +330,14 @@ void IRQbspInit()
     ADS131::cs::mode(Mode::OUTPUT);
     ADS131::cs::getPin().high();
 
-    LPS28DFW_1::interrupt::mode(Mode::INPUT);
-    LPS28DFW_2::interrupt::mode(Mode::INPUT);
-
     using namespace radio;
     cs::mode(Mode::OUTPUT);
     cs::getPin().high();
     // dio0::mode(Mode::INPUT);
     dio1::mode(Mode::INPUT);
     dio3::mode(Mode::INPUT);
+    tx_enable::mode(Mode::OUTPUT);
+    rx_enable::mode(Mode::OUTPUT);
 
     using namespace gpios;
     cut_trigger::mode(Mode::OUTPUT);
