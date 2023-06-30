@@ -348,6 +348,9 @@ void IRQbspInit()
     liftoff_detach::mode(Mode::INPUT);
     nosecone_detach::mode(Mode::INPUT);
 
+    using namespace actuators;
+    buzzer::mode(Mode::ALTERNATE_OD_PULL_DOWN);
+
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(new STM32Serial(
         defaultSerial, defaultSerialSpeed, STM32Serial::NOFLOWCTRL)));
 }
