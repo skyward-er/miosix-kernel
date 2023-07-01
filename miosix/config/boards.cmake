@@ -78,7 +78,8 @@ set(BOARDS
     stm32f429zi_skyward_rig
     stm32f756zg_nucleo
     stm32f767zi_compute_unit
-    stm32f767zi_skyward_death_stack_v4
+    stm32f767zi_gemini_motor
     stm32f767zi_nucleo
+    stm32f767zi_skyward_death_stack_v4
     stm32f769ni_discovery
 )

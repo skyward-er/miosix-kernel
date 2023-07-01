@@ -25,97 +25,54 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/***************************************************************************
- * bsp_impl.h Part of the Miosix Embedded OS.
- * Board support package, this file initializes hardware.
- ***************************************************************************/
-
-#ifndef BSP_IMPL_H
-#define BSP_IMPL_H
-
-#include "config/miosix_settings.h"
-#include "interfaces/gpio.h"
-
-namespace miosix
-{
-
-/**
-\addtogroup Hardware
-\{
-*/
+#pragma once
 
 /**
  * \internal
- * Called by stage_1_boot.cpp to enable the SDRAM before initializing .data/.bss
- * Requires the CPU clock to be already configured (running from the PLL)
+ * Versioning for board_settings.h for out of git tree projects
  */
-void configureSdram();
+#define BOARD_SETTINGS_VERSION 100
+
+namespace miosix {
 
 /**
- * \internal
- * Board pin definition
+ * \addtogroup Settings
+ * \{
  */
-typedef Gpio<GPIOB_BASE, 7> userLed1;
-typedef Gpio<GPIOE_BASE, 3> userLed2;
-typedef Gpio<GPIOC_BASE, 13> userLed3_1;  // On MCU rev 2
-typedef Gpio<GPIOG_BASE, 9> userLed3_2;   // On MCU rev 3
-typedef Gpio<GPIOC_BASE, 2> userLed4;
-typedef Gpio<GPIOB_BASE, 2> userSwitch;
 
-inline void ledOn()
-{
-    userLed1::high();
-    userLed2::high();
-    userLed3_1::high();
-    userLed3_2::high();
-    userLed4::high();
-}
+/// Size of stack for main().
+/// The C standard library is stack-heavy (iprintf requires 1KB)
+const unsigned int MAIN_STACK_SIZE=16*1024;
 
-inline void ledOff()
-{
-    userLed1::low();
-    userLed2::low();
-    userLed3_1::low();
-    userLed3_2::low();
-    userLed4::low();
-}
+/// Frequency of tick (in Hz). For the priority scheduler this is also the
+/// context switch frequency
+const unsigned int TICK_FREQ=1000;
 
-inline void led1On() { userLed1::high(); }
+///\internal Aux timer run @ 100KHz
+/// Note that since the timer is only 16 bits this imposes a limit on the
+/// burst measurement of 655ms. If due to a pause_kernel() or
+/// disable_interrupts() section a thread runs for more than that time, a wrong
+/// burst value will be measured
+const unsigned int AUX_TIMER_CLOCK=100000;
+const unsigned int AUX_TIMER_MAX=0xffff;  ///<\internal Aux timer is 16 bits
 
-inline void led1Off() { userLed1::low(); }
+/// Serial port
+const unsigned int defaultSerial=1;
+const unsigned int defaultSerialSpeed=115200;
+#define SERIAL_1_DMA
+// #define SERIAL_2_DMA
+// #define SERIAL_3_DMA
 
-inline void led2On() { userLed2::high(); }
+// SD card driver
+static const unsigned char sdVoltage=33; //Board powered @ 3.3V
+// #define SD_ONE_BIT_DATABUS
+#define SD_SDMMC 1 //Select either SDMMC1 or SDMMC2
 
-inline void led2Off() { userLed2::low(); }
-
-inline void led3On()
-{
-    userLed3_1::high();
-    userLed3_2::high();
-}
-
-inline void led3Off()
-{
-    userLed3_1::low();
-    userLed3_2::low();
-}
+/// Analog supply voltage for ADC, DAC, Reset blocks, RCs and PLL
+#define V_DDA_VOLTAGE 3.3f
 
 /**
- * Polls the SD card sense GPIO.
- *
- * This board has no SD card whatsoever, but a card can be connected to the
- * following GPIOs:
- * TODO: never tested
- *
- * \return true. As there's no SD card sense switch, let's pretend that
- * the card is present.
+ * \}
  */
-inline bool sdCardSense() { return true; }
-
-/**
-\}
-*/
 
 }  // namespace miosix
-
-#endif  // BSP_IMPL_H
