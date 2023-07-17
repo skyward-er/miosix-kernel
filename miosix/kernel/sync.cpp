@@ -361,60 +361,44 @@ unsigned int Mutex::PKunlockAllDepthLevels(PauseKernelLock& dLock)
 // class ConditionVariable
 //
 
-ConditionVariable::ConditionVariable(): first(0), last(0) {}
-
 void ConditionVariable::wait(Mutex& m)
 {
-    PauseKernelLock dLock;
+    WaitToken listItem(Thread::IRQgetCurrentThread());
     
-    WaitingData w;
-    w.p=Thread::getCurrentThread();
-    w.next=0; 
-    //Add entry to tail of list
-    if(first==0)
-    {
-        first=last=&w;
-    } else {
-       last->next=&w;
-       last=&w;
-    }
-    //Unlock mutex and wait
+    PauseKernelLock dLock;
+    unsigned int depth=m.PKunlockAllDepthLevels(dLock);
+    condList.push_back(&listItem);
+
+    // Set the cond wait flag and wait
     {
         FastInterruptDisableLock l;
-        w.p->flags.IRQsetCondWait(true);
+        listItem.thread->flags.IRQsetCondWait(true);
     }
-
-    unsigned int depth=m.PKunlockAllDepthLevels(dLock);
     {
         RestartKernelLock eLock(dLock);
         Thread::yield(); //Here the wait becomes effective
     }
+
+    condList.removeFast(&listItem);
     m.PKlockToDepth(dLock,depth);
 }
 
 void ConditionVariable::wait(FastMutex& m)
 {
+    WaitToken listItem(Thread::IRQgetCurrentThread());
+ 
     FastInterruptDisableLock dLock;
-    
-    WaitingData w;
-    w.p=Thread::getCurrentThread();
-    w.next=0;
-    //Add entry to tail of list
-    if(first==0)
-    {
-        first=last=&w;
-    } else {
-       last->next=&w;
-       last=&w;
-    }
-    //Unlock mutex and wait
-    w.p->flags.IRQsetCondWait(true);
-
     unsigned int depth=IRQdoMutexUnlockAllDepthLevels(m.get());
+    condList.push_back(&listItem);
+
+    // Set the cond wait flag and wait
+    listItem.thread->flags.IRQsetCondWait(true);
     {
         FastInterruptEnableLock eLock(dLock);
         Thread::yield(); //Here the wait becomes effective
     }
+
+    condList.removeFast(&listItem);
     IRQdoMutexLockToDepth(m.get(),dLock,depth);
 }
 
@@ -426,14 +410,14 @@ void ConditionVariable::signal()
         //that can only be called with irq disabled, othrwise we would use
         //PauseKernelLock
         FastInterruptDisableLock lock;
-        if(first==0) return;
-        //Wakeup
-        first->p->flags.IRQsetCondWait(false);
+        if(condList.empty()) return;
+        //Remove from list and wakeup
+        Thread *t=condList.front()->thread;
+        condList.pop_front();
+        t->flags.IRQsetCondWait(false);
         //Check for priority issues
-        if(first->p->IRQgetPriority() >
-                Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-        //Remove from list
-        first=first->next;
+        if(t->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+            hppw=true;
     }
     //If the woken thread has higher priority than our priority, yield
     if(hppw) Thread::yield();
@@ -447,15 +431,15 @@ void ConditionVariable::broadcast()
         //that can only be called with irq disabled, othrwise we would use
         //PauseKernelLock
         FastInterruptDisableLock lock;
-        while(first!=0)
+        while(!condList.empty())
         {
-            //Wakeup
-            first->p->flags.IRQsetCondWait(false);
+            //Remove from list and wakeup
+            Thread *t=condList.front()->thread;
+            condList.pop_front();
+            t->flags.IRQsetCondWait(false);
             //Check for priority issues
-            if(first->p->IRQgetPriority() >
-                Thread::IRQgetCurrentThread()->IRQgetPriority()) hppw=true;
-            //Remove from list
-            first=first->next;
+            if(t->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+                hppw=true;
         }
     }
     //If at least one of the woken thread has higher priority than our priority,

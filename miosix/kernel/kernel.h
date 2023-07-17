@@ -34,6 +34,7 @@
 #include "interfaces/portability.h"
 #include "kernel/scheduler/sched_types.h"
 #include "stdlib_integration/libstdcpp_integration.h"
+#include "intrusive.h"
 #include <cstdlib>
 #include <new>
 #include <functional>
@@ -388,6 +389,15 @@ bool isKernelRunning();
  */
 long long getTick();
 
+/**
+ * Possible return values of timedWait
+ */
+enum class TimedWaitResult
+{
+    NoTimeout,
+    Timeout
+};
+
 //Forwrd declaration
 struct SleepData;
 class MemoryProfiling;
@@ -580,10 +590,11 @@ public:
     void terminate();
 
     /**
-     * This method stops the thread until another thread calls wakeup() on this
-     * thread.<br>Calls to wait are not cumulative. If wait() is called two
-     * times, only one call to wakeup() is needed to wake the thread.
-     * <br>CANNOT be called when the kernel is paused.
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
+     * CANNOT be called when the kernel is paused.
      */
     static void wait();
 
@@ -595,7 +606,7 @@ public:
 
     /**
      * Wakeup a thread.
-     * <br>Can be called when the kernel is paused.
+     * <br>Can only be called when the kernel is paused.
      */
     void PKwakeup();
 
@@ -644,8 +655,10 @@ public:
     Priority IRQgetPriority();
 
     /**
-     * Same as wait(), but is meant to be used only inside an IRQ or when
-     * interrupts are disabled.<br>
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
      * Note: this method is meant to put the current thread in wait status in a
      * piece of code where interrupts are disbled; it returns immediately, so
      * the user is responsible for re-enabling interrupts and calling yield to
@@ -654,16 +667,164 @@ public:
      * \code
      * disableInterrupts();
      * ...
-     * Thread::IRQwait();//Return immediately
+     * Thread::IRQwait(); //Return immediately
      * enableInterrupts();
-     * Thread::yield();//After this, thread is in wait status
+     * Thread::yield(); //After this, thread is in wait status
      * \endcode
+     *
+     * Consider using IRQenableIrqAndWait() instead.
      */
     static void IRQwait();
 
     /**
-     * Same as wakeup(), but is meant to be used only inside an IRQ or when
-     * interrupts are disabled.
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where the kernel is paused (preemption disabled).
+     * Preemption will be enabled during the waiting period, and disabled back
+     * before this method returns.
+     *
+     * \param dLock the PauseKernelLock object that was used to disable
+     * preemption in the current context.
+     */
+    static void PKrestartKernelAndWait(PauseKernelLock& dLock);
+
+    /**
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where interrupts are disbled, interrupts will be enabled
+     * during the waiting period, and disabled back before this method returns.
+     *
+     * \param dLock the InterruptDisableLock object that was used to disable
+     * interrupts in the current context.
+     */
+    static void IRQenableIrqAndWait(InterruptDisableLock& dLock)
+    {
+        (void)dLock; //Common implementation doesn't need it
+        return IRQenableIrqAndWaitImpl();
+    }
+
+    /**
+     * This method stops the thread until wakeup() is called.
+     * Ths method is useful to implement any kind of blocking primitive,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where interrupts are disbled, interrupts will be enabled
+     * during the waiting period, and disabled back before this method returns.
+     *
+     * \param dLock the FastInterruptDisableLock object that was used to disable
+     * interrupts in the current context.
+     */
+    static void IRQenableIrqAndWait(FastInterruptDisableLock& dLock)
+    {
+        (void)dLock; //Common implementation doesn't need it
+        return IRQenableIrqAndWaitImpl();
+    }
+
+    /**
+     * This method stops the thread until wakeup() is called or the specified
+     * time in milliseconds has passed.
+     * Ths method is thus a combined IRQwait() and absoluteSleep(), and is
+     * useful to implement any kind of blocking primitive with timeout,
+     * including device drivers.
+     *
+     * \param ms the number of millisecond. If it is <=0 this method will
+     * time out immediately
+     * \return TimedWaitResult::Timeout if the wait timed out
+     */
+    static TimedWaitResult timedWaitMs(long long ms);
+
+    /**
+     * This method stops the thread until wakeup() is called or the specified
+     * absolute time in milliseconds is reached.
+     * Ths method is thus a combined IRQwait() and absoluteSleep(), and is
+     * useful to implement any kind of blocking primitive with timeout,
+     * including device drivers.
+     *
+     * \param absoluteTimeout absolute time after which the wait times out
+     * \return TimedWaitResult::Timeout if the wait timed out
+     */
+    static TimedWaitResult timedWaitUntilMs(long long absoluteTime)
+    {
+        FastInterruptDisableLock dLock;
+        return IRQenableIrqAndTimedWaitMsImpl(absoluteTime);
+    }
+
+    /**
+     * This method stops the thread until wakeup() is called or the specified
+     * absolute time in milliseconds is reached.
+     * Ths method is thus a combined IRQwait() and absoluteSleep(), and is
+     * useful to implement any kind of blocking primitive with timeout,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where the kernel is paused (preemption disabled).
+     * Preemption will be enabled during the waiting period, and disabled back
+     * before this method returns.
+     *
+     * \param dLock the PauseKernelLock object that was used to disable
+     * preemption in the current context.
+     * \param absoluteTimeout absolute time after which the wait times out
+     * \return TimedWaitResult::Timeout if the wait timed out
+     */
+    static TimedWaitResult PKrestartKernelAndTimedWaitMs(PauseKernelLock& dLock,
+            long long absoluteTime);
+
+    /**
+     * This method stops the thread until wakeup() is called or the specified
+     * absolute time in milliseconds is reached.
+     * Ths method is thus a combined IRQwait() and absoluteSleep(), and is
+     * useful to implement any kind of blocking primitive with timeout,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where interrupts are disbled, interrupts will be enabled
+     * during the waiting period, and disabled back before this method returns.
+     *
+     * \param dLock the InterruptDisableLock object that was used to disable
+     * interrupts in the current context.
+     * \param absoluteTimeout absolute time after which the wait times out
+     * \return TimedWaitResult::Timeout if the wait timed out
+     */
+    static TimedWaitResult IRQenableIrqAndTimedWaitMs(InterruptDisableLock& dLock,
+            long long absoluteTime)
+    {
+        (void)dLock; //Common implementation doesn't need it
+        return IRQenableIrqAndTimedWaitMsImpl(absoluteTime);
+    }
+
+    /**
+     * This method stops the thread until wakeup() is called or the specified
+     * absolute time in milliseconds is reached.
+     * Ths method is thus a combined IRQwait() and absoluteSleep(), and is
+     * useful to implement any kind of blocking primitive with timeout,
+     * including device drivers.
+     *
+     * NOTE: this method is meant to put the current thread in wait status in a
+     * piece of code where interrupts are disbled, interrupts will be enabled
+     * during the waiting period, and disabled back before this method returns.
+     *
+     * \param dLock the FastInterruptDisableLock object that was used to disable
+     * interrupts in the current context.
+     * \param absoluteTimeout absolute time after which the wait times out
+     * \return TimedWaitResult::Timeout if the wait timed out
+     */
+    static TimedWaitResult IRQenableIrqAndTimedWaitMs(FastInterruptDisableLock& dLock,
+            long long absoluteTime)
+    {
+        (void)dLock; //Common implementation doesn't need it
+        return IRQenableIrqAndTimedWaitMsImpl(absoluteTime);
+    }
+
+    /**
+     * Wakeup a thread.
+     * <br>Can only be called inside an IRQ or when interrupts are disabled.
      */
     void IRQwakeup();
 
@@ -754,6 +915,12 @@ private:
          * \param sleeping if true the flag will be set, otherwise cleared
          */
         void IRQsetSleep(bool sleeping);
+
+        /**
+         * Used by IRQwakeThreads to clear both the sleep and wait flags,
+         * waking threads doing absoluteSleep() as well as timedWait()
+         */
+        void IRQclearSleepAndWait();
 
         /**
          * Set the deleted flag of the thread. This flag can't be cleared.
@@ -942,7 +1109,17 @@ private:
      * \param argv argument passed to the entry point
      */
     static void threadLauncher(void *(*threadfunc)(void*), void *argv);
-    
+
+    /**
+     * Common implementation of all IRQenableIrqAndWait calls
+     */
+    static void IRQenableIrqAndWaitImpl();
+
+    /**
+     * Common implementation of all timedWait calls
+     */
+    static TimedWaitResult IRQenableIrqAndTimedWaitMsImpl(long long absoluteTime);
+
     /**
      * Allocates the idle thread and makes cur point to it
      * Can only be called before the kernel is started, is called exactly once
@@ -996,8 +1173,6 @@ private:
     //friend functions
     //Needs access to watermark, ctxsave
     friend void miosix_private::IRQstackOverflowCheck();
-    //Need access to status
-    friend void IRQaddToSleepingList(SleepData *x);
     //Needs access to status
     friend bool IRQwakeThreads();
     //Needs access to watermark, status, next
@@ -1052,20 +1227,24 @@ public:
 
 /**
  * \internal
- * \struct Sleep_data
- * This struct is used to make a list of sleeping threads.
+ * This class is used to make a list of sleeping threads.
  * It is used by the kernel, and should not be used by end users.
  */
-struct SleepData
+class SleepData : public IntrusiveListItem
 {
+public:
+    // Default constructor declared for compatibility with the old SleepData class usages
+    SleepData() = default;
+
+    SleepData(Thread *thread, long long wakeupTime)
+        : thread(thread), wakeupTime(wakeupTime) {}
+
     ///\internal Thread that is sleeping
-    Thread *p;
+    Thread *thread;
     
     ///\internal When this number becomes equal to the kernel tick,
     ///the thread will wake
-    long long wakeup_time;
-    
-    SleepData *next;///<\internal Next thread in the list
+    long long wakeupTime;
 };
 
 /**

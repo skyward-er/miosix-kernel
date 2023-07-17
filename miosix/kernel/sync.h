@@ -402,7 +402,7 @@ public:
     /**
      * Constructor, initializes the ConditionVariable.
      */
-    ConditionVariable();
+    ConditionVariable() {}
 
     /**
      * Unlock the mutex and wait.
@@ -443,24 +443,23 @@ public:
      */
     void broadcast();
 
-private:
     //Unwanted methods
-    ConditionVariable(const ConditionVariable& );
-    ConditionVariable& operator= (const ConditionVariable& );
+    ConditionVariable(const ConditionVariable& ) = delete;
+    ConditionVariable& operator= (const ConditionVariable& ) = delete;
 
+private:
     /**
-     * \internal
-     * \struct WaitingData
-     * This struct is used to make a list of waiting threads.
+     * \internal Element of a thread waiting list
      */
-    struct WaitingData
+    class WaitToken : public IntrusiveListItem
     {
-        Thread *p;///<\internal Thread that is waiting
-        WaitingData *next;///<\internal Next thread in the list
+    public:
+        WaitToken(Thread *thread) : thread(thread) {}
+        Thread *thread; ///<\internal Waiting thread
     };
 
-    WaitingData *first;///<Pointer to first element of waiting fifo
-    WaitingData *last;///<Pointer to last element of waiting fifo
+    // The list of threads waiting on this condition variable
+    IntrusiveList<WaitToken> condList;
 };
 
 /**
