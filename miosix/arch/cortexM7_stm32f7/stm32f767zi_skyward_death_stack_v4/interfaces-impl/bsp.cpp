@@ -333,7 +333,7 @@ void IRQbspInit()
     using namespace radio;
     cs::mode(Mode::OUTPUT);
     cs::getPin().high();
-    // dio0::mode(Mode::INPUT);
+    dio0::mode(Mode::INPUT);
     dio1::mode(Mode::INPUT);
     dio3::mode(Mode::INPUT);
     tx_enable::mode(Mode::OUTPUT);
@@ -349,7 +349,7 @@ void IRQbspInit()
     nosecone_detach::mode(Mode::INPUT);
 
     using namespace actuators;
-    buzzer::mode(Mode::ALTERNATE_OD_PULL_DOWN);
+    buzzer::mode(Mode::ALTERNATE_PULL_DOWN);
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(new STM32Serial(
         defaultSerial, defaultSerialSpeed, STM32Serial::NOFLOWCTRL)));
