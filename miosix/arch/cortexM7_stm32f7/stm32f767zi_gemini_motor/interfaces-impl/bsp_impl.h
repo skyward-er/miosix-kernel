@@ -34,6 +34,7 @@
 #define BSP_IMPL_H
 
 #include "config/miosix_settings.h"
+#include "hwmapping.h"
 #include "interfaces/gpio.h"
 
 namespace miosix
@@ -51,53 +52,42 @@ namespace miosix
  */
 void configureSdram();
 
-/**
- * \internal
- * Board pin definition
- */
-typedef Gpio<GPIOB_BASE, 7> userLed1;
-typedef Gpio<GPIOE_BASE, 3> userLed2;
-typedef Gpio<GPIOC_BASE, 13> userLed3_1;  // On MCU rev 2
-typedef Gpio<GPIOG_BASE, 9> userLed3_2;   // On MCU rev 3
-typedef Gpio<GPIOC_BASE, 2> userLed4;
-typedef Gpio<GPIOB_BASE, 2> userSwitch;
-
 inline void ledOn()
 {
-    userLed1::high();
-    userLed2::high();
-    userLed3_1::high();
-    userLed3_2::high();
-    userLed4::high();
+    peripherals::leds::userLed1::high();
+    peripherals::leds::userLed2::high();
+    peripherals::leds::userLed3_1::high();
+    peripherals::leds::userLed3_2::high();
+    peripherals::leds::userLed4::high();
 }
 
 inline void ledOff()
 {
-    userLed1::low();
-    userLed2::low();
-    userLed3_1::low();
-    userLed3_2::low();
-    userLed4::low();
+    peripherals::leds::userLed1::low();
+    peripherals::leds::userLed2::low();
+    peripherals::leds::userLed3_1::low();
+    peripherals::leds::userLed3_2::low();
+    peripherals::leds::userLed4::low();
 }
 
-inline void led1On() { userLed1::high(); }
+inline void led1On() { peripherals::leds::userLed1::high(); }
 
-inline void led1Off() { userLed1::low(); }
+inline void led1Off() { peripherals::leds::userLed1::low(); }
 
-inline void led2On() { userLed2::high(); }
+inline void led2On() { peripherals::leds::userLed2::high(); }
 
-inline void led2Off() { userLed2::low(); }
+inline void led2Off() { peripherals::leds::userLed2::low(); }
 
 inline void led3On()
 {
-    userLed3_1::high();
-    userLed3_2::high();
+    peripherals::leds::userLed3_1::high();
+    peripherals::leds::userLed3_2::high();
 }
 
 inline void led3Off()
 {
-    userLed3_1::low();
-    userLed3_2::low();
+    peripherals::leds::userLed3_1::low();
+    peripherals::leds::userLed3_2::low();
 }
 
 /**
