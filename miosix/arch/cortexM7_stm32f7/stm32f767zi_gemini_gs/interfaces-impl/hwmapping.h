@@ -55,20 +55,20 @@ namespace interfaces
 {
 
 // Radio 1
+namespace spi3
+{
+using sck  = Gpio<GPIOB_BASE, 3>;
+using miso = Gpio<GPIOB_BASE, 4>;
+using mosi = Gpio<GPIOD_BASE, 6>;
+} // namespace spi3s
+
+// Radio 2
 namespace spi1
 {
 using sck  = Gpio<GPIOA_BASE, 5>;
 using miso = Gpio<GPIOA_BASE, 6>;
 using mosi = Gpio<GPIOA_BASE, 7>;
 } // namespace spi1
-
-// Radio 2
-namespace spi3
-{
-using sck  = Gpio<GPIOB_BASE, 3>;
-using miso = Gpio<GPIOB_BASE, 4>;
-using mosi = Gpio<GPIOD_BASE, 6>;
-} // namespace spi3
 
 // Ethernet module
 namespace spi4

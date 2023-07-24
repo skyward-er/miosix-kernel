@@ -285,7 +285,8 @@ void IRQbspInit() {
 
 void bspInit2() {
     #ifdef WITH_FILESYSTEM
-    basicFilesystemSetup(SDIODriver::instance());
+    // Init devfs with empty device
+    basicFilesystemSetup(intrusive_ref_ptr<Device>());
     #endif // WITH_FILESYSTEM
 
     #ifdef WITH_BACKUP_SRAM
