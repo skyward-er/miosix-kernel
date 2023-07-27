@@ -259,6 +259,11 @@ namespace miosix
         uart1::tx::mode(Mode::ALTERNATE);
         uart1::tx::alternateFunction(7);
 
+        can1::rx::mode(Mode::ALTERNATE);
+        can1::rx::alternateFunction(9);
+        can1::tx::mode(Mode::ALTERNATE);
+        can1::tx::alternateFunction(9);
+
         timers::tim4ch2::mode(Mode::ALTERNATE);
         timers::tim11ch1::mode(Mode::ALTERNATE);
         timers::tim3ch1::mode(Mode::ALTERNATE);

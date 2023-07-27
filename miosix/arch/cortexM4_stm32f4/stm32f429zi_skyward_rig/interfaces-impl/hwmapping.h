@@ -77,6 +77,12 @@ using tx = Gpio<GPIOA_BASE, 9>;
 using rx = Gpio<GPIOA_BASE, 10>;
 }  // namespace uart1
 
+namespace can1
+{
+using tx = Gpio<GPIOA_BASE, 12>;
+using rx = Gpio<GPIOA_BASE, 11>;
+}  // namespace can1
+
 namespace timers
 {
 using tim4ch2  = Gpio<GPIOB_BASE, 7>;  // Servo 1
