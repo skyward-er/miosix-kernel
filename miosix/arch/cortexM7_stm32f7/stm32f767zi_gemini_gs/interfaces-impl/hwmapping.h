@@ -89,7 +89,6 @@ using namespace miosix::interfaces::spi3;
 using cs   = Gpio<GPIOA_BASE, 15>;
 using dio0 = Gpio<GPIOC_BASE, 8>;
 using dio1 = Gpio<GPIOC_BASE, 10>;
-using dio2 = Gpio<GPIOC_BASE, 11>;
 using dio3 = Gpio<GPIOC_BASE, 12>;
 using txen = Gpio<GPIOG_BASE, 12>;
 using rxen = Gpio<GPIOG_BASE, 14>;
@@ -105,12 +104,9 @@ using namespace miosix::interfaces::spi1;
 using cs   = Gpio<GPIOA_BASE, 4>;
 using dio0 = Gpio<GPIOC_BASE, 6>;
 using dio1 = Gpio<GPIOD_BASE, 4>;
-using dio2 = Gpio<GPIOD_BASE, 7>;
 using dio3 = Gpio<GPIOD_BASE, 5>;
-using dio4 = Gpio<GPIOD_BASE, 2>;
-using dio5 = Gpio<GPIOD_BASE, 3>;
-using txen = Gpio<GPIOA_BASE, 10>;
-using rxen = Gpio<GPIOA_BASE, 9>;
+using txen = Gpio<GPIOB_BASE, 8>;
+using rxen = Gpio<GPIOB_BASE, 9>;
 using nrst = Gpio<GPIOA_BASE, 0>;
 } // namespace radio2
 
