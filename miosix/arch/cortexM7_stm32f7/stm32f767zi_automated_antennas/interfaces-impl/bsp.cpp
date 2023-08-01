@@ -236,60 +236,56 @@ void IRQbspInit()
     userSwitch::mode(Mode::INPUT);
 
     using namespace interfaces;
-    // spi1::sck::mode(Mode::ALTERNATE);
-    // spi1::sck::alternateFunction(5);
-    // spi1::miso::mode(Mode::ALTERNATE);
-    // spi1::miso::alternateFunction(5);
-    // spi1::mosi::mode(Mode::ALTERNATE);
-    // spi1::mosi::alternateFunction(5);
+    spi1::sck::mode(Mode::ALTERNATE);
+    spi1::sck::alternateFunction(5);
+    spi1::miso::mode(Mode::ALTERNATE);
+    spi1::miso::alternateFunction(5);
+    spi1::mosi::mode(Mode::ALTERNATE);
+    spi1::mosi::alternateFunction(5);
 
-    // spi3::sck::mode(Mode::ALTERNATE);
-    // spi3::sck::alternateFunction(6);
-    // spi3::miso::mode(Mode::ALTERNATE);
-    // spi3::miso::alternateFunction(6);
-    // spi3::mosi::mode(Mode::ALTERNATE);
-    // spi3::mosi::alternateFunction(5);
+    spi3::sck::mode(Mode::ALTERNATE);
+    spi3::sck::alternateFunction(6);
+    spi3::miso::mode(Mode::ALTERNATE);
+    spi3::miso::alternateFunction(6);
+    spi3::mosi::mode(Mode::ALTERNATE);
+    spi3::mosi::alternateFunction(5);
 
-    // spi4::sck::mode(Mode::ALTERNATE);
-    // spi4::sck::alternateFunction(5);
-    // spi4::miso::mode(Mode::ALTERNATE);
-    // spi4::miso::alternateFunction(5);
-    // spi4::mosi::mode(Mode::ALTERNATE);
-    // spi4::mosi::alternateFunction(5);
+    spi4::sck::mode(Mode::ALTERNATE);
+    spi4::sck::alternateFunction(5);
+    spi4::miso::mode(Mode::ALTERNATE);
+    spi4::miso::alternateFunction(5);
+    spi4::mosi::mode(Mode::ALTERNATE);
+    spi4::mosi::alternateFunction(5);
 
-    // can2::rx::mode(Mode::ALTERNATE);
-    // can2::rx::alternateFunction(9);
-    // can2::tx::mode(Mode::ALTERNATE);
-    // can2::tx::alternateFunction(9);
+    can2::rx::mode(Mode::ALTERNATE);
+    can2::rx::alternateFunction(9);
+    can2::tx::mode(Mode::ALTERNATE);
+    can2::tx::alternateFunction(9);
 
-    // usart1::tx::mode(Mode::ALTERNATE);
-    // usart1::tx::alternateFunction(7);
-    // usart1::rx::mode(Mode::ALTERNATE);
-    // usart1::rx::alternateFunction(7);
+    usart1::tx::mode(Mode::ALTERNATE);
+    usart1::tx::alternateFunction(7);
+    usart1::rx::mode(Mode::ALTERNATE);
+    usart1::rx::alternateFunction(7);
 
-    // usart2::tx::mode(Mode::ALTERNATE);
-    // usart2::tx::alternateFunction(7);
-    // usart2::rx::mode(Mode::ALTERNATE);
-    // usart2::rx::alternateFunction(7);
+    usart2::tx::mode(Mode::ALTERNATE);
+    usart2::tx::alternateFunction(7);
+    usart2::rx::mode(Mode::ALTERNATE);
+    usart2::rx::alternateFunction(7);
 
-    // using namespace radio;
-    // cs::mode(Mode::OUTPUT);
-    // cs::getPin().high();
-    // // dio0::mode(Mode::INPUT);
-    // dio1::mode(Mode::INPUT);
-    // dio3::mode(Mode::INPUT);
-    // tx_enable::mode(Mode::OUTPUT);
-    // rx_enable::mode(Mode::OUTPUT);
+    using namespace radio;
+    cs::mode(Mode::OUTPUT);
+    cs::getPin().high();
+    dio0::mode(Mode::INPUT);
+    dio1::mode(Mode::INPUT);
+    dio3::mode(Mode::INPUT);
+    tx_enable::mode(Mode::OUTPUT);
+    rx_enable::mode(Mode::OUTPUT);
 
     using namespace timers;
-    // tim1ch4::mode(Mode::ALTERNATE);
-    // tim1ch4::alternateFunction(1);
     tim3ch2::mode(Mode::ALTERNATE);
     tim3ch2::alternateFunction(2);
     tim4ch1::mode(Mode::ALTERNATE);
     tim4ch1::alternateFunction(2);
-    // tim8ch4::mode(Mode::ALTERNATE);
-    // tim8ch4::alternateFunction(3);
 
     stepper1::enable::mode(Mode::OUTPUT);
     stepper1::direction::mode(Mode::OUTPUT);
