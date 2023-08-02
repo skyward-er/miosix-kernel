@@ -312,7 +312,6 @@ void IRQbspInit()
 
     H3LIS331DL::cs::mode(Mode::OUTPUT);
     H3LIS331DL::cs::getPin().high();
-    H3LIS331DL::interrupt::mode(Mode::INPUT);
 
     LIS2MDL::cs::mode(Mode::OUTPUT);
     LIS2MDL::cs::getPin().high();

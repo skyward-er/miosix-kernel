@@ -121,11 +121,10 @@ using interrupt2 = Gpio<GPIOG_BASE, 7>;
 
 namespace H3LIS331DL
 {
-using sck       = interfaces::spi3::sck;
-using miso      = interfaces::spi3::miso;
-using mosi      = interfaces::spi3::mosi;
-using cs        = Gpio<GPIOD_BASE, 3>;
-using interrupt = Gpio<GPIOC_BASE, 3>;
+using sck  = interfaces::spi3::sck;
+using miso = interfaces::spi3::miso;
+using mosi = interfaces::spi3::mosi;
+using cs   = Gpio<GPIOD_BASE, 3>;
 }  // namespace H3LIS331DL
 
 namespace LIS2MDL
@@ -177,36 +176,36 @@ using cs   = Gpio<GPIOG_BASE, 10>;
 
 namespace LPS28DFW_1
 {
-using sda       = interfaces::i2c1::sda;
-using scl       = interfaces::i2c1::scl;
+using sda = interfaces::i2c1::sda;
+using scl = interfaces::i2c1::scl;
 }  // namespace LPS28DFW_1
 
 namespace LPS28DFW_2
 {
-using sda       = interfaces::i2c1::sda;
-using scl       = interfaces::i2c1::scl;
+using sda = interfaces::i2c1::sda;
+using scl = interfaces::i2c1::scl;
 }  // namespace LPS28DFW_2
 
 }  // namespace sensors
 
 namespace radio
 {
-using sck  = interfaces::spi6::sck;
-using miso = interfaces::spi6::miso;
-using mosi = interfaces::spi6::mosi;
-using cs   = Gpio<GPIOG_BASE, 11>;
-using dio0 = Gpio<GPIOA_BASE, 13>;
-using dio1 = Gpio<GPIOD_BASE, 4>;
-using dio3 = Gpio<GPIOC_BASE, 5>;
+using sck       = interfaces::spi6::sck;
+using miso      = interfaces::spi6::miso;
+using mosi      = interfaces::spi6::mosi;
+using cs        = Gpio<GPIOG_BASE, 11>;
+using dio0      = Gpio<GPIOC_BASE, 3>;
+using dio1      = Gpio<GPIOD_BASE, 4>;
+using dio3      = Gpio<GPIOC_BASE, 5>;
 using rx_enable = Gpio<GPIOB_BASE, 0>;
 using tx_enable = Gpio<GPIOC_BASE, 1>;
 }  // namespace radio
 
 namespace actuators
 {
-using airbrakes = interfaces::timers::tim3ch1;
-using expulsion = interfaces::timers::tim1ch3;
-using buzzer    = interfaces::timers::tim1ch1;
+using airbrakes       = interfaces::timers::tim3ch1;
+using expulsion       = interfaces::timers::tim1ch3;
+using buzzer          = interfaces::timers::tim1ch1;
 using parafoil_servo1 = interfaces::timers::tim3ch1;
 using parafoil_servo2 = interfaces::timers::tim3ch2;
 }  // namespace actuators
