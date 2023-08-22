@@ -825,24 +825,68 @@ void ClockController::calibrateClockSpeed(SDIODriver *sdio)
     unsigned int minFreq=CLOCK_400KHz;
     unsigned int maxFreq=CLOCK_MAX;
     unsigned int selected;
+    unsigned int counter = 1;
+    unsigned int savedBuffer[512 / sizeof(unsigned int)];
+
+    // Save the block of data inside the buffer at the minimum read speed
+    setClockSpeed(minFreq);
+    if(sdio->readBlock(reinterpret_cast<unsigned char*>(savedBuffer), 512, 0) != 512)
+    {
+        // Error reading at minimum frequency, keep this
+        clockReductionAvailable = MAX_ALLOWED_REDUCTIONS;
+        retries = MAX_RETRY;
+        return;
+    }
+
     while(minFreq-maxFreq>1)
     {
+        // Populate the buffer to write with dummy data
+        for(unsigned int i = 0; i < 512 / sizeof(unsigned int); i++)
+        {
+            buffer[i] = counter;
+        }
+
         selected=(minFreq+maxFreq)/2;
         DBG("Trying CLKCR=%d\n",selected);
         setClockSpeed(selected);
-        if(sdio->readBlock(reinterpret_cast<unsigned char*>(buffer),512,0)==512)
+        
+        // Write the dummy data
+        sdio->writeBlock(reinterpret_cast<unsigned char*>(buffer), 512, 0);
+
+        // Read the dummy data and verify its validity
+        for(unsigned int i = 0; i < 512 / sizeof(unsigned int); i++)
+        {
+            buffer[i] = 0;
+        }
+
+        sdio->readBlock(reinterpret_cast<unsigned char*>(buffer), 512, 0);
+
+        bool valid = true;
+        for(unsigned int i = 0; i < 512 / sizeof(unsigned int); i++)
+        {
+            valid &= buffer[i] == counter;
+        }
+
+        // Update the selection for the search
+        if(valid)
+        {
             minFreq=selected;
-        else maxFreq=selected;
+        }
+        else
+        {
+            maxFreq=selected;
+        } 
+
+        // Increment the counter for future checks
+        counter++;
     }
+
+    // Rewrite the previous saved buffer
+    setClockSpeed(CLOCK_400KHz);
+    sdio->writeBlock(reinterpret_cast<unsigned char*>(savedBuffer), 512, 0);
+
     //Last round of algorithm
-    setClockSpeed(maxFreq);
-    if(sdio->readBlock(reinterpret_cast<unsigned char*>(buffer),512,0)==512)
-    {
-        DBG("Optimal CLKCR=%d\n",maxFreq);
-    } else {
-        setClockSpeed(minFreq);
-        DBG("Optimal CLKCR=%d\n",minFreq);
-    }
+    setClockSpeed(minFreq);
 
     //Make clock reduction available
     clockReductionAvailable=MAX_ALLOWED_REDUCTIONS;
