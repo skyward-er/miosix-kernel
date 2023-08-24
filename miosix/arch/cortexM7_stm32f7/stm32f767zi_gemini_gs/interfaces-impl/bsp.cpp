@@ -275,6 +275,12 @@ void IRQbspInit() {
     radio2::dio1::mode(Mode::INPUT);
     radio2::dio3::mode(Mode::INPUT);
 
+    ethernet::cs::mode(Mode::OUTPUT);
+    ethernet::cs::high();
+    ethernet::nrst::mode(Mode::OUTPUT);
+    ethernet::nrst::high();
+    ethernet::intr::mode(Mode::INPUT);
+
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(new STM32Serial(
         defaultSerial, defaultSerialSpeed, STM32Serial::NOFLOWCTRL)));
 }
