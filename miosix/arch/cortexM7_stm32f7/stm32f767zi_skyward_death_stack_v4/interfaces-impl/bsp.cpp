@@ -301,8 +301,8 @@ void IRQbspInit()
     tim3ch2::alternateFunction(2);
     tim1ch1::mode(Mode::ALTERNATE);
     tim1ch1::alternateFunction(1);
-    tim1ch3::mode(Mode::ALTERNATE);
-    tim1ch3::alternateFunction(1);
+    tim12ch2::mode(Mode::ALTERNATE);
+    tim12ch2::alternateFunction(9);
 
     using namespace sensors;
     LSM6DSRX::cs::mode(Mode::OUTPUT);

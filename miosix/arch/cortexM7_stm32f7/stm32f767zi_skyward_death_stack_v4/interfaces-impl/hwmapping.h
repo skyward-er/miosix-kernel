@@ -99,10 +99,10 @@ using rx = Gpio<GPIOA_BASE, 1>;
 
 namespace timers
 {
-using tim3ch1 = Gpio<GPIOC_BASE, 6>;   // Airbrakes servo   - Servo1 Payload
-using tim3ch2 = Gpio<GPIOC_BASE, 7>;   // Auxiliary         - Servo2 Payload
-using tim1ch1 = Gpio<GPIOA_BASE, 8>;   // Buzzer
-using tim1ch3 = Gpio<GPIOB_BASE, 15>;  // Expulsion
+using tim3ch1  = Gpio<GPIOC_BASE, 6>;   // Airbrakes servo   - Servo1 Payload
+using tim3ch2  = Gpio<GPIOC_BASE, 7>;   // Auxiliary         - Servo2 Payload
+using tim1ch1  = Gpio<GPIOA_BASE, 8>;   // Buzzer
+using tim12ch2 = Gpio<GPIOB_BASE, 15>;  // Expulsion
 }  // namespace timers
 
 }  // namespace interfaces
@@ -204,7 +204,7 @@ using tx_enable = Gpio<GPIOC_BASE, 1>;
 namespace actuators
 {
 using airbrakes       = interfaces::timers::tim3ch1;
-using expulsion       = interfaces::timers::tim1ch3;
+using expulsion       = interfaces::timers::tim12ch2;
 using buzzer          = interfaces::timers::tim1ch1;
 using parafoil_servo1 = interfaces::timers::tim3ch1;
 using parafoil_servo2 = interfaces::timers::tim3ch2;
