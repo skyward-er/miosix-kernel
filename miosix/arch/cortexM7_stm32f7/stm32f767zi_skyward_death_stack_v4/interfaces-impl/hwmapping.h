@@ -219,6 +219,7 @@ using status_led      = Gpio<GPIOA_BASE, 14>;
 using camera_enable   = Gpio<GPIOA_BASE, 12>;
 using liftoff_detach  = Gpio<GPIOA_BASE, 11>;
 using nosecone_detach = Gpio<GPIOA_BASE, 4>;
+using exp_sense       = Gpio<GPIOG_BASE, 6>;
 
 }  // namespace gpios
 

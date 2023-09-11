@@ -346,6 +346,7 @@ void IRQbspInit()
     camera_enable::mode(Mode::OUTPUT);
     liftoff_detach::mode(Mode::INPUT);
     nosecone_detach::mode(Mode::INPUT);
+    exp_sense::mode(Mode::INPUT);
 
     using namespace actuators;
     buzzer::mode(Mode::ALTERNATE_PULL_DOWN);
