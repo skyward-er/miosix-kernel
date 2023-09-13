@@ -140,6 +140,11 @@ using lvl2 = Gpio<GPIOG_BASE, 6>;
 using lvl3 = Gpio<GPIOB_BASE, 14>;
 }  // namespace tank_level
 
+namespace battery_voltage
+{
+using ch15 = Gpio<GPIOC_BASE, 5>;
+}
+
 }  // namespace peripherals
 
 }  // namespace miosix

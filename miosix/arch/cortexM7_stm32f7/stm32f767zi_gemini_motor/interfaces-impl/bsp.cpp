@@ -295,6 +295,8 @@ void IRQbspInit() {
     peripherals::tank_level::lvl2::mode(Mode::INPUT);
     peripherals::tank_level::lvl3::mode(Mode::INPUT);
 
+    peripherals::battery_voltage::ch15::mode(Mode::INPUT_ANALOG);
+
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(new STM32Serial(
         defaultSerial, defaultSerialSpeed, STM32Serial::NOFLOWCTRL)));
 }
