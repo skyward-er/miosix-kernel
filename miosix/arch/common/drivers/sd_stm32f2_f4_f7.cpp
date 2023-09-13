@@ -801,7 +801,7 @@ private:
     #endif //SD_ONE_BIT_DATABUS
 
     ///\internal Maximum number of calls to IRQreduceClockSpeed() allowed
-    static const unsigned char MAX_ALLOWED_REDUCTIONS=1;
+    static const unsigned char MAX_ALLOWED_REDUCTIONS=5;
 
     ///\internal value returned by getRetryCount() while *not* calibrating clock.
     static const unsigned char MAX_RETRY=10;
