@@ -29,6 +29,9 @@
 
 #include "interfaces/gpio.h"
 
+#define MIOSIX_ETHERNET_IRQ EXTI1_IRQHandlerImpl
+#define MIOSIX_ETHERNET_SPI SPI4
+
 namespace miosix
 {
 namespace interfaces
@@ -115,5 +118,17 @@ using direction  = Gpio<GPIOG_BASE, 7>;
 using pulseTimer = interfaces::timers::tim4ch1;
 using countTimer = interfaces::timers::tim8ch4;
 }  // namespace stepper2
+
+namespace ethernet
+{
+namespace spi
+{
+using namespace miosix::interfaces::spi4;
+}  // namespace spi
+
+using cs   = Gpio<GPIOE_BASE, 4>;
+using intr = Gpio<GPIOC_BASE, 1>;
+using nrst = Gpio<GPIOB_BASE, 1>;
+}  // namespace ethernet
 
 }  // namespace miosix
