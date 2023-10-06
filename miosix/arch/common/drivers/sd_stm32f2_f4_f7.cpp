@@ -815,34 +815,38 @@ private:
 
 void ClockController::calibrateClockSpeed(SDIODriver *sdio)
 {
-    //During calibration we call readBlock() which will call reduceClockSpeed()
-    //so not to invalidate calibration clock reduction must not be available
-    clockReductionAvailable=0;
-    retries=1;
+    #ifdef SD_DIVIDER
+        setClockSpeed(SD_DIVIDER);
+    #else
+        //During calibration we call readBlock() which will call reduceClockSpeed()
+        //so not to invalidate calibration clock reduction must not be available
+        clockReductionAvailable=0;
+        retries=1;
 
-    DBG("Automatic speed calibration\n");
-    unsigned int buffer[512/sizeof(unsigned int)];
-    unsigned int minFreq=CLOCK_400KHz;
-    unsigned int maxFreq=CLOCK_MAX;
-    unsigned int selected;
-    while(minFreq-maxFreq>1)
-    {
-        selected=(minFreq+maxFreq)/2;
-        DBG("Trying CLKCR=%d\n",selected);
-        setClockSpeed(selected);
+        DBG("Automatic speed calibration\n");
+        unsigned int buffer[512/sizeof(unsigned int)];
+        unsigned int minFreq=CLOCK_400KHz;
+        unsigned int maxFreq=CLOCK_MAX;
+        unsigned int selected;
+        while(minFreq-maxFreq>1)
+        {
+            selected=(minFreq+maxFreq)/2;
+            DBG("Trying CLKCR=%d\n",selected);
+            setClockSpeed(selected);
+            if(sdio->readBlock(reinterpret_cast<unsigned char*>(buffer),512,0)==512)
+                minFreq=selected;
+            else maxFreq=selected;
+        }
+        //Last round of algorithm
+        setClockSpeed(maxFreq);
         if(sdio->readBlock(reinterpret_cast<unsigned char*>(buffer),512,0)==512)
-            minFreq=selected;
-        else maxFreq=selected;
-    }
-    //Last round of algorithm
-    setClockSpeed(maxFreq);
-    if(sdio->readBlock(reinterpret_cast<unsigned char*>(buffer),512,0)==512)
-    {
-        DBG("Optimal CLKCR=%d\n",maxFreq);
-    } else {
-        setClockSpeed(minFreq);
-        DBG("Optimal CLKCR=%d\n",minFreq);
-    }
+        {
+            DBG("Optimal CLKCR=%d\n",maxFreq);
+        } else {
+            setClockSpeed(minFreq);
+            DBG("Optimal CLKCR=%d\n",minFreq);
+        }
+    #endif
 
     //Make clock reduction available
     clockReductionAvailable=MAX_ALLOWED_REDUCTIONS;
