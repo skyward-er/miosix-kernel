@@ -816,6 +816,7 @@ private:
 void ClockController::calibrateClockSpeed(SDIODriver *sdio)
 {
     #ifdef SD_DIVIDER
+        // The frequency will be divided by a factor of SD_DIVIDER + 2
         setClockSpeed(SD_DIVIDER);
     #else
         //During calibration we call readBlock() which will call reduceClockSpeed()
