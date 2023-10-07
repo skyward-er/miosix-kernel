@@ -815,6 +815,10 @@ private:
 
 void ClockController::calibrateClockSpeed(SDIODriver *sdio)
 {
+    #ifdef SD_DIVIDER
+    // The frequency will be divided by a factor of SD_DIVIDER + 2
+    setClockSpeed(SD_DIVIDER);
+    #else
     //During calibration we call readBlock() which will call reduceClockSpeed()
     //so not to invalidate calibration clock reduction must not be available
     clockReductionAvailable=0;
@@ -843,6 +847,7 @@ void ClockController::calibrateClockSpeed(SDIODriver *sdio)
         setClockSpeed(minFreq);
         DBG("Optimal CLKCR=%d\n",minFreq);
     }
+    #endif
 
     //Make clock reduction available
     clockReductionAvailable=MAX_ALLOWED_REDUCTIONS;
