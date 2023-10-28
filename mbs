@@ -1,0 +1,303 @@
+#!/bin/bash
+
+# Copyright (C) 2023 by Skyward
+#
+# This program is free software; you can redistribute it and/or 
+# it under the terms of the GNU General Public License as published 
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# As a special exception, if other files instantiate templates or use
+# macros or inline functions from this file, or you compile this file
+# and link it with other works to produce a work based on this file,
+# this file does not by itself cause the resulting work to be covered
+# by the GNU General Public License. However the source code for this
+# file must still be made available in accordance with the GNU 
+# Public License. This exception does not invalidate any other 
+# why a work based on this file might be covered by the GNU General
+# Public License.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>
+
+print_banner() {
+    cat <<EOF
++---------------------------------------------------------------+
+|   __  __ _           _                                        |
+|  |  \\/  (_) ___  ___(_)_  __                                  |
+|  | |\\/| | |/ _ \\/ __| \\ \\/ /                                  |
+|  | |  | | | (_) \\__ \\ |>  <                                   |
+|  |_|  |_|_|\\___/|___/_/_/\\_\\                                  |
+|   ____        _ _     _   ____            _                   |
+|  | __ ) _   _(_) | __| | / ___| _   _ ___| |_ ___ _ __ ___    |
+|  |  _ \\| | | | | |/ _\` | \\___ \\| | | / __| __/ _ \\ '_ \` _ \\   |
+|  | |_) | |_| | | | (_| |  ___) | |_| \\__ \\ ||  __/ | | | | |  |
+|  |____/ \\__,_|_|_|\\__,_| |____/ \\__, |___/\\__\\___|_| |_| |_|  |
++----------------------------------|___/-------------------v1.0-+
+EOF
+}
+
+usage() {
+    echo
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+OPTIONS:
+  General Options:
+    -h, --help            Show this help message and exit
+    -j JOBS, --jobs JOBS  Build or lint in parallel using a specific number of jobs
+    -l, --list_targets    List all targets available
+    -r, --list_boards     List all boards available
+
+  Build Options:
+    -b TARGET, --build TARGET
+                          Build a specific target
+    -f TARGET, --flash TARGET
+                          Build and flash a specific target
+    -c, --clean           Clean the working tree
+    -u, --configure       Force configure and do not build
+    -d, --debug           Enable debug
+    -v, --verbose         Print a verbose output
+EOF
+}
+
+ohai() {
+    printf "\n${TTY_BLUE}==>${TTY_RESET}${TTY_BOLD} %s${TTY_RESET}\n" "$@"
+}
+
+init_dirs() {
+    msb_base=$(cd -- $(dirname "$0") > /dev/null 2>&1 && pwd -P)
+    source_dir="$PWD"
+    build_dir="$source_dir/$BUILD_DEFAULT_DIRNAME"
+    toolchain_file="$msb_base/miosix/cmake/toolchain.cmake"
+}
+
+find_deps() {
+    ohai "Find dependencies"
+    
+    command -v cmake               > /dev/null 2>&1 && found_cmake=true
+    command -v arm-miosix-eabi-g++ > /dev/null 2>&1 && found_miosixgpp=true
+    command -v ccache              > /dev/null 2>&1 && found_ccache=true
+    command -v ninja               > /dev/null 2>&1 && found_ninja=true
+    command -v st-flash            > /dev/null 2>&1 && found_stflash=true
+    
+    printf "Found CMake: ";               [ "$found_cmake" = true ]     && echo "yes" || echo "no"
+    printf "Found arm-miosix-eabi-g++: "; [ "$found_miosixgpp" = true ] && echo "yes" || echo "no"
+    printf "Found Ccache: ";              [ "$found_ccache" = true ]    && echo "yes" || echo "no"
+    printf "Found Ninja: ";               [ "$found_ninja" = true ]     && echo "yes" || echo "no"
+    printf "Found st-flash: ";            [ "$found_stflash" = true ]   && echo "yes" || echo "no"
+    
+    [ "$found_cmake" = true ]     || { echo "Error: CMake must be installed"; return 1; }
+    [ "$found_miosixgpp" = true ] || { echo "Error: arm-miosix-eabi-g++ must be installed"; return 1; }
+
+    # TODO: Maybe prompt the user to download and intall miosix?
+}
+
+configure() {
+    declare build_dir="$1"
+    
+    ohai "Configure"
+    
+    [ -f "$toolchain_file" ] || { echo "Error: CMake Toolchain File for Miosix was not found"; return 1; }
+    
+    # Always use colors when possible
+    defs+=(-DCMAKE_C_FLAGS=-fdiagnostics-color=always -DCMAKE_CXX_FLAGS=-fdiagnostics-color=always)
+    
+    # Toolchain files
+    defs+=(-DCMAKE_TOOLCHAIN_FILE="$toolchain_file")
+
+    # Use ccache when available
+    [ "$found_ccache" = true ]   && defs+=(-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
+
+    # Debug or release build types
+    [ "$config_debug" = true ]   && defs+=(-DCMAKE_BUILD_TYPE=Debug) || defs+=(-DCMAKE_BUILD_TYPE=Release)
+
+    # Verbose output
+    [ "$config_verbose" = true ] && defs+=(-DCMAKE_VERBOSE_MAKEFILE=ON)
+    
+    # CMake generator
+    declare gen
+    [ "$found_ninja" = true ] && gen=-GNinja || gen=-G"Unix Makefiles"
+    
+    # Configure build
+    cmake -B"$build_dir" "${defs[@]}" "$gen" "$source_dir" || return
+
+    # Save configuration to avoid reconfiguring each time
+    { [ "$config_debug" = true ]   && touch "$build_dir/$DEBUG_FILENAME";   } || rm -f "$build_dir/$DEBUG_FILENAME"
+    { [ "$config_verbose" = true ] && touch "$build_dir/$VERBOSE_FILENAME"; } || rm -f "$build_dir/$VERBOSE_FILENAME"
+}
+
+check_configured() {
+    declare build_dir="$1"
+    
+    declare to_reconfigure=false
+    if [ ! -d "$build_dir" ]; then
+        to_reconfigure=true
+    elif [ ! -f "$build_dir/$CMAKE_FILENAME" ]; then
+        rm -rf "$build_dir"
+        to_reconfigure=true
+    else
+        [ -f "$build_dir/$DEBUG_FILENAME" ]   && found_debug=true   || found_debug=false
+        [ -f "$build_dir/$VERBOSE_FILENAME" ] && found_verbose=true || found_verbose=false
+        if [ "$config_debug" != "$found_debug" ] \
+        || [ "$config_verbose" != "$found_verbose" ]; then
+            to_reconfigure=true
+        fi
+    fi
+    
+    if [ "$to_reconfigure" = true ]; then
+        configure "$build_dir"
+    fi
+}
+
+build() {
+    declare build_dir="$1"
+    declare target="$2"
+    
+    check_configured "$build_dir" || return
+    
+    ohai "Build"
+    
+    get_build_opts
+    
+    cmake --build "$build_dir" "${opts[@]}" --target "$target"
+}
+
+build_all() {
+    build "$build_dir" all
+}
+
+clean() {
+    ohai "Cleaning build files"
+    
+    if [ -f "$build_dir/$CMAKE_FILENAME" ]; then
+        get_build_opts
+        
+        cmake --build "$build_dir" "${opts[@]}" --target clean
+    fi
+    
+    echo "Removing build folder..."
+    rm -rf "$build_dir"
+}
+
+flash() {
+    declare target="$1"
+    build "$build_dir" "$target" || return
+
+    # This variable will be evaluated in the command
+    declare binary=$build_dir/$target.bin
+    declare hex=$build_dir/$target.hex
+
+    # Check if the target has a custom build command
+    declare custom_command_file=$build_dir/flash-$target.txt
+    if [[ -f "$custom_command_file" ]]; then
+        ohai "Flash via custom command"
+        eval $(cat $custom_command_file)
+    elif [ "$found_stflash" = true ]; then
+        ohai "Flash via st-flash"
+        st-flash --reset write "$build_dir/$target.bin" 0x8000000
+    else
+        echo "Error: No flashing software found!"
+        return 1
+    fi
+}
+
+list_targets() {
+    check_configured "$build_dir" || return
+    
+    ohai "List targets"
+    
+    echo "[1/1] All MBS targets available:"
+    cmake --build "$build_dir" --target help \
+    | grep -o '^[^/]*\.bin' | cut -f 1 -d '.'
+}
+
+list_boards() {
+    check_configured "$build_dir" || return
+    
+    ohai "List boards"
+    
+    cmake --build "$build_dir" --target help-boards
+}
+
+set_debug() {
+    config_debug=true
+}
+
+set_verbose() {
+    config_verbose=true
+}
+
+set_jobs() {
+    jobs="$1"
+}
+
+get_build_opts() {
+    declare -a opts
+    [ -n "$jobs" ] && opts=("-j $jobs")
+}
+
+CMAKE_FILENAME="CMakeCache.txt"
+DEBUG_FILENAME=".sbs_debug"
+VERBOSE_FILENAME=".sbs_verbose"
+BUILD_DEFAULT_DIRNAME="build"
+TTY_BLUE="\033[34m"
+TTY_BOLD="\033[1m"
+TTY_RESET="\033[0m"
+
+msb_base=
+source_dir=
+build_dir=
+toolchain_file=
+found_cmake=false
+found_miosixgpp=false
+found_ccache=false
+found_ninja=false
+found_stflash=false
+config_debug=false
+config_verbose=false
+jobs=
+
+print_banner
+init_dirs
+
+for arg in "$@"; do
+    shift
+    case "$arg" in
+        --help)         set -- "$@" "-h";;
+        --jobs)         set -- "$@" "-j";;
+        --list_targets) set -- "$@" "-l";;
+        --list_boards)  set -- "$@" "-r";;
+        --build)        set -- "$@" "-b";;
+        --flash)        set -- "$@" "-f";;
+        --clean)        set -- "$@" "-c";;
+        --configure)  set -- "$@" "-u";;
+        --debug)        set -- "$@" "-d";;
+        --verbose)      set -- "$@" "-v";;
+        *)              set -- "$@" "$arg"
+    esac
+done
+
+while getopts b:cdef:hj:lnrt:uv opt; do
+    case "$opt" in
+        h) usage; exit 0;;
+        j) set_jobs "$OPTARG";;
+        l) find_deps && list_targets; exit;;
+        r) find_deps && list_boards; exit;;
+        b) find_deps && build "$build_dir" "$OPTARG"; exit;;
+        f) find_deps && flash "$OPTARG"; exit;;
+        c) find_deps && clean; exit;;
+        u) find_deps && configure "$build_dir"; exit;;
+        d) set_debug;;
+        v) set_verbose;;
+        ?) usage; exit 2;;
+    esac
+done
+shift $((OPTIND - 1))
+
+find_deps && build_all

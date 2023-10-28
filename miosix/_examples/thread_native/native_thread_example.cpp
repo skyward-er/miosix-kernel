@@ -33,11 +33,11 @@ int main()
     thread=Thread::create(threadfunc,2048,1,(void*)strlen(str),Thread::JOINABLE);
     {
         Lock<Mutex> lock(mutex);
-        for(int i=0;i<strlen(str);i++)
+        for(int i=0;i<(int)strlen(str);i++)
         {
             c=str[i];
             cond.signal();
-            if(i<strlen(str)-1) ack.wait(lock);
+            if(i<(int)strlen(str)-1) ack.wait(lock);
         }
     }
     thread->join();
