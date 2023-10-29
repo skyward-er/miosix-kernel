@@ -142,9 +142,10 @@ set(TESTSUITE_BOARDS
     stm32f205rg_sony-newman
     stm32f207ig_stm3220g-eval
     stm32f207ze_als_camboard
-    stm32f207zg_ethboard_v2
-    # stm32l151_als_mainboard
-    # atsam4lc2aa_generic
+    stm32f207zg_EthBoardV2
+    stm32f207zg_nucleo
+    # stm32l151c8_als_mainboard
+    # atsam4lcc
     stm32f303vc_stm32f3discovery
     stm32f401re_nucleo
     stm32f401vc_stm32f4discovery
@@ -158,6 +159,7 @@ set(TESTSUITE_BOARDS
     stm32f429zi_skyward_homeone
     stm32f429zi_stm32f4discovery
     stm32f469ni_stm32f469i-disco
+    stm32l4r9zi_sensortile
     stm32l476rg_nucleo
     stm32f746zg_nucleo
     stm32f767zi_nucleo

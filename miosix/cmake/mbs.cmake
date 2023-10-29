@@ -25,19 +25,12 @@
 
 enable_language(C CXX ASM)
 
-# Load in CMAKE_MODULE_PATH the current directory
+# Include the Miosix libraries
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
-
-# Load in MBS_BASE the project path (points to the 'miosix' folder)
-get_filename_component(MBS_BASE ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
-
-# Include the kernel and board list
-file(GLOB KPATH ${MBS_BASE})
-add_subdirectory(${KPATH} EXCLUDE_FROM_ALL)
-include(${KPATH}/cmake/boards.cmake)
+include(miosix)
 
 # Create a custom target to list all the boards
-string(REPLACE ";" "\\n" BOARDS_STR "${BOARDS}")
+string(REPLACE ";" "\\n" BOARDS_STR "${MIOSIX_BOARDS}")
 add_custom_target(
     help-boards
     COMMAND printf ${BOARDS_STR}
