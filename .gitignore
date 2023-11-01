@@ -13,3 +13,6 @@ main.map
 # Exclude Mac OS X temporary
 ._*
 .DS_Store
+
+# CMake build directory
+build
