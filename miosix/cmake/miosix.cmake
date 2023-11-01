@@ -100,12 +100,12 @@ function(add_miosix_libraries BOARD BOARD_OPTIONS_FILE)
 
     # Create a library for the boot file
     set(BOOT_LIB boot-${BOARD})
-    add_library(${BOOT_LIB} OBJECT ${BOOT_FILE})
+    add_library(${BOOT_LIB} OBJECT EXCLUDE_FROM_ALL ${BOOT_FILE})
     configure_target_for_kernel(${BOOT_LIB})
 
     # Create a library for the rest of the kernel
     set(KERNEL_LIB kernel-${BOARD})
-    add_library(${KERNEL_LIB} STATIC ${MIOSIX_SRC} ${ARCH_SRC})
+    add_library(${KERNEL_LIB} STATIC EXCLUDE_FROM_ALL ${MIOSIX_SRC} ${ARCH_SRC})
     configure_target_for_kernel(${KERNEL_LIB})
     add_custom_command(
         TARGET ${KERNEL_LIB} PRE_LINK
@@ -128,8 +128,6 @@ endfunction()
 
 # Create Miosix libraries for each board
 foreach(BOARD ${MIOSIX_BOARDS})
-    # Get board architecture
     get_board_architecture(${BOARD})
-
     add_miosix_libraries(${BOARD} ${KPATH}/config/arch/${ARCH}/${BOARD}/board_options.cmake)
 endforeach()
