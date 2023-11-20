@@ -73,7 +73,7 @@ void __attribute__((noinline)) usart1irqImpl()
 /**
  * \internal interrupt routine for usart1
  */
-void __attribute__((naked)) USART1_IRQHandler()
+void __attribute__((naked, weak)) USART1_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart1irqImplv");
@@ -93,7 +93,7 @@ void __attribute__((noinline)) usart2irqImpl()
 /**
  * \internal interrupt routine for usart2
  */
-void __attribute__((naked)) USART2_IRQHandler()
+void __attribute__((naked, weak)) USART2_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart2irqImplv");
@@ -113,14 +113,14 @@ void __attribute__((noinline)) usart3irqImpl()
  * \internal interrupt routine for usart3
  */
 #if !defined(STM32F072xB)
-void __attribute__((naked)) USART3_IRQHandler()
+void __attribute__((naked, weak)) USART3_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart3irqImplv");
     restoreContext();
 }
 #else  //!defined(STM32F072xB)
-void __attribute__((naked)) USART3_4_IRQHandler()
+void __attribute__((naked, weak)) USART3_4_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z13usart3irqImplv");
