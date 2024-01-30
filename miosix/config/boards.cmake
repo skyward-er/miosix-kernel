@@ -79,6 +79,7 @@ set(BOARDS
     stm32f756zg_nucleo
     stm32f767zi_automated_antennas
     stm32f767zi_compute_unit
+    stm32f767zi_compute_unit_v2
     stm32f767zi_gemini_motor
     stm32f767zi_gemini_gs
     stm32f767zi_nucleo
