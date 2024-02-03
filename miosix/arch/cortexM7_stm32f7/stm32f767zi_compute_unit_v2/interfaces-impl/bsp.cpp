@@ -155,8 +155,9 @@ void configureSdram() {
     RCC->AHB3ENR |= RCC_AHB3ENR_FMCEN;
     RCC_SYNC();
 
-    // The SDRAM is a AS4C4M16SA-6TAN
-    // HCLK = 216MHz -> SDRAM clock = HCLK/2 = 133MHz
+    // The SDRAM is a AS4C16M16SA-6TIN
+    // 16Mx16bit = 256Mb = 32MB
+    // HCLK = 216MHz -> SDRAM clock = HCLK/2 = 108MHz
 
     // 1. Memory device features
     FMC_Bank5_6->SDCR[0] = 0                   // 0 delay after CAS latency
@@ -184,28 +185,30 @@ void configureSdram() {
     #endif
 
     // 3. Enable the bank 2 clock
-    FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_0   // Clock Configuration Enable
-                         | FMC_SDCMR_CTB2;  // Bank 2
+    FMC_Bank5_6->SDCMR = 0b001 << FMC_SDCMR_MODE_Pos  // Clock Configuration Enable
+                         | FMC_SDCMR_CTB2;            // Bank 2
     sdramCommandWait();
 
     // 4. Wait during command execution
     delayUs(100);
 
     // 5. Issue a "Precharge All" command
-    FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_1   // Precharge all
-                         | FMC_SDCMR_CTB2;  // Bank 2
+    FMC_Bank5_6->SDCMR = 0b010 << FMC_SDCMR_MODE_Pos  // Precharge all
+                         | FMC_SDCMR_CTB2;            // Bank 2
     sdramCommandWait();
 
     // 6. Issue Auto-Refresh commands
-    FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_1 | FMC_SDCMR_MODE_0  // Auto-Refresh
-                         | FMC_SDCMR_CTB2                     // Bank 2
-                         | (8 - 1) << FMC_SDCMR_NRFS_Pos;     // 2 Auto-Refresh
+    FMC_Bank5_6->SDCMR = 0b011 << FMC_SDCMR_MODE_Pos       // Auto-Refresh
+                         | FMC_SDCMR_CTB2                  // Bank 2
+                         | (8 - 1) << FMC_SDCMR_NRFS_Pos;  // 8 Auto-Refresh
     sdramCommandWait();
 
     // 7. Issue a Load Mode Register command
-    FMC_Bank5_6->SDCMR = FMC_SDCMR_MODE_2               /// Load mode register
-                         | FMC_SDCMR_CTB2               // Bank 2
-                         | 0x220 << FMC_SDCMR_MRD_Pos;  // CAS = 2, burst = 1
+    FMC_Bank5_6->SDCMR = 0b100 << FMC_SDCMR_MODE_Pos          // Load mode register
+                         | FMC_SDCMR_CTB2                     // Bank 2
+                         | 0 << FMC_SDCMR_MRD_Pos             // Burst length = 1
+                         | (0b010 << 4) << FMC_SDCMR_MRD_Pos  // CAS = 2 clocks,
+                         | (1 << 9) << FMC_SDCMR_MRD_Pos;     // Single bit write burst mode 
     sdramCommandWait();
 
 // 8. Program the refresh rate (4K / 32ms)
