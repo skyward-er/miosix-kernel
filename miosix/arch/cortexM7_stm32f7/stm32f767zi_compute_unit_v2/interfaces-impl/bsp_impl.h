@@ -72,9 +72,9 @@ inline void led3On() { userLed3::high(); }
 
 inline void led3Off() { userLed3::low(); }
 
-inline void led4On() { userLed3::high(); }
+inline void led4On() { userLed4::high(); }
 
-inline void led4Off() { userLed3::low(); }
+inline void led4Off() { userLed4::low(); }
 
 inline void ledOn()
 {
