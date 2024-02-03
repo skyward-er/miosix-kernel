@@ -211,8 +211,8 @@ void configureSdram() {
 // 8. Program the refresh rate (4K / 32ms)
 // 64ms / 8192 = 7.8125us
 #ifdef SYSCLK_FREQ_216MHz
-    // 7.8125us * 133MHz = 1039 - 20 = 1019
-    FMC_Bank5_6->SDRTR = 1019 << FMC_SDRTR_COUNT_Pos;
+    // 7.8125us * 108MHz = 844 - 20 = 824
+    FMC_Bank5_6->SDRTR = 824 << FMC_SDRTR_COUNT_Pos;
 #else
 #error No SDRAM refresh timings for this clock
 #endif

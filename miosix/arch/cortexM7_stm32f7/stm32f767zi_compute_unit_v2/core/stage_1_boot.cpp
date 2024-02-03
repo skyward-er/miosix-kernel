@@ -82,6 +82,12 @@ void Reset_Handler()
     miosix::configureSdram();
     #endif  //__ENABLE_XRAM
 
+
+    for(uint32_t address = 0xd0000000; address < 0xd1000000; address += 4) {
+        *((volatile uint32_t*) address) = (uint32_t) 0;
+    }
+
+
     /*
      * Load into the program stack pointer the heap end address and switch from
      * the msp to sps.
