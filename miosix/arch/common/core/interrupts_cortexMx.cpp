@@ -90,6 +90,7 @@ void __attribute__((naked)) HardFault_Handler()
     restoreContext();
 }
 
+#if 0
 void __attribute__((noinline)) HardFault_impl()
 {
     #ifdef WITH_PROCESSES
@@ -109,6 +110,45 @@ void __attribute__((noinline)) HardFault_impl()
     #endif //WITH_ERRLOG
     miosix_private::IRQsystemReboot();
 }
+#else
+
+typedef uint32_t u32;
+typedef uint32_t u16;
+typedef uint32_t u8;
+#define REG32(address) (*((volatile u32*) address))
+
+void __attribute__((noinline, optimize("-O0"))) HardFault_impl() {
+    // ARM's documentation links will probably rot sometime in the future
+    //
+    // ARMv7-M Architecture Reference Manual
+    //     https://developer.arm.com/documentation/ddi0403/ee/
+    // ARM Cortex-M7 Processor Technical Reference Manual
+    //     https://documentation-service.arm.com/static/5e906b038259fe2368e2a7bb
+    // PM0253 STM32F7 Series and STM32H7 Series Cortex-M7 processor programming manual
+    //    https://www.st.com/resource/en/programming_manual/pm0253-stm32f7-series-and-stm32h7-series-cortexm7-processor-programming-manual-stmicroelectronics.pdf
+    //
+    volatile u32 lCFSR  = REG32(0xE000ED28);
+    // volatile u16 lUFSR  = REG32(0xE000ED2A);
+    // volatile u8  lBFSR  = REG32(0xE000ED29);
+    // volatile u8  lMMFSR = REG32(0xE000ED28);
+
+    volatile u32 lBFAR  = REG32(0xE000ED38); // Valid only if BFARVALID bit in BFSR is set
+    volatile u32 lABFSR = REG32(0xE000EFA8); // Valid only if IMPRECISERR bit in BFSR
+    volatile u32 lMMFAR = REG32(0xE000ED34); // Valid only if MMFARVALID bit in MMFSR is set
+    volatile u32 lHFSR  = REG32(0xE000ED2C); // Quite useless IMO
+
+
+    while(1) {
+        // copied from https://interrupt.memfault.com/blog/cortex-m-hardfault-debug
+        // as most of the other stuff. amo quest'articolo
+        //
+        if (REG32(0xE000EDF0) & (1 << 0)) { // DHCSR Debug Halting Control and Status Register
+          __asm("bkpt 1");
+        }
+    }
+}
+#endif
+
 
 // Cortex M0/M0+ architecture does not have the interrupts handled by code
 // below this point
