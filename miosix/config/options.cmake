@@ -1207,8 +1207,8 @@ endif()
 ##
 ## Then, initialize C/C++ flags
 ##
-set(CFLAGS_BASE "-D_MIOSIX_BOARDNAME=\"${OPT_BOARD}\"" -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type -g)
-set(CXXFLAGS_BASE "-D_MIOSIX_BOARDNAME=\"${OPT_BOARD}\"" -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type -g)
+set(CFLAGS_BASE "-D_MIOSIX_BOARDNAME=\"${OPT_BOARD}\"" -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type -g3)
+set(CXXFLAGS_BASE "-D_MIOSIX_BOARDNAME=\"${OPT_BOARD}\"" -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type -g3)
 
 ##
 ## Now two big switch-like constructs nested. The first lists all possible
@@ -3228,8 +3228,8 @@ elseif(${ARCH} STREQUAL cortexM7_stm32f7)
         ## Select linker script and boot file
         ## Their path must be relative to the miosix directory.
         set(BOOT_FILE ${KPATH}/${BOARD_INC}/core/stage_1_boot.cpp)
-        # set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+384k_ram.ld)
-        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+16m_xram.ld)
+        set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+384k_ram.ld)
+        # set(LINKER_SCRIPT ${KPATH}/${BOARD_INC}/stm32_2m+16m_xram.ld)
 
         ## Enables the initialization of the external SDRAM memory
         set(XRAM -D__ENABLE_XRAM)
