@@ -168,7 +168,7 @@ void configureSdram() {
                          | FMC_SDCR2_NB        // 4 internal banks
                          | FMC_SDCR2_MWID_0    // 16 bit data bus
                          | FMC_SDCR2_NR_1      // 13 bit row address
-                         | FMC_SDCR2_NC_1;     // 9 bit column address
+                         | FMC_SDCR2_NC_0;     // 9 bit column address
 
     // 2. Memory device timings
     #ifdef SYSCLK_FREQ_216MHz
