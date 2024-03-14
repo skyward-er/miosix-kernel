@@ -1231,33 +1231,45 @@ static void initSDIOPeripheral()
         #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
         sdD0::mode(Mode::ALTERNATE);
         sdD0::alternateFunction(11);
+        sdD0::speed(Speed::_100MHz);
         #ifndef SD_ONE_BIT_DATABUS
         sdD1::mode(Mode::ALTERNATE);
         sdD1::alternateFunction(11);
+        sdD1::speed(Speed::_100MHz);
         sdD2::mode(Mode::ALTERNATE);
         sdD2::alternateFunction(10);
+        sdD2::speed(Speed::_100MHz);
         sdD3::mode(Mode::ALTERNATE);
         sdD3::alternateFunction(10);
+        sdD3::speed(Speed::_100MHz);
         #endif // SD_ONE_BIT_DATABUS
         sdCLK::mode(Mode::ALTERNATE);
         sdCLK::alternateFunction(11);
+        sdCLK::speed(Speed::_100MHz);
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(11);
+        sdCMD::speed(Speed::_100MHz);
         #else
         sdD0::mode(Mode::ALTERNATE);
         sdD0::alternateFunction(12);
+        sdD0::speed(Speed::_100MHz);
         #ifndef SD_ONE_BIT_DATABUS
         sdD1::mode(Mode::ALTERNATE);
         sdD1::alternateFunction(12);
+        sdD1::speed(Speed::_100MHz);
         sdD2::mode(Mode::ALTERNATE);
         sdD2::alternateFunction(12);
+        sdD2::speed(Speed::_100MHz);
         sdD3::mode(Mode::ALTERNATE);
         sdD3::alternateFunction(12);
+        sdD3::speed(Speed::_100MHz);
         #endif // SD_ONE_BIT_DATABUS
         sdCLK::mode(Mode::ALTERNATE);
         sdCLK::alternateFunction(12);
+        sdCLK::speed(Speed::_100MHz);
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(12);
+        sdCMD::speed(Speed::_100MHz);
         #endif
     }
 
