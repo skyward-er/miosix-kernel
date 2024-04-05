@@ -23,12 +23,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-enable_language(C CXX ASM)
-
-# Include the Miosix libraries
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
-include(miosix)
-
 # Create a custom target to list all the boards
 string(REPLACE ";" "\\n" BOARDS_STR "${MIOSIX_BOARDS}")
 add_custom_target(

@@ -23,52 +23,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-# Load in KPATH the project path
-cmake_path(GET CMAKE_CURRENT_LIST_DIR PARENT_PATH KPATH)
+cmake_minimum_required(VERSION 3.25)
 
-# Include board list
-include(${KPATH}/cmake/boards.cmake)
-
-# Miosix source files
-set(MIOSIX_SRC
-    ${KPATH}/kernel/kernel.cpp
-    ${KPATH}/kernel/sync.cpp
-    ${KPATH}/kernel/error.cpp
-    ${KPATH}/kernel/pthread.cpp
-    ${KPATH}/kernel/stage_2_boot.cpp
-    ${KPATH}/kernel/elf_program.cpp
-    ${KPATH}/kernel/process.cpp
-    ${KPATH}/kernel/process_pool.cpp
-    ${KPATH}/kernel/timeconversion.cpp
-    ${KPATH}/kernel/intrusive.cpp 
-    ${KPATH}/kernel/SystemMap.cpp
-    ${KPATH}/kernel/cpu_time_counter.cpp   
-    ${KPATH}/kernel/scheduler/priority/priority_scheduler.cpp
-    ${KPATH}/kernel/scheduler/control/control_scheduler.cpp
-    ${KPATH}/kernel/scheduler/edf/edf_scheduler.cpp
-    ${KPATH}/filesystem/file_access.cpp
-    ${KPATH}/filesystem/file.cpp
-    ${KPATH}/filesystem/stringpart.cpp
-    ${KPATH}/filesystem/console/console_device.cpp
-    ${KPATH}/filesystem/mountpointfs/mountpointfs.cpp
-    ${KPATH}/filesystem/devfs/devfs.cpp
-    ${KPATH}/filesystem/fat32/fat32.cpp
-    ${KPATH}/filesystem/fat32/ff.cpp
-    ${KPATH}/filesystem/fat32/diskio.cpp
-    ${KPATH}/filesystem/fat32/wtoupper.cpp
-    ${KPATH}/filesystem/fat32/ccsbcs.cpp
-    ${KPATH}/stdlib_integration/libc_integration.cpp
-    ${KPATH}/stdlib_integration/libstdcpp_integration.cpp
-    ${KPATH}/e20/e20.cpp
-    ${KPATH}/e20/unmember.cpp
-    ${KPATH}/util/util.cpp
-    ${KPATH}/util/unicode.cpp
-    ${KPATH}/util/version.cpp
-    ${KPATH}/util/crc16.cpp
-    ${KPATH}/util/lcd44780.cpp
+project(Miosix
+    VERSION 2.7
+    DESCRIPTION "Miosix is an OS kernel designed to run on 32bit microcontrollers."
+    HOMEPAGE_URL "https://miosix.org/"
+    LANGUAGES C CXX
 )
 
-# Function to configure a target to be built for the kernel
+# Load in KPATH the project path
+set(KPATH ${CMAKE_CURRENT_LIST_DIR})
+
+# Include board list and kernel sources
+include(${KPATH}/cmake/boards.cmake)
+include(${KPATH}/cmake/kernel_sources.cmake)
+
+# Configures a target to be built for the kernel
 function(configure_target_for_kernel TARGET)
     # Include kernel directories
     target_include_directories(${TARGET} PUBLIC
@@ -112,7 +83,7 @@ function(add_miosix_libraries BOARD_OPTIONS_FILE)
 
     # Create a library for the rest of the kernel
     set(KERNEL_LIB kernel-${BOARD_NAME})
-    add_library(${KERNEL_LIB} STATIC EXCLUDE_FROM_ALL ${MIOSIX_SRC} ${ARCH_SRC})
+    add_library(${KERNEL_LIB} STATIC EXCLUDE_FROM_ALL ${KERNEL_SRC} ${ARCH_SRC})
     configure_target_for_kernel(${KERNEL_LIB})
     add_custom_command(
         TARGET ${KERNEL_LIB} PRE_LINK
@@ -133,7 +104,7 @@ function(add_miosix_libraries BOARD_OPTIONS_FILE)
     add_library(Miosix::Kernel::${BOARD_NAME} ALIAS ${KERNEL_LIB})
 endfunction()
 
-# Create Miosix libraries for each board
+# Create libraries for each board
 foreach(BOARD_OPTIONS_FILE ${MIOSIX_BOARDS_OPTIONS_FILES})
     add_miosix_libraries(${BOARD_OPTIONS_FILE})
 endforeach()

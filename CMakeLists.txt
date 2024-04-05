@@ -24,9 +24,14 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
 cmake_minimum_required(VERSION 3.25)
-include(miosix/cmake/mbs.cmake)
 
-project(MiosixExamples)
+project(MiosixExamples C CXX ASM)
+
+# Add the Miosix kernel
+add_subdirectory(miosix)
+
+# Makes available the mbs_target function
+include(miosix/cmake/mbs.cmake)
 
 #-----------------------------------------------------------------------------#
 #                                  Examples                                   #
@@ -42,9 +47,9 @@ add_executable(blinking_led miosix/_examples/blinking_led/simple.cpp)
 mbs_target(blinking_led stm32f429zi_stm32f4discovery)
 
 add_executable(datalogger
-    ${KPATH}/_examples/datalogger/main.cpp
-    ${KPATH}/_examples/datalogger/Logger.cpp
-    ${KPATH}/_examples/datalogger/tscpp/buffer.cpp
+    miosix/_examples/datalogger/main.cpp
+    miosix/_examples/datalogger/Logger.cpp
+    miosix/_examples/datalogger/tscpp/buffer.cpp
 )
 target_include_directories(datalogger PUBLIC miosix/_examples/datalogger/)
 mbs_target(datalogger stm32f407vg_stm32f4discovery)
@@ -105,7 +110,7 @@ mbs_target(fs_misc_testcode stm32f407vg_stm32f4discovery)
 # add_custom_command(
 #   TARGET processes
 #   COMMAND make
-#   WORKING_DIRECTORY ${KPATH}/_tools/processes/process_template
+#   WORKING_DIRECTORY miosix/_tools/processes/process_template
 # )
 # mbs_target(processes stm32f407vg_stm32f4discovery)
 
