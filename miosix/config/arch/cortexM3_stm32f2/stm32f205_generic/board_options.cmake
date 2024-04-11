@@ -27,9 +27,9 @@ set(BOARD_NAME stm32f205_generic)
 set(ARCH_NAME cortexM3_stm32f2)
 
 # Base directories with header files for this board
-set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
-set(BOARD_PATH ${KPATH}/arch/${ARCH_NAME}/${BOARD_NAME})
-set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
+set(ARCH_PATH arch/${ARCH_NAME}/common)
+set(BOARD_PATH arch/${ARCH_NAME}/${BOARD_NAME})
+set(BOARD_CONFIG_PATH config/${BOARD_PATH})
 
 # Optimization flags:
 # -O0 do no optimization, the default if no optimization level is specified
@@ -67,7 +67,7 @@ set(FLAGS_BASE -mcpu=cortex-m3 -mthumb)
 
 # Flags for ASM and linker
 set(AFLAGS_BASE ${FLAGS_BASE})
-set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
 # Flags for C/C++
 set(CFLAGS_BASE
@@ -84,13 +84,13 @@ set(ARCH_SRC
     ${ARCH_PATH}/interfaces-impl/portability.cpp
     ${BOARD_PATH}/interfaces-impl/bsp.cpp
     ${BOARD_PATH}/interfaces-impl/delays.cpp
-    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F2xx/Source/Templates/system_stm32f2xx.c
-    ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
-    ${KPATH}/arch/common/core/mpu_cortexMx.cpp
-    ${KPATH}/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
-    ${KPATH}/arch/common/drivers/dcc.cpp
-    ${KPATH}/arch/common/drivers/serial_stm32.cpp
-    ${KPATH}/arch/common/drivers/servo_stm32.cpp
-    ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
-    ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
+    arch/common/CMSIS/Device/ST/STM32F2xx/Source/Templates/system_stm32f2xx.c
+    arch/common/core/interrupts_cortexMx.cpp
+    arch/common/core/mpu_cortexMx.cpp
+    arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
+    arch/common/drivers/dcc.cpp
+    arch/common/drivers/serial_stm32.cpp
+    arch/common/drivers/servo_stm32.cpp
+    arch/common/drivers/sd_stm32f2_f4_f7.cpp
+    arch/common/drivers/stm32f2_f4_i2c.cpp
 )

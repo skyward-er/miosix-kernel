@@ -27,9 +27,9 @@ set(BOARD_NAME efm32gg332f1024_wandstem)
 set(ARCH_NAME cortexM3_efm32gg)
 
 # Base directories with header files for this board
-set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
-set(BOARD_PATH ${KPATH}/arch/${ARCH_NAME}/${BOARD_NAME})
-set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
+set(ARCH_PATH arch/${ARCH_NAME}/common)
+set(BOARD_PATH arch/${ARCH_NAME}/${BOARD_NAME})
+set(BOARD_CONFIG_PATH config/${BOARD_PATH})
 
 # Optimization flags:
 # -O0 do no optimization, the default if no optimization level is specified
@@ -67,7 +67,7 @@ set(FLAGS_BASE -mcpu=cortex-m3 -mthumb)
 
 # Flags for ASM and linker
 set(AFLAGS_BASE ${FLAGS_BASE})
-set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
 # Flags for C/C++
 set(CFLAGS_BASE
@@ -97,7 +97,7 @@ set(ARCH_SRC
     ${BOARD_PATH}/interfaces-impl/transceiver.cpp
     ${BOARD_PATH}/interfaces-impl/vht.cpp
     ${BOARD_PATH}/interfaces-impl/virtual_clock.cpp
-    ${KPATH}/arch/common/CMSIS/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.c
-    ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
-    ${KPATH}/arch/common/drivers/serial_efm32.cpp
+    arch/common/CMSIS/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.c
+    arch/common/core/interrupts_cortexMx.cpp
+    arch/common/drivers/serial_efm32.cpp
 )

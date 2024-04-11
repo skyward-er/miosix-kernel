@@ -35,76 +35,55 @@ project(Miosix
 # Load in KPATH the project path
 set(KPATH ${CMAKE_CURRENT_LIST_DIR})
 
-# Include board list and kernel sources
-include(${KPATH}/cmake/boards.cmake)
-include(${KPATH}/cmake/kernel_sources.cmake)
-
-# Configures a target to be built for the kernel
-function(configure_target_for_kernel TARGET)
-    # Include kernel directories
-    target_include_directories(${TARGET} PUBLIC
-        ${KPATH}
-        ${KPATH}/arch/common
-        ${ARCH_PATH}
-        ${BOARD_PATH}
-        ${BOARD_CONFIG_PATH}
-    )
-
-    # Set include path where to find config/miosix_settings.h
-    if(DEFINED BOARD_MIOSIX_SETTINGS_PATH)
-        target_include_directories(${TARGET} PUBLIC ${BOARD_MIOSIX_SETTINGS_PATH})
-    else()
-        target_include_directories(${TARGET} PUBLIC ${KPATH}/default)
-    endif()
-
-    # Define COMPILING_MIOSIX (only for C and C++)
-    target_compile_definitions(${TARGET} PRIVATE $<$<OR:$<COMPILE_LANGUAGE:C>,$<COMPILE_LANGUAGE:CXX>>:COMPILING_MIOSIX>)
-
-    # Require cpp14 target_compile_features (this will add the -std=c++14 flag)
-    target_compile_features(${TARGET} PUBLIC cxx_std_14)
-
-    # Configure compiler flags
-    target_compile_options(${TARGET} PUBLIC
-        $<$<COMPILE_LANGUAGE:ASM>:${AFLAGS_BASE}>
-        $<$<COMPILE_LANGUAGE:C>:${DFLAGS} ${CFLAGS_BASE}>
-        $<$<COMPILE_LANGUAGE:CXX>:${DFLAGS} ${CXXFLAGS_BASE}>
-    )
-endfunction()
-
-# Creates the Miosix::Boot::${BOARD_NAME} and Miosix::Kernel::${BOARD_NAME} libraries
-function(add_miosix_libraries BOARD_OPTIONS_FILE)
-    # Get board options
-    include(${BOARD_OPTIONS_FILE})
-
-    # Create a library for the boot file
-    set(BOOT_LIB boot-${BOARD_NAME})
-    add_library(${BOOT_LIB} OBJECT EXCLUDE_FROM_ALL ${BOOT_FILE})
-    configure_target_for_kernel(${BOOT_LIB})
-
-    # Create a library for the rest of the kernel
-    set(KERNEL_LIB kernel-${BOARD_NAME})
-    add_library(${KERNEL_LIB} STATIC EXCLUDE_FROM_ALL ${KERNEL_SRC} ${ARCH_SRC})
-    configure_target_for_kernel(${KERNEL_LIB})
-    add_custom_command(
-        TARGET ${KERNEL_LIB} PRE_LINK
-        COMMAND perl ${KPATH}/_tools/kernel_global_objects.pl $<TARGET_OBJECTS:${KERNEL_LIB}>
-        VERBATIM
-        COMMAND_EXPAND_LISTS
-    )
-
-    # Configure linker file and options
-    set_property(TARGET ${KERNEL_LIB} PROPERTY INTERFACE_LINK_DEPENDS ${LINKER_SCRIPT})
-    target_link_options(${KERNEL_LIB} INTERFACE ${LFLAGS_BASE})
-
-    # Configure flash command
-    set_property(TARGET ${KERNEL_LIB} PROPERTY PROGRAM_CMDLINE ${PROGRAM_CMDLINE})
-
-    # Create nice aliases for the libraries
-    add_library(Miosix::Boot::${BOARD_NAME} ALIAS ${BOOT_LIB})
-    add_library(Miosix::Kernel::${BOARD_NAME} ALIAS ${KERNEL_LIB})
-endfunction()
-
 # Create libraries for each board
+include(${KPATH}/cmake/boards.cmake)
+include(${KPATH}/cmake/add_miosix_libraries.cmake)
 foreach(BOARD_OPTIONS_FILE ${MIOSIX_BOARDS_OPTIONS_FILES})
     add_miosix_libraries(${BOARD_OPTIONS_FILE})
 endforeach()
+
+# Install libraries and target properties
+foreach(BOARD_NAME ${MIOSIX_BOARDS_NAMES})
+    list(APPEND MIOSIX_TARGETS board-${BOARD_NAME})
+    list(APPEND MIOSIX_TARGETS boot-${BOARD_NAME})
+    list(APPEND MIOSIX_TARGETS kernel-${BOARD_NAME})
+endforeach()
+install(TARGETS
+        ${MIOSIX_TARGETS}
+    EXPORT MiosixTargets
+    DESTINATION Miosix
+)
+install(EXPORT MiosixTargets
+    NAMESPACE Miosix::
+    FILE MiosixTargets.cmake
+    DESTINATION Miosix
+)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(cmake/Config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/MiosixConfig.cmake
+    INSTALL_DESTINATION Miosix
+)
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/MiosixConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY ExactVersion
+)
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/MiosixConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/MiosixConfigVersion.cmake
+    DESTINATION Miosix
+)
+
+# Install header and linker files
+install(DIRECTORY arch/
+    DESTINATION Miosix/arch
+    FILES_MATCHING REGEX "\.(h|(ld))$"
+)
+install(DIRECTORY config/
+    DESTINATION Miosix/config
+    FILES_MATCHING PATTERN "*.h"
+)
+install(DIRECTORY default/
+    DESTINATION Miosix/default
+    FILES_MATCHING PATTERN "*.h"
+)

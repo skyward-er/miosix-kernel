@@ -27,9 +27,9 @@ set(BOARD_NAME lpc2138_miosix_board)
 set(ARCH_NAME arm7_lpc2000)
 
 # Base directories with header files for this board
-set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
-set(BOARD_PATH ${KPATH}/arch/${ARCH_NAME}/${BOARD_NAME})
-set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
+set(ARCH_PATH arch/${ARCH_NAME}/common)
+set(BOARD_PATH arch/${ARCH_NAME}/${BOARD_NAME})
+set(BOARD_CONFIG_PATH config/${BOARD_PATH})
 
 # Optimization flags:
 # -O0 do no optimization, the default if no optimization level is specified
@@ -64,7 +64,7 @@ set(FLAGS_BASE -mcpu=arm7tdmi)
 
 # Flags for ASM and linker
 set(AFLAGS_BASE ${FLAGS_BASE} -mapcs-32 -mfloat-abi=soft)
-set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
 # Flags for C/C++
 set(CFLAGS_BASE
@@ -81,7 +81,7 @@ set(ARCH_SRC
     ${BOARD_PATH}/interfaces-impl/delays.cpp
     ${BOARD_PATH}/interfaces-impl/os_timer.cpp
     ${BOARD_PATH}/interfaces-impl/portability.cpp
-    ${KPATH}/arch/common/core/interrupts_arm7.cpp
-    ${KPATH}/arch/common/drivers/serial_lpc2000.cpp
-    ${KPATH}/arch/common/drivers/sd_lpc2000.cpp
+    arch/common/core/interrupts_arm7.cpp
+    arch/common/drivers/serial_lpc2000.cpp
+    arch/common/drivers/sd_lpc2000.cpp
 )

@@ -23,28 +23,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-# Create a custom target to list all the boards
-string(REPLACE ";" "\\n" BOARDS_STR "${MIOSIX_BOARDS}")
-add_custom_target(
-    help-boards
-    COMMAND printf ${BOARDS_STR}
-    COMMENT "All boards available:"
-    VERBATIM
-)
+# Creates a custom target to flash the board
+function(generate_flash_target TARGET)
+    get_target_property(PROGRAM_CMDLINE Miosix::board-${OPT_BOARD} PROGRAM_CMDLINE)
+    if(PROGRAM_CMDLINE STREQUAL "PROGRAM_CMDLINE-NOTFOUND")
+        set(PROGRAM_CMDLINE st-flash --reset write <binary> 0x8000000)
+    endif()
 
-# Function to link the Miosix libraries to the target
-function(mbs_target TARGET OPT_BOARD)
+    list(TRANSFORM PROGRAM_CMDLINE REPLACE <binary> ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.bin)
+    list(TRANSFORM PROGRAM_CMDLINE REPLACE <hex> ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.hex)
+
+    add_custom_target(flash-${TARGET} ${PROGRAM_CMDLINE}
+        DEPENDS ${TARGET}
+        VERBATIM
+    )
+endfunction()
+
+# Function to link the Miosix libraries to a target and register the build command
+function(target_link_miosix TARGET OPT_BOARD)
     if(NOT OPT_BOARD)
         message(FATAL_ERROR "No board selected")
     endif()
 
+    # Linker script and linking options are eredited from miosix libraries
+
     # Link libraries
     target_link_libraries(${TARGET} PRIVATE
-        $<TARGET_OBJECTS:Miosix::Boot::${OPT_BOARD}>
-        $<LINK_GROUP:RESCAN,Miosix::Kernel::${OPT_BOARD},stdc++,c,m,gcc,atomic>
+        $<TARGET_OBJECTS:Miosix::boot-${OPT_BOARD}>
+        $<LINK_GROUP:RESCAN,Miosix::kernel-${OPT_BOARD},stdc++,c,m,gcc,atomic>
     )
-
-    # Linker script and linking options are eredited from the kernel library
 
     # Add a post build command to create the hex file to flash on the board
     add_custom_command(
@@ -55,9 +62,6 @@ function(mbs_target TARGET OPT_BOARD)
         VERBATIM
     )
 
-    # Save custom flash command to file
-    get_target_property(PROGRAM_CMDLINE Miosix::Kernel::${OPT_BOARD} PROGRAM_CMDLINE)
-    if(NOT PROGRAM_CMDLINE STREQUAL "PROGRAM_CMDLINE-NOTFOUND")
-        file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/flash-${TARGET}.txt" ${PROGRAM_CMDLINE})
-    endif()
+    # Generate custom build command to flash the target
+    generate_flash_target(${TARGET})
 endfunction()

@@ -27,9 +27,9 @@ set(BOARD_NAME stm32f100cb_tempsensor)
 set(ARCH_NAME cortexM3_stm32f1)
 
 # Base directories with header files for this board
-set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
-set(BOARD_PATH ${KPATH}/arch/${ARCH_NAME}/${BOARD_NAME})
-set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
+set(ARCH_PATH arch/${ARCH_NAME}/common)
+set(BOARD_PATH arch/${ARCH_NAME}/${BOARD_NAME})
+set(BOARD_CONFIG_PATH config/${BOARD_PATH})
 
 # Optimization flags:
 # -O0 do no optimization, the default if no optimization level is specified
@@ -68,7 +68,7 @@ set(FLAGS_BASE -mcpu=cortex-m3 -mthumb)
 
 # Flags for ASM and linker
 set(AFLAGS_BASE ${FLAGS_BASE})
-set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
 # Flags for C/C++
 set(CFLAGS_BASE
@@ -85,9 +85,9 @@ set(ARCH_SRC
     ${ARCH_PATH}/interfaces-impl/gpio_impl.cpp
     ${ARCH_PATH}/interfaces-impl/portability.cpp
     ${BOARD_PATH}/interfaces-impl/bsp.cpp
-    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F10x/Source/Templates/system_stm32f10x.c
-    ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
-    ${KPATH}/arch/common/core/stm32f1_l1_os_timer.cpp
-    ${KPATH}/arch/common/drivers/dcc.cpp
-    ${KPATH}/arch/common/drivers/serial_stm32.cpp
+    arch/common/CMSIS/Device/ST/STM32F10x/Source/Templates/system_stm32f10x.c
+    arch/common/core/interrupts_cortexMx.cpp
+    arch/common/core/stm32f1_l1_os_timer.cpp
+    arch/common/drivers/dcc.cpp
+    arch/common/drivers/serial_stm32.cpp
 )

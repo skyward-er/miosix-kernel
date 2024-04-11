@@ -69,3 +69,50 @@ set(MIOSIX_BOARDS_OPTIONS_FILES
     ${KPATH}/config/arch/cortexM7_stm32f7/stm32f769ni_discovery/board_options.cmake
     ${KPATH}/config/arch/cortexM7_stm32h7/stm32h753xi_eval/board_options.cmake
 )
+
+set(MIOSIX_BOARDS_NAMES
+    lpc2138_miosix_board
+    stm32f072rb_stm32f0discovery
+    efm32gg332f1024_wandstem
+    stm32f100c8_microboard
+    stm32f100c8_vaisala_rs41
+    stm32f100cb_tempsensor
+    stm32f100cx_generic
+    stm32f100rb_stm32vldiscovery
+    stm32f100rc_solertegiard
+    stm32f103c8_breakout
+    stm32f103cb_als_mainboard_rev2
+    stm32f103cx_generic
+    stm32f103ve_mp3v2
+    stm32f103ve_strive_mini
+    stm32f103ze_redbull_v2
+    stm32f103ze_stm3210e-eval
+    stm32f205_generic
+    stm32f205rc_skyward_stormtrooper
+    stm32f205rg_sony-newman
+    stm32f207ig_stm3220g-eval
+    stm32f207ze_als_camboard
+    stm32f207zg_EthBoardV2
+    stm32f207zg_nucleo
+    stm32l151c8_als_mainboard
+    atsam4lc2aa_generic
+    stm32f303vc_stm32f3discovery
+    stm32f401re_nucleo
+    stm32f401vc_stm32f4discovery
+    stm32f407vg_bitsboard
+    stm32f407vg_stm32f4discovery
+    stm32f407vg_thermal_test_chip
+    stm32f411ce_blackpill
+    stm32f411re_nucleo
+    stm32f429zi_oledboard2
+    stm32f429zi_skyward_anakin
+    stm32f429zi_skyward_homeone
+    stm32f429zi_stm32f4discovery
+    stm32f469ni_stm32f469i-disco
+    stm32l4r9zi_sensortile
+    stm32l476rg_nucleo
+    stm32f746zg_nucleo
+    stm32f767zi_nucleo
+    stm32f769ni_discovery
+    stm32h753xi_eval
+)

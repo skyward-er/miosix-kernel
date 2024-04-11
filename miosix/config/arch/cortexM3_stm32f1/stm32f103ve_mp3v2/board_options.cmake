@@ -27,9 +27,9 @@ set(BOARD_NAME stm32f103ve_mp3v2)
 set(ARCH_NAME cortexM3_stm32f1)
 
 # Base directories with header files for this board
-set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
-set(BOARD_PATH ${KPATH}/arch/${ARCH_NAME}/${BOARD_NAME})
-set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
+set(ARCH_PATH arch/${ARCH_NAME}/common)
+set(BOARD_PATH arch/${ARCH_NAME}/${BOARD_NAME})
+set(BOARD_CONFIG_PATH config/${BOARD_PATH})
 
 # Optimization flags:
 # -O0 do no optimization, the default if no optimization level is specified
@@ -66,7 +66,7 @@ set(CLOCK_FREQ -DSYSCLK_FREQ_72MHz=72000000)
 # used with the Miosix Build System. Use $binary or $hex as placeolders, they
 # will be replaced by the build systems with the binary or hex file repectively.
 # If a command is not specified, the build system will use st-flash if found
-if(${LINKER_SCRIPT} STREQUAL ${KPATH}/${BOARD_INC}/stm32_512k+64k_ram.ld)
+if(${LINKER_SCRIPT} STREQUAL ${BOARD_INC}/stm32_512k+64k_ram.ld)
     set(PROGRAM_CMDLINE "mp3v2_bootloader --ram $binary")
 else()
     set(PROGRAM_CMDLINE "mp3v2_bootloader --code $binary")
@@ -77,7 +77,7 @@ set(FLAGS_BASE -mcpu=cortex-m3 -mthumb)
 
 # Flags for ASM and linker
 set(AFLAGS_BASE ${FLAGS_BASE})
-set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
 # Flags for C/C++
 set(CFLAGS_BASE
@@ -94,10 +94,10 @@ set(ARCH_SRC
     ${ARCH_PATH}/interfaces-impl/gpio_impl.cpp
     ${ARCH_PATH}/interfaces-impl/portability.cpp
     ${BOARD_PATH}/interfaces-impl/bsp.cpp
-    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F10x/Source/Templates/system_stm32f10x.c
-    ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
-    ${KPATH}/arch/common/core/stm32f1_l1_os_timer.cpp
-    ${KPATH}/arch/common/drivers/dcc.cpp
-    ${KPATH}/arch/common/drivers/serial_stm32.cpp
-    ${KPATH}/arch/common/drivers/sd_stm32f1.cpp
+    arch/common/CMSIS/Device/ST/STM32F10x/Source/Templates/system_stm32f10x.c
+    arch/common/core/interrupts_cortexMx.cpp
+    arch/common/core/stm32f1_l1_os_timer.cpp
+    arch/common/drivers/dcc.cpp
+    arch/common/drivers/serial_stm32.cpp
+    arch/common/drivers/sd_stm32f1.cpp
 )

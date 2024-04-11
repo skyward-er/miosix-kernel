@@ -27,9 +27,9 @@ set(BOARD_NAME stm32f207ig_stm3220g-eval)
 set(ARCH_NAME cortexM3_stm32f2)
 
 # Base directories with header files for this board
-set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
-set(BOARD_PATH ${KPATH}/arch/${ARCH_NAME}/${BOARD_NAME})
-set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
+set(ARCH_PATH arch/${ARCH_NAME}/common)
+set(BOARD_PATH arch/${ARCH_NAME}/${BOARD_NAME})
+set(BOARD_CONFIG_PATH config/${BOARD_PATH})
 
 # Optimization flags:
 # -O0 do no optimization, the default if no optimization level is specified
@@ -91,7 +91,7 @@ set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_120MHz=120000000)
 # will be replaced by the build systems with the binary or hex file repectively.
 # If a command is not specified, the build system will use st-flash if found
 if(${LINKER_SCRIPT} STREQUAL ${BOARD_PATH}/stm32_1m+128k_all_in_xram.ld)
-    set(PROGRAM_CMDLINE "${KPATH}/_tools/bootloaders/stm32/pc_loader/pc_loader /dev/ttyUSB0 $binary")
+    set(PROGRAM_CMDLINE "_tools/bootloaders/stm32/pc_loader/pc_loader /dev/ttyUSB0 $binary")
 else()
     set(PROGRAM_CMDLINE "qstlink2 -cqewV $binary")
 endif()
@@ -101,7 +101,7 @@ set(FLAGS_BASE -mcpu=cortex-m3 -mthumb)
 
 # Flags for ASM and linker
 set(AFLAGS_BASE ${FLAGS_BASE})
-set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
+set(LFLAGS_BASE ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map ${OPT_EXCEPT} ${OPT_OPTIMIZATION} -nostdlib)
 
 # Flags for C/C++
 set(CFLAGS_BASE
@@ -118,11 +118,11 @@ set(ARCH_SRC
     ${ARCH_PATH}/interfaces-impl/portability.cpp
     ${BOARD_PATH}/interfaces-impl/bsp.cpp
     ${BOARD_PATH}/interfaces-impl/delays.cpp
-    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F2xx/Source/Templates/system_stm32f2xx.c
-    ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
-    ${KPATH}/arch/common/core/mpu_cortexMx.cpp
-    ${KPATH}/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
-    ${KPATH}/arch/common/drivers/dcc.cpp
-    ${KPATH}/arch/common/drivers/serial_stm32.cpp
-    ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
+    arch/common/CMSIS/Device/ST/STM32F2xx/Source/Templates/system_stm32f2xx.c
+    arch/common/core/interrupts_cortexMx.cpp
+    arch/common/core/mpu_cortexMx.cpp
+    arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
+    arch/common/drivers/dcc.cpp
+    arch/common/drivers/serial_stm32.cpp
+    arch/common/drivers/sd_stm32f2_f4_f7.cpp
 )
