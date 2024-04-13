@@ -24,6 +24,7 @@ void *threadfunc(void *argv)
         c=0;
     }
     pthread_mutex_unlock(&mutex);
+    return nullptr;
 }
 
 int main()

@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cstring>
-#include "miosix/kernel/scheduler/scheduler.h"
+#include "kernel/scheduler/scheduler.h"
 #include "util/software_i2c.h"
 #include "adpcm.h"
 #include "player.h"
