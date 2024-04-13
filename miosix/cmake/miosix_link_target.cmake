@@ -41,7 +41,7 @@ endfunction()
 
 # Function to link the Miosix libraries to a target and register the build command
 function(miosix_link_target TARGET OPT_BOARD)
-    if(NOT OPT_BOARD)
+    if(NOT DEFINED OPT_BOARD)
         message(FATAL_ERROR "No board selected")
     endif()
 

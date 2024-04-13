@@ -32,14 +32,40 @@
 # - Miosix::boot-${BOARD_NAME}
 # - Miosix::miosix-${BOARD_NAME}
 function(miosix_add_board_libraries BOARD_OPTIONS_FILE)
-    # Get board options and kernel sources
-    # The files are included here to scope all the variables
+    if(NOT KPATH)
+        message(FATAL_ERROR "KPATH must be defined to be the path to the miosix-kernel/miosix directory")
+    endif()
+
     include(${BOARD_OPTIONS_FILE})
     include(${KPATH}/cmake/kernel_sources.cmake)
+
+    miosix_check_board_options_variables()
 
     miosix_add_interface_library(${BOARD_NAME})
     miosix_add_boot_library(${BOARD_NAME})
     miosix_add_miosix_library(${BOARD_NAME})
+endfunction()
+
+# Aborts if the required variables to generate the libraries are missing
+function(miosix_check_board_options_variables)
+    set(VARIABLES
+        BOARD_NAME
+        ARCH_PATH
+        BOARD_PATH
+        BOARD_CONFIG_PATH
+        BOOT_FILE
+        LINKER_SCRIPT
+        AFLAGS
+        LFLAGS
+        CFLAGS
+        CXXFLAGS
+        ARCH_SRC
+    )
+    foreach(VARIABLE ${VARIABLES})
+        if(NOT DEFINED ${VARIABLE})
+            message(FATAL_ERROR "You must define ${VARIABLE} in your board_options.cmake file")
+        endif()
+    endforeach()
 endfunction()
 
 # Adds an interface library with all the include directories and compile options needed to compile kernel code 
