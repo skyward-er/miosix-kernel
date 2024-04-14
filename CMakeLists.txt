@@ -30,6 +30,8 @@ project(MiosixExamples C CXX ASM)
 add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:PARSING_FROM_IDE>)
 
 add_subdirectory(miosix EXCLUDE_FROM_ALL)
+add_subdirectory(miosix/_examples/datalogger/tscpp EXCLUDE_FROM_ALL)
+
 include(miosix/cmake/miosix_link_target.cmake)
 
 #-----------------------------------------------------------------------------#
@@ -51,9 +53,8 @@ miosix_link_target(blinking_led stm32f429zi_stm32f4discovery)
 add_executable(datalogger
     miosix/_examples/datalogger/main.cpp
     miosix/_examples/datalogger/Logger.cpp
-    miosix/_examples/datalogger/tscpp/buffer.cpp
 )
-target_include_directories(datalogger PUBLIC miosix/_examples/datalogger/)
+target_link_libraries(datalogger PUBLIC tscpp)
 miosix_link_target(datalogger stm32f407vg_stm32f4discovery)
 
 add_executable(hd44780 miosix/_examples/hd44780/hd44780.cpp)
