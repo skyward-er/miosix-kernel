@@ -65,9 +65,9 @@ OBJ := $(addsuffix .o, $(basename $(SRC)))
 ## Includes the miosix base directory for C/C++
 ## Always include CONFPATH first, as it overrides the config file location
 CXXFLAGS := $(CXXFLAGS_BASE) -I$(CONFPATH) -I$(CONFPATH)/config/$(BOARD_INC)  \
-            -I. -Iarch/common -I$(ARCH_INC) -I$(BOARD_INC) -DCOMPILING_MIOSIX
+            -I. -Iarch/common -Idefault -I$(ARCH_INC) -I$(BOARD_INC) -DCOMPILING_MIOSIX
 CFLAGS   := $(CFLAGS_BASE)   -I$(CONFPATH) -I$(CONFPATH)/config/$(BOARD_INC)  \
-            -I. -Iarch/common -I$(ARCH_INC) -I$(BOARD_INC) -DCOMPILING_MIOSIX
+            -I. -Iarch/common -Idefault -I$(ARCH_INC) -I$(BOARD_INC) -DCOMPILING_MIOSIX
 AFLAGS   := $(AFLAGS_BASE)
 DFLAGS    := -MMD -MP
 

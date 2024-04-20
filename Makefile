@@ -47,10 +47,10 @@ OBJ := $(addsuffix .o, $(basename $(SRC)))
 ## Includes the miosix base directory for C/C++
 ## Always include CONFPATH first, as it overrides the config file location
 CXXFLAGS := $(CXXFLAGS_BASE) -I$(CONFPATH) -I$(CONFPATH)/config/$(BOARD_INC)  \
-            -I. -I$(KPATH) -I$(KPATH)/arch/common -I$(KPATH)/$(ARCH_INC)      \
+            -I. -I$(KPATH) -I$(KPATH)/default -I$(KPATH)/arch/common -I$(KPATH)/$(ARCH_INC)      \
             -I$(KPATH)/$(BOARD_INC) $(INCLUDE_DIRS)
 CFLAGS   := $(CFLAGS_BASE)   -I$(CONFPATH) -I$(CONFPATH)/config/$(BOARD_INC)  \
-            -I. -I$(KPATH) -I$(KPATH)/arch/common -I$(KPATH)/$(ARCH_INC)      \
+            -I. -I$(KPATH) -I$(KPATH)/default -I$(KPATH)/arch/common -I$(KPATH)/$(ARCH_INC)      \
             -I$(KPATH)/$(BOARD_INC) $(INCLUDE_DIRS)
 AFLAGS   := $(AFLAGS_BASE)
 LFLAGS   := $(LFLAGS_BASE)
