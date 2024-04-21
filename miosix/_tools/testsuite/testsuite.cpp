@@ -91,7 +91,7 @@ using namespace miosix;
 // Note: can be reduced down to STACK_MIN if only testing with -O2
 const unsigned int STACK_SMALL=768;
 
-#ifndef _BOARD_WANDSTEM
+#ifndef _BOARD_EFM32GG332F1024_WANDSTEM
 const unsigned int MAX_TIME_IRQ_DISABLED=14000;//us
 #else
 //theoretical maximum for this board is 2^16/2/48e6=680us

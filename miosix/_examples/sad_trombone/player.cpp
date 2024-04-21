@@ -36,7 +36,7 @@
 using namespace std;
 using namespace miosix;
 
-#ifdef _BOARD_STM32VLDISCOVERY
+#ifdef _BOARD_STM32F100RB_DISCOVERY
 typedef Gpio<GPIOA_BASE,4> dacPin; //DAC1 out on the stm32f100rb is PA4
 #else //Assuming stm32f4discovery
 typedef Gpio<GPIOB_BASE,6>  scl;
@@ -66,7 +66,7 @@ static void IRQdmaRefill()
 		enobuf=true;
 		return;
 	}
-    #ifdef _BOARD_STM32VLDISCOVERY
+    #ifdef _BOARD_STM32F100RB_DISCOVERY
 	DMA1_Channel3->CCR=0;
 	DMA1_Channel3->CPAR=reinterpret_cast<unsigned int>(&DAC->DHR12L1);
 	DMA1_Channel3->CMAR=reinterpret_cast<unsigned int>(buffer);
@@ -102,7 +102,7 @@ static void dmaRefill()
 	IRQdmaRefill();
 }
 
-#ifdef _BOARD_STM32VLDISCOVERY
+#ifdef _BOARD_STM32F100RB_DISCOVERY
 /**
  * DMA end of transfer interrupt
  */
@@ -281,7 +281,7 @@ Player& Player::instance()
 	return singleton;
 }
 
-#ifdef _BOARD_STM32VLDISCOVERY
+#ifdef _BOARD_STM32F100RB_DISCOVERY
 void Player::play(Sound& sound)
 {
 	Lock<Mutex> l(mutex);

@@ -79,7 +79,7 @@
 //By TFT: Miosix uses the __ENABLE_XRAM macro to tell the startup code it wants XRAM
 //additionally, other boards may have the RAM connected in other ways, so
 //use this code only for the STM3220G_EVAL
-#if defined(__ENABLE_XRAM) && defined(_BOARD_STM3220G_EVAL)
+#if defined(__ENABLE_XRAM) && defined(_BOARD_STM32F207IG_EVALUATION)
 #define DATA_IN_ExtSRAM
 #endif //__ENABLE_XRAM
 
@@ -109,11 +109,11 @@
 
 //By TFT -- begin
 // the smartwatch has a bootloader
-#ifdef _BOARD_SONY_NEWMAN
+#ifdef _BOARD_STM32F205RG_SONY_NEWMAN
 #define USER_VECT_TAB_ADDRESS
 #define VECT_TAB_BASE_ADDRESS  FLASH_BASE
 #define VECT_TAB_OFFSET        0x40000
-#endif //_BOARD_SONY_NEWMAN
+#endif //_BOARD_STM32F205RG_SONY_NEWMAN
 //By TFT -- end
 
 //By TFT -- begin
@@ -326,7 +326,7 @@ static void SetSysClock(void)
 
   if (HSEStatus == (uint32_t)0x01)
   {
-    #ifdef _BOARD_SONY_NEWMAN
+    #ifdef _BOARD_STM32F205RG_SONY_NEWMAN
     //By TFT: We don't know how the clock is configured by the bootloader,
     //so better switch to the HSE and disable the PLL.
     unsigned int temp=RCC->CFGR;
@@ -335,7 +335,7 @@ static void SetSysClock(void)
     RCC->CFGR=temp;
     while((RCC->CFGR & RCC_CFGR_SWS)!=RCC_CFGR_SWS_0) ;
     RCC->CR &= ~ RCC_CR_PLLON;
-    #endif //_BOARD_SONY_NEWMAN
+    #endif //_BOARD_STM32F205RG_SONY_NEWMAN
       
     /* HCLK = SYSCLK / 1*/
     RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
@@ -359,12 +359,12 @@ static void SetSysClock(void)
     }
    
     /* Configure Flash prefetch, Instruction cache, Data cache and wait state */
-#ifndef _BOARD_SONY_NEWMAN
+#ifndef _BOARD_STM32F205RG_SONY_NEWMAN
     FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS;
-#else //_BOARD_SONY_NEWMAN
+#else //_BOARD_STM32F205RG_SONY_NEWMAN
     //By TFT: Three wait states seem to make it unstable (crashing) when CPU load is high
     FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_7WS;
-#endif //_BOARD_SONY_NEWMAN
+#endif //_BOARD_STM32F205RG_SONY_NEWMAN
     
     /* Select the main PLL as system clock source */
     RCC->CFGR &= (uint32_t)((uint32_t)~(RCC_CFGR_SW));

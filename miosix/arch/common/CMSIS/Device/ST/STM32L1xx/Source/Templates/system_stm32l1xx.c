@@ -148,11 +148,11 @@
   * @{
   */
 //By TFT: we want to run the ALS_MAINBOARD at a lower clock to save power
-#ifdef _BOARD_ALS_MAINBOARD
+#ifdef _BOARD_STM32L151C8_ALS_MAINBOARD
 uint32_t SystemCoreClock    = 16000000;
-#else //_BOARD_ALS_MAINBOARD
+#else //_BOARD_STM32L151C8_ALS_MAINBOARD
 uint32_t SystemCoreClock    = 32000000;
-#endif //_BOARD_ALS_MAINBOARD
+#endif //_BOARD_STM32L151C8_ALS_MAINBOARD
 __I uint8_t PLLMulTable[9] = {3, 4, 6, 8, 12, 16, 24, 32, 48};
 __I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
@@ -187,7 +187,7 @@ static void SetSysClock(void);
 void SystemInit (void)
 {
     //By TFT: additional config for ALS_MAINBOARD
-    #ifdef _BOARD_ALS_MAINBOARD
+    #ifdef _BOARD_STM32L151C8_ALS_MAINBOARD
 
     FLASH->ACR |= FLASH_ACR_ACC64;
     FLASH->ACR |= FLASH_ACR_PRFTEN;
@@ -216,7 +216,7 @@ void SystemInit (void)
     RCC->CIR = 0x00000000;
     SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET; /* Vector Table Relocation in Internal FLASH. */
     return;
-    #endif //_BOARD_ALS_MAINBOARD
+    #endif //_BOARD_STM32L151C8_ALS_MAINBOARD
 
   /*!< Set MSION bit */
   RCC->CR |= (uint32_t)0x00000100;

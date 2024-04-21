@@ -1236,7 +1236,7 @@
             <preprocessorList>
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>_ARCH_ARM7_LPC2000</Elem>
-              <Elem>_BOARD_MIOSIX_BOARD</Elem>
+              <Elem>_BOARD_LPC2138_MIOSIX_BOARD</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -1244,7 +1244,7 @@
             <preprocessorList>
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>_ARCH_ARM7_LPC2000</Elem>
-              <Elem>_BOARD_MIOSIX_BOARD</Elem>
+              <Elem>_BOARD_LPC2138_MIOSIX_BOARD</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -1776,7 +1776,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_STM3210E_EVAL</Elem>
+              <Elem>_BOARD_STM32F103ZE_EVALUATION</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -1786,7 +1786,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_STM3210E_EVAL</Elem>
+              <Elem>_BOARD_STM32F103ZE_EVALUATION</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -2393,7 +2393,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_MP3V2</Elem>
+              <Elem>_BOARD_STM32F103VE_MP3V2</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -2403,7 +2403,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_MP3V2</Elem>
+              <Elem>_BOARD_STM32F103VE_MP3V2</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -3012,7 +3012,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_MD_VL</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_STM32VLDISCOVERY</Elem>
+              <Elem>_BOARD_STM32F100RB_DISCOVERY</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -3022,7 +3022,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_MD_VL</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_STM32VLDISCOVERY</Elem>
+              <Elem>_BOARD_STM32F100RB_DISCOVERY</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -3481,7 +3481,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_STRIVE_MINI</Elem>
+              <Elem>_BOARD_STM32F103VE_STRIVE_MINI</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -3491,7 +3491,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_STRIVE_MINI</Elem>
+              <Elem>_BOARD_STM32F103VE_STRIVE_MINI</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -4101,7 +4101,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_REDBULL_V2</Elem>
+              <Elem>_BOARD_STM32F103ZE_REDBULL_V2</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -4111,7 +4111,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_HD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_REDBULL_V2</Elem>
+              <Elem>_BOARD_STM32F103ZE_REDBULL_V2</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -4721,7 +4721,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>SYSCLK_FREQ_168MHz</Elem>
               <Elem>_ARCH_CORTEXM4_STM32F4</Elem>
-              <Elem>_BOARD_STM32F4DISCOVERY</Elem>
+              <Elem>_BOARD_STM32F407VG_DISCOVERY</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
             <undefinedList>
@@ -4735,7 +4735,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>SYSCLK_FREQ_168MHz</Elem>
               <Elem>_ARCH_CORTEXM4_STM32F4</Elem>
-              <Elem>_BOARD_STM32F4DISCOVERY</Elem>
+              <Elem>_BOARD_STM32F407VG_DISCOVERY</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
             <undefinedList>
@@ -5361,7 +5361,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_STM32F4DISCOVERY</Elem>
+              <Elem>_BOARD_STM32F407VG_DISCOVERY</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -5370,7 +5370,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_STM32F4DISCOVERY</Elem>
+              <Elem>_BOARD_STM32F407VG_DISCOVERY</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -5991,7 +5991,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_ETHBOARDV2</Elem>
+              <Elem>_BOARD_STM32F207ZG_ETHBOARD_V2</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -6000,7 +6000,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_ETHBOARDV2</Elem>
+              <Elem>_BOARD_STM32F207ZG_ETHBOARD_V2</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -6621,7 +6621,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_ALS_CAMBOARD</Elem>
+              <Elem>_BOARD_STM32F207ZE_ALS_CAMBOARD</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -6630,7 +6630,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_ALS_CAMBOARD</Elem>
+              <Elem>_BOARD_STM32F207ZE_ALS_CAMBOARD</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -7090,7 +7090,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32L1</Elem>
-              <Elem>_BOARD_ALS_MAINBOARD</Elem>
+              <Elem>_BOARD_STM32L151C8_ALS_MAINBOARD</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -7099,7 +7099,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32L1</Elem>
-              <Elem>_BOARD_ALS_MAINBOARD</Elem>
+              <Elem>_BOARD_STM32L151C8_ALS_MAINBOARD</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -7571,7 +7571,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>SYSCLK_FREQ_168MHz</Elem>
               <Elem>_ARCH_CORTEXM4_STM32F4</Elem>
-              <Elem>_BOARD_BITSBOARD</Elem>
+              <Elem>_BOARD_STM32F407VG_BITSBOARD</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
           </cTool>
@@ -7582,7 +7582,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>SYSCLK_FREQ_168MHz</Elem>
               <Elem>_ARCH_CORTEXM4_STM32F4</Elem>
-              <Elem>_BOARD_BITSBOARD</Elem>
+              <Elem>_BOARD_STM32F407VG_BITSBOARD</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
           </ccTool>
@@ -8205,7 +8205,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_SONY_NEWMAN</Elem>
+              <Elem>_BOARD_STM32F205RG_SONY_NEWMAN</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -8214,7 +8214,7 @@
               <Elem>COMPILING_MIOSIX</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F2</Elem>
-              <Elem>_BOARD_SONY_NEWMAN</Elem>
+              <Elem>_BOARD_STM32F205RG_SONY_NEWMAN</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -8684,7 +8684,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>SYSCLK_FREQ_168MHz</Elem>
               <Elem>_ARCH_CORTEXM4_STM32F4</Elem>
-              <Elem>_BOARD_STM32F429ZI_STM32F4DISCOVERY</Elem>
+              <Elem>_BOARD_STM32F429ZI_DISCOVERY</Elem>
               <Elem>__ENABLE_XRAM</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
@@ -8699,7 +8699,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>SYSCLK_FREQ_168MHz</Elem>
               <Elem>_ARCH_CORTEXM4_STM32F4</Elem>
-              <Elem>_BOARD_STM32F429ZI_STM32F4DISCOVERY</Elem>
+              <Elem>_BOARD_STM32F429ZI_DISCOVERY</Elem>
               <Elem>__ENABLE_XRAM</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
@@ -9360,7 +9360,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_MD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_ALS_MAINBOARD_REV2</Elem>
+              <Elem>_BOARD_STM32F103CB_ALS_MAINBOARD_REV2</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -9370,7 +9370,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_MD</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_ALS_MAINBOARD_REV2</Elem>
+              <Elem>_BOARD_STM32F103CB_ALS_MAINBOARD_REV2</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -9849,7 +9849,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_MD_VL</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_TEMPSENSOR</Elem>
+              <Elem>_BOARD_STM32F100CB_TEMPSENSOR</Elem>
             </preprocessorList>
           </cTool>
           <ccTool>
@@ -9859,7 +9859,7 @@
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>STM32F10X_MD_VL</Elem>
               <Elem>_ARCH_CORTEXM3_STM32F1</Elem>
-              <Elem>_BOARD_TEMPSENSOR</Elem>
+              <Elem>_BOARD_STM32F100CB_TEMPSENSOR</Elem>
             </preprocessorList>
           </ccTool>
         </makeTool>
@@ -11046,7 +11046,7 @@
               <Elem>EFM32GG332F1024</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_EFM32GG</Elem>
-              <Elem>_BOARD_WANDSTEM</Elem>
+              <Elem>_BOARD_EFM32GG332F1024_WANDSTEM</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
           </cTool>
@@ -11057,7 +11057,7 @@
               <Elem>EFM32GG332F1024</Elem>
               <Elem>PARSING_FROM_IDE</Elem>
               <Elem>_ARCH_CORTEXM3_EFM32GG</Elem>
-              <Elem>_BOARD_WANDSTEM</Elem>
+              <Elem>_BOARD_EFM32GG332F1024_WANDSTEM</Elem>
               <Elem>__VFP_FP__</Elem>
             </preprocessorList>
           </ccTool>

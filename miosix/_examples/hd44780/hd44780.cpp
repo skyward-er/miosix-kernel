@@ -4,7 +4,7 @@
 
 using namespace miosix;
 
-#ifndef _BOARD_STM32F4DISCOVERY
+#ifndef _BOARD_STM32F407VG_DISCOVERY
 #warning "You may need to choose different GPIOs that are free in your board"
 #endif
 
