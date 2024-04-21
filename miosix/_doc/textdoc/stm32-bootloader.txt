@@ -41,7 +41,7 @@ Loading code using the bootloader in external RAM
 1) Make sure Miosix is configured to run from the STM32'e external RAM:
 in miosix/config/Makefile.inc options:
 
-OPT_BOARD := stm32f103ze_stm3210e-eval
+OPT_BOARD := stm32f103ze_evaluation
 
 LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_all_in_xram.ld
 
@@ -76,7 +76,7 @@ interrupts @ 0x6800000, or Miosix will fail at the first interrupt.
 
 Then run openocd in a shell:
 
-sudo openocd -f miosix/arch/cortexM3_stm32f1/stm32f103ze_stm3210e-eval/stm32f10x_eval.cfg
+sudo openocd -f miosix/arch/cortexM3_stm32f1/stm32f103ze_evaluation/stm32f10x_evaluation.cfg
 
 and in another shell type:
 
@@ -103,7 +103,7 @@ In miosix/config/Makefile.inc
 
 select:
 
-OPT_BOARD := stm32f103ze_stm3210e-eval
+OPT_BOARD := stm32f103ze_evaluation
 
 LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_rom.ld
 

@@ -23,20 +23,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-set(BOARD_NAME stm32f205rg_sony-newman)
-set(ARCH_NAME cortexM3_stm32f2)
+set(BOARD_NAME stm32f429zi_discovery)
+set(ARCH_NAME cortexM4_stm32f4)
 
 # Base directories with header files for this board
 set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
 set(BOARD_PATH ${KPATH}/arch/${ARCH_NAME}/${BOARD_NAME})
 set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
 
-# Boot file and linker script
+# Boot file
 set(BOOT_FILE ${BOARD_PATH}/core/stage_1_boot.cpp)
-set(LINKER_SCRIPT ${BOARD_PATH}/stm32_1M+128k_rom.ld)
 
-# Clock frequency
-set(CLOCK_FREQ -DHSE_VALUE=26000000)
+# Linker script type, there are three options
+# 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
+#    the most common choice, available for all microcontrollers
+# 2) Code in FLASH, stack + heap in external RAM (file *8m_xram.ld)
+#    You must uncomment -D__ENABLE_XRAM below in this case.
+# 3) Code in FLASH, stack + heap in external RAM (file *6m_xram.ld)
+#    Same as above, but leaves the upper 2MB of RAM for the LCD.
+# set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+256k_rom.ld)
+# set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+8m_xram.ld)
+set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+6m_xram.ld)
+
+# Uncommenting __ENABLE_XRAM enables the initialization of the external
+# 16MB SDRAM memory. Do not uncomment this even if you don't use a linker
+# script that requires it, as it is used for the LCD framebuffer.
+set(XRAM -D__ENABLE_XRAM)
+
+# Select clock frequency.
+# Warning: due to a limitation in the PLL, it is not possible to generate
+# a precise 48MHz output when running the core at 180MHz. If 180MHz is
+# chosen the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
+# set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000)
+set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
+# set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
 
 # C++ Exception/rtti support disable flags.
 # To save code size if not using C++ exceptions (nor some STL code which
@@ -49,15 +69,10 @@ set(CLOCK_FREQ -DHSE_VALUE=26000000)
 # built. Use <binary> or <hex> as placeolders, they will be replaced by the
 # build systems with the binary or hex file path repectively.
 # If a command is not specified, the build system will fallback to st-flash
-set(PROGRAM_CMDLINE
-    perl -e "print \"\\xe7\\x91\\x11\\xc0\"" > magic.bin;
-    dfu-util -d 0fce:f0fa -a 0 -i 0 -s 0x08040000 -D <binary>;
-    dfu-util -d 0fce:f0fa -a 0 -i 0 -s 0x080ffffc -D <binary>;
-    rm magic.bin
-)
+set(PROGRAM_CMDLINE qstlink2 -cqewV <binary>)
 
 # Basic flags
-set(FLAGS_BASE -mcpu=cortex-m3 -mthumb)
+set(FLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
 # Flags for ASM and linker
 set(AFLAGS ${FLAGS_BASE})
@@ -66,24 +81,25 @@ set(LFLAGS ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} 
 # Flags for C/C++
 string(TOUPPER ${ARCH_NAME} ARCH_NAME_UPPER)
 set(CFLAGS
-    -D_BOARD_SONY_NEWMAN -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
+    -D_BOARD_STM32F429ZI_STM32F4DISCOVERY -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
     -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type
     -D_ARCH_${ARCH_NAME_UPPER}
-    ${CLOCK_FREQ} ${XRAM} ${FLAGS_BASE} -c
+    ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${FLAGS_BASE} -c
 )
 set(CXXFLAGS ${CFLAGS} -std=c++14 ${OPT_EXCEPT})
 
 # Select architecture specific files
 set(ARCH_SRC
+    ${ARCH_PATH}/interfaces-impl/delays.cpp
     ${ARCH_PATH}/interfaces-impl/gpio_impl.cpp
     ${ARCH_PATH}/interfaces-impl/portability.cpp
     ${BOARD_PATH}/interfaces-impl/bsp.cpp
-    ${BOARD_PATH}/interfaces-impl/delays.cpp
-    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F2xx/Source/Templates/system_stm32f2xx.c
+    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
     ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
     ${KPATH}/arch/common/core/mpu_cortexMx.cpp
     ${KPATH}/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
-    ${KPATH}/arch/common/drivers/dcc.cpp
+    ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
     ${KPATH}/arch/common/drivers/serial_stm32.cpp
+    ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
     ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
 )

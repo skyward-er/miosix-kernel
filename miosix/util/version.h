@@ -40,7 +40,7 @@ namespace miosix {
  * \return a string with the kernel version.
  * The format is "Miosix vX.XX (board, builddate, compiler)" where
  * vX.XX is the kernel version number, like "v2.0"
- * board is the board name, like "stm32f103ze_stm3210e-eval"
+ * board is the board name, like "stm32f103ze_evaluation"
  * builddate is the date the kernel was built, like "Oct 30 2011 00:58:10"
  * compiler is the compiler version, like "gcc 4.7.3"
  */

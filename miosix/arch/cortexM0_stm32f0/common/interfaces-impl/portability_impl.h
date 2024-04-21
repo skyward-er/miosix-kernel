@@ -71,7 +71,7 @@ const int stackPtrOffsetInCtxsave=0; ///< Allows to locate the stack pointer
  * barrier IRQfindNextThread() would occasionally read the previous value and
  * perform a context switch while the kernel was paused, leading to deadlock.
  * The failure was only observed within the exception_test() in the testsuite
- * running on the stm32f429zi_stm32f4discovery.
+ * running on the stm32f429zi_discovery.
  */
 
 #define saveContext()                                                        \

@@ -7,7 +7,7 @@
 # Macros
 TOP=`pwd`
 CND_PLATFORM=ARM_MIOSIX_EABI-Linux-x86
-CND_CONF=stm32f207ig_stm3220g-eval
+CND_CONF=stm32f207ig_evaluation
 CND_DISTDIR=dist
 CND_BUILDDIR=build
 NBTMPDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}/tmp-packaging

@@ -23,7 +23,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-set(BOARD_NAME stm32f207zg_EthBoardV2)
+set(BOARD_NAME stm32f207zg_ethboard_v2)
 set(ARCH_NAME cortexM3_stm32f2)
 
 # Base directories with header files for this board

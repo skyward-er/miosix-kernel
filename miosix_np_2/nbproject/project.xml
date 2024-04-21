@@ -23,7 +23,7 @@
                     <type>0</type>
                 </confElem>
                 <confElem>
-                    <name>stm32f103ze_stm3210e-eval</name>
+                    <name>stm32f103ze_evaluation</name>
                     <type>0</type>
                 </confElem>
                 <confElem>
@@ -31,7 +31,7 @@
                     <type>0</type>
                 </confElem>
                 <confElem>
-                    <name>stm32f100rb_stm32vldiscovery</name>
+                    <name>stm32f100rb_discovery</name>
                     <type>0</type>
                 </confElem>
                 <confElem>
@@ -43,11 +43,11 @@
                     <type>0</type>
                 </confElem>
                 <confElem>
-                    <name>stm32f407vg_stm32f4discovery</name>
+                    <name>stm32f407vg_discovery</name>
                     <type>0</type>
                 </confElem>
                 <confElem>
-                    <name>stm32f207ig_stm3220g-eval</name>
+                    <name>stm32f207ig_evaluation</name>
                     <type>0</type>
                 </confElem>
                 <confElem>
@@ -67,11 +67,11 @@
                     <type>0</type>
                 </confElem>
                 <confElem>
-                    <name>stm32f205rg_sony-newman</name>
+                    <name>stm32f205rg_sony_newman</name>
                     <type>0</type>
                 </confElem>
                 <confElem>
-                    <name>stm32f429zi_stm32f4discovery</name>
+                    <name>stm32f429zi_discovery</name>
                     <type>0</type>
                 </confElem>
                 <confElem>

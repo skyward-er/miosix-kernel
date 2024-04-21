@@ -23,8 +23,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-set(BOARD_NAME stm32h753xi_eval)
-set(ARCH_NAME cortexM7_stm32h7)
+set(BOARD_NAME stm32f205rg_sony_newman)
+set(ARCH_NAME cortexM3_stm32f2)
 
 # Base directories with header files for this board
 set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
@@ -33,17 +33,10 @@ set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
 
 # Boot file and linker script
 set(BOOT_FILE ${BOARD_PATH}/core/stage_1_boot.cpp)
+set(LINKER_SCRIPT ${BOARD_PATH}/stm32_1M+128k_rom.ld)
 
-# Linker script type, there are three options
-# 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
-#    the most common choice, available for all microcontrollers
-# 2) Code in FLASH, stack + heap in external RAM (file *m_xram.ld)
-#    You must uncomment -D__ENABLE_XRAM below in this case.
-set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+512k_rom.ld)
-# set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+32m_xram.ld)
-
-# Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_400MHz=400000000)
+# Clock frequency
+set(CLOCK_FREQ -DHSE_VALUE=26000000)
 
 # C++ Exception/rtti support disable flags.
 # To save code size if not using C++ exceptions (nor some STL code which
@@ -56,10 +49,15 @@ set(CLOCK_FREQ -DHSE_VALUE=25000000 -DSYSCLK_FREQ_400MHz=400000000)
 # built. Use <binary> or <hex> as placeolders, they will be replaced by the
 # build systems with the binary or hex file path repectively.
 # If a command is not specified, the build system will fallback to st-flash
-set(PROGRAM_CMDLINE echo "make program not supported.")
+set(PROGRAM_CMDLINE
+    perl -e "print \"\\xe7\\x91\\x11\\xc0\"" > magic.bin;
+    dfu-util -d 0fce:f0fa -a 0 -i 0 -s 0x08040000 -D <binary>;
+    dfu-util -d 0fce:f0fa -a 0 -i 0 -s 0x080ffffc -D <binary>;
+    rm magic.bin
+)
 
 # Basic flags
-set(FLAGS_BASE -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16)
+set(FLAGS_BASE -mcpu=cortex-m3 -mthumb)
 
 # Flags for ASM and linker
 set(AFLAGS ${FLAGS_BASE})
@@ -68,26 +66,24 @@ set(LFLAGS ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} 
 # Flags for C/C++
 string(TOUPPER ${ARCH_NAME} ARCH_NAME_UPPER)
 set(CFLAGS
-    -D_BOARD_STM32H753XI_EVAL -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
+    -D_BOARD_SONY_NEWMAN -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
     -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type
     -D_ARCH_${ARCH_NAME_UPPER}
-    ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${FLAGS_BASE} -c
+    ${CLOCK_FREQ} ${XRAM} ${FLAGS_BASE} -c
 )
 set(CXXFLAGS ${CFLAGS} -std=c++14 ${OPT_EXCEPT})
 
 # Select architecture specific files
 set(ARCH_SRC
-    ${ARCH_PATH}/drivers/pll.cpp
-    ${ARCH_PATH}/interfaces-impl/delays.cpp
     ${ARCH_PATH}/interfaces-impl/gpio_impl.cpp
     ${ARCH_PATH}/interfaces-impl/portability.cpp
     ${BOARD_PATH}/interfaces-impl/bsp.cpp
-    ${KPATH}/arch/common/CMSIS/Device/ST/STM32H7xx/Source/Templates/system_stm32h7xx.c
-    ${KPATH}/arch/common/core/cache_cortexMx.cpp
+    ${BOARD_PATH}/interfaces-impl/delays.cpp
+    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F2xx/Source/Templates/system_stm32f2xx.c
     ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
     ${KPATH}/arch/common/core/mpu_cortexMx.cpp
     ${KPATH}/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
     ${KPATH}/arch/common/drivers/dcc.cpp
     ${KPATH}/arch/common/drivers/serial_stm32.cpp
-    ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
+    ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
 )

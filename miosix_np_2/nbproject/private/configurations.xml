@@ -266,7 +266,7 @@
                 <in>bsp_impl.h</in>
               </df>
             </df>
-            <df name="stm32f100rb_stm32vldiscovery">
+            <df name="stm32f100rb_discovery">
               <df name="core">
                 <in>stage_1_boot.cpp</in>
               </df>
@@ -315,7 +315,7 @@
                 <in>hwmapping.h</in>
               </df>
             </df>
-            <df name="stm32f103ze_stm3210e-eval">
+            <df name="stm32f103ze_evaluation">
               <df name="core">
                 <in>stage_1_boot.cpp</in>
               </df>
@@ -337,7 +337,7 @@
               </df>
               <in>arch_settings.h</in>
             </df>
-            <df name="stm32f205rg_sony-newman">
+            <df name="stm32f205rg_sony_newman">
               <df name="core">
                 <in>stage_1_boot.cpp</in>
               </df>
@@ -349,7 +349,7 @@
                 <in>hwmapping.h</in>
               </df>
             </df>
-            <df name="stm32f207ig_stm3220g-eval">
+            <df name="stm32f207ig_evaluation">
               <df name="core">
                 <in>stage_1_boot.cpp</in>
               </df>
@@ -372,7 +372,7 @@
                 <in>hwmapping.h</in>
               </df>
             </df>
-            <df name="stm32f207zg_EthBoardV2">
+            <df name="stm32f207zg_ethboard_v2">
               <df name="core">
                 <in>stage_1_boot.cpp</in>
               </df>
@@ -431,7 +431,7 @@
                 <in>bsp_impl.h</in>
               </df>
             </df>
-            <df name="stm32f407vg_stm32f4discovery">
+            <df name="stm32f407vg_discovery">
               <df name="core">
                 <in>stage_1_boot.cpp</in>
               </df>
@@ -473,7 +473,7 @@
                 <in>hwmapping.h</in>
               </df>
             </df>
-            <df name="stm32f429zi_stm32f4discovery">
+            <df name="stm32f429zi_discovery">
               <df name="core">
                 <in>stage_1_boot.cpp</in>
               </df>
@@ -501,7 +501,7 @@
               <df name="stm32f100cb_tempsensor">
                 <in>board_settings.h</in>
               </df>
-              <df name="stm32f100rb_stm32vldiscovery">
+              <df name="stm32f100rb_discovery">
                 <in>board_settings.h</in>
               </df>
               <df name="stm32f103cb_als_mainboard_rev2">
@@ -516,21 +516,21 @@
               <df name="stm32f103ze_redbull_v2">
                 <in>board_settings.h</in>
               </df>
-              <df name="stm32f103ze_stm3210e-eval">
+              <df name="stm32f103ze_evaluation">
                 <in>board_settings.h</in>
               </df>
             </df>
             <df name="cortexM3_stm32f2">
-              <df name="stm32f205rg_sony-newman">
+              <df name="stm32f205rg_sony_newman">
                 <in>board_settings.h</in>
               </df>
-              <df name="stm32f207ig_stm3220g-eval">
+              <df name="stm32f207ig_evaluation">
                 <in>board_settings.h</in>
               </df>
               <df name="stm32f207ze_als_camboard">
                 <in>board_settings.h</in>
               </df>
-              <df name="stm32f207zg_EthBoardV2">
+              <df name="stm32f207zg_ethboard_v2">
                 <in>board_settings.h</in>
               </df>
             </df>
@@ -543,7 +543,7 @@
               <df name="stm32f407vg_bitsboard">
                 <in>board_settings.h</in>
               </df>
-              <df name="stm32f407vg_stm32f4discovery">
+              <df name="stm32f407vg_discovery">
                 <in>board_settings.h</in>
               </df>
               <df name="stm32f411re_nucleo">
@@ -555,7 +555,7 @@
               <df name="stm32f429zi_skyward_anakin">
                 <in>board_settings.h</in>
               </df>
-              <df name="stm32f429zi_stm32f4discovery">
+              <df name="stm32f429zi_discovery">
                 <in>board_settings.h</in>
               </df>
             </df>
@@ -775,7 +775,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="stm32f103ze_stm3210e-eval" type="0">
+    <conf name="stm32f103ze_evaluation" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <platform>2</platform>
@@ -865,7 +865,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="stm32f100rb_stm32vldiscovery" type="0">
+    <conf name="stm32f100rb_discovery" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <platform>2</platform>
@@ -1000,7 +1000,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="stm32f407vg_stm32f4discovery" type="0">
+    <conf name="stm32f407vg_discovery" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <platform>2</platform>
@@ -1045,7 +1045,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="stm32f207ig_stm3220g-eval" type="0">
+    <conf name="stm32f207ig_evaluation" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <platform>2</platform>
@@ -1270,7 +1270,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="stm32f205rg_sony-newman" type="0">
+    <conf name="stm32f205rg_sony_newman" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <platform>2</platform>
@@ -1315,7 +1315,7 @@
         </environment>
       </runprofile>
     </conf>
-    <conf name="stm32f429zi_stm32f4discovery" type="0">
+    <conf name="stm32f429zi_discovery" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
         <platform>2</platform>

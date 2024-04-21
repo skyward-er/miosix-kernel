@@ -9,7 +9,7 @@ This example supports the following two boards:
 ===================
 
 This board has a builting I2S audio DAC, just configure the kernel for
-this board (OPT_BOARD := stm32f407vg_stm32f4discovery in Makefile.inc),
+this board (OPT_BOARD := stm32f407vg_discovery in Makefile.inc),
 make; make program and plug headphone jack to the board's connector.
 
 2) stm32vldiscovery

@@ -23,8 +23,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-set(BOARD_NAME stm32f401vc_stm32f4discovery)
-set(ARCH_NAME cortexM4_stm32f4)
+set(BOARD_NAME stm32f072rb_discovery)
+set(ARCH_NAME cortexM0_stm32f0)
 
 # Base directories with header files for this board
 set(ARCH_PATH ${KPATH}/arch/${ARCH_NAME}/common)
@@ -33,10 +33,10 @@ set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
 
 # Boot file and linker script
 set(BOOT_FILE ${BOARD_PATH}/core/stage_1_boot.cpp)
-set(LINKER_SCRIPT ${BOARD_PATH}/stm32_256k+64k_rom.ld)
+set(LINKER_SCRIPT ${BOARD_PATH}/stm32_128k+16k_rom.ld)
 
-# Select clock frequency (HSE_VALUE is the xtal on board, fixed)
-set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000)
+# Clock frequency
+set(CLOCK_FREQ -DSYSCLK_FREQ_32MHz=32000000 -DRUN_WITH_HSI)
 
 # C++ Exception/rtti support disable flags.
 # To save code size if not using C++ exceptions (nor some STL code which
@@ -49,10 +49,10 @@ set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000)
 # built. Use <binary> or <hex> as placeolders, they will be replaced by the
 # build systems with the binary or hex file path repectively.
 # If a command is not specified, the build system will fallback to st-flash
-set(PROGRAM_CMDLINE qstlink2 -cqewV <binary>)
+# set(PROGRAM_CMDLINE st-flash --reset write <binary> 0x8000000)
 
 # Basic flags
-set(FLAGS_BASE -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
+set(FLAGS_BASE -mcpu=cortex-m0 -mthumb)
 
 # Flags for ASM and linker
 set(AFLAGS ${FLAGS_BASE})
@@ -61,10 +61,10 @@ set(LFLAGS ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} 
 # Flags for C/C++
 string(TOUPPER ${ARCH_NAME} ARCH_NAME_UPPER)
 set(CFLAGS
-    -D_BOARD_STM32F401VC_STM32F4DISCOVERY -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
+    -D_BOARD_STM32F072RB_DISCO -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
     -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type
-    -D_ARCH_${ARCH_NAME_UPPER}
-    ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${FLAGS_BASE} -c
+    -D_ARCH_${ARCH_NAME_UPPER} -DSTM32F072xB
+    ${CLOCK_FREQ} ${FLAGS_BASE} -c
 )
 set(CXXFLAGS ${CFLAGS} -std=c++14 ${OPT_EXCEPT})
 
@@ -74,11 +74,8 @@ set(ARCH_SRC
     ${ARCH_PATH}/interfaces-impl/gpio_impl.cpp
     ${ARCH_PATH}/interfaces-impl/portability.cpp
     ${BOARD_PATH}/interfaces-impl/bsp.cpp
-    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
+    ${KPATH}/arch/common/CMSIS/Device/ST/STM32F0xx/Source/Templates/system_stm32f0xx.c
     ${KPATH}/arch/common/core/interrupts_cortexMx.cpp
-    ${KPATH}/arch/common/core/mpu_cortexMx.cpp
-    ${KPATH}/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
-    ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
+    ${KPATH}/arch/common/core/stm32f0_f3_os_timer.cpp
     ${KPATH}/arch/common/drivers/serial_stm32.cpp
-    ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
 )

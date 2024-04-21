@@ -23,7 +23,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
-set(BOARD_NAME stm32f469ni_stm32f469i-disco)
+set(BOARD_NAME stm32f407vg_discovery)
 set(ARCH_NAME cortexM4_stm32f4)
 
 # Base directories with header files for this board
@@ -34,29 +34,23 @@ set(BOARD_CONFIG_PATH ${KPATH}/config/arch/${ARCH_NAME}/${BOARD_NAME})
 # Boot file
 set(BOOT_FILE ${BOARD_PATH}/core/stage_1_boot.cpp)
 
-# Linker script type, there are three options
+# Linker script options:
 # 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
-#    the most common choice, available for all microcontrollers
-# 2) Code in FLASH, stack + heap in external RAM (file *16m_xram.ld)
-#    You must uncomment -D__ENABLE_XRAM below in this case.
-# 3) Code in FLASH, stack + heap in external RAM (file *12m_xram.ld)
-#    Same as above, but leaves the upper 4MB of RAM for the LCD.
-# set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+384k_rom.ld)
-# set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+16m_xram.ld)
-set(LINKER_SCRIPT ${BOARD_PATH}/stm32_2m+12m_xram.ld)
+# 2) Code + stack + heap in internal RAM (file *_ram.ld)
+# 3) Same as 1) but space has been reserved for a process pool, allowing
+#    to configure the kernel with "#define WITH_PROCESSES"
+set(LINKER_SCRIPT ${BOARD_PATH}/stm32_1m+192k_rom.ld)
+# set(LINKER_SCRIPT ${BOARD_PATH}/stm32_1m+192k_ram.ld)
+# set(LINKER_SCRIPT ${BOARD_PATH}/stm32_1m+192k_rom_processes.ld)
 
-# Uncommenting __ENABLE_XRAM enables the initialization of the external
-# 8MB SDRAM memory. Do not uncomment this even if you don't use a linker
-# script that requires it, as it is used for the LCD framebuffer.
-set(XRAM -D__ENABLE_XRAM)
+# set(SRAM_BOOT -DVECT_TAB_SRAM)
+# This causes the interrupt vector table to be relocated in SRAM, must be
+# uncommented when using the ram linker script
 
-# Select clock frequency.
-# Warning: due to a limitation in the PLL, it is not possible to generate
-# a precise 48MHz output when running the core at 180MHz. If 180MHz is
-# chosen the SDIO and RNG will run ~6% slower (45MHz insteand of 48)
-# set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_180MHz=180000000)
+# Select clock frequency (HSE_VALUE is the xtal on board, fixed)
 set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000)
 # set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000)
+# set(CLOCK_FREQ -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000)
 
 # C++ Exception/rtti support disable flags.
 # To save code size if not using C++ exceptions (nor some STL code which
@@ -81,7 +75,7 @@ set(LFLAGS ${FLAGS_BASE} -Wl,--gc-sections,-Map,main.map -Wl,-T${LINKER_SCRIPT} 
 # Flags for C/C++
 string(TOUPPER ${ARCH_NAME} ARCH_NAME_UPPER)
 set(CFLAGS
-    -D_BOARD_STM32F469NI_STM32F469I_DISCO -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
+    -D_BOARD_STM32F4DISCOVERY -D_MIOSIX_BOARDNAME="${BOARD_NAME}"
     -D_DEFAULT_SOURCE=1 -ffunction-sections -Wall -Werror=return-type
     -D_ARCH_${ARCH_NAME_UPPER}
     ${CLOCK_FREQ} ${XRAM} ${SRAM_BOOT} ${FLAGS_BASE} -c
@@ -100,6 +94,7 @@ set(ARCH_SRC
     ${KPATH}/arch/common/core/stm32f2_f4_l4_f7_h7_os_timer.cpp
     ${KPATH}/arch/common/drivers/sd_stm32f2_f4_f7.cpp
     ${KPATH}/arch/common/drivers/serial_stm32.cpp
+    ${KPATH}/arch/common/drivers/servo_stm32.cpp
     ${KPATH}/arch/common/drivers/stm32_hardware_rng.cpp
     ${KPATH}/arch/common/drivers/stm32f2_f4_i2c.cpp
 )
