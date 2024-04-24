@@ -25,10 +25,15 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-project(MiosixExamples C CXX ASM)
+project(Datalogger C CXX ASM)
 
-add_subdirectory(miosix EXCLUDE_FROM_ALL)
-include(miosix/cmake/miosix_link_target.cmake)
+# Bypass the ckeck in miosix_settings.h
+add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:PARSING_FROM_IDE>)
 
-add_executable(main main.cpp)
-miosix_link_target(main stm32f407vg_discovery)
+add_subdirectory(../.. miosix EXCLUDE_FROM_ALL)
+add_subdirectory(tscpp EXCLUDE_FROM_ALL)
+include(../../cmake/miosix_link_target.cmake)
+
+add_executable(datalogger main.cpp Logger.cpp)
+target_link_libraries(datalogger PUBLIC tscpp)
+miosix_link_target(datalogger stm32f407vg_discovery)

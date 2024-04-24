@@ -25,10 +25,16 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-project(MiosixExamples C CXX ASM)
+project(Servo C CXX ASM)
 
-add_subdirectory(miosix EXCLUDE_FROM_ALL)
-include(miosix/cmake/miosix_link_target.cmake)
+# Bypass the ckeck in miosix_settings.h
+add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:PARSING_FROM_IDE>)
 
-add_executable(main main.cpp)
-miosix_link_target(main stm32f407vg_discovery)
+add_subdirectory(../.. miosix EXCLUDE_FROM_ALL)
+include(../../cmake/miosix_link_target.cmake)
+
+add_executable(servo-prompt prompt.cpp)
+miosix_link_target(servo-prompt stm32f407vg_discovery)
+
+add_executable(servo-sweep sweep.cpp)
+miosix_link_target(servo-sweep stm32f407vg_discovery)

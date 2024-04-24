@@ -25,10 +25,22 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-project(MiosixExamples C CXX ASM)
+project(Processes C CXX ASM)
 
-add_subdirectory(miosix EXCLUDE_FROM_ALL)
-include(miosix/cmake/miosix_link_target.cmake)
+# Bypass the ckeck in miosix_settings.h
+add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:PARSING_FROM_IDE>)
 
-add_executable(main main.cpp)
-miosix_link_target(main stm32f407vg_discovery)
+add_subdirectory(../.. miosix EXCLUDE_FROM_ALL)
+include(../../cmake/miosix_link_target.cmake)
+
+# To build this entrypoint remember to:
+# - Define WITH_PROCESSES in miosix_settings.h
+# - Select a linker script like stm32_1m+192k_rom_processes.ld
+add_executable(processes miosix/_tools/processes/main_processes.cpp)
+target_include_directories(processes PUBLIC miosix/_tools/processes)
+add_custom_command(
+  TARGET processes
+  PRE_BUILD COMMAND make
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/miosix/_tools/processes/process_template
+)
+miosix_link_target(processes stm32f407vg_discovery)
