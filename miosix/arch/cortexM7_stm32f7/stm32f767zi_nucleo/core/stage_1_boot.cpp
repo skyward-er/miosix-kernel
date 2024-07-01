@@ -73,6 +73,9 @@ void program_startup()
 void Reset_Handler() __attribute__((__interrupt__, noreturn));
 void Reset_Handler()
 {
+	#pragma GCC diagnostic push
+  	#pragma GCC diagnostic ignored "-Wextra"
+
     /*
      * Load into the program stack pointer the heap end address and switch from
      * the msp to sps.
@@ -89,6 +92,8 @@ void Reset_Handler()
         "isb                          \n\t":::"r0");
 
     program_startup();
+
+  	#pragma GCC diagnostic pop
 }
 
 /**

@@ -53,6 +53,9 @@ void __attribute__((noreturn)) program_startup()
  */
 void __attribute__((__interrupt__, noreturn)) Reset_Handler()
 {
+	#pragma GCC diagnostic push
+  	#pragma GCC diagnostic ignored "-Wextra"
+
     /*
      * Initialize process stack and switch to it.
      * This is required for booting Miosix, a small portion of the top of the
@@ -67,6 +70,8 @@ void __attribute__((__interrupt__, noreturn)) Reset_Handler()
                  "isb                          \n\t":::"r0");
 
     program_startup();
+
+  	#pragma GCC diagnostic pop
 }
 
 /**

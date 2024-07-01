@@ -52,6 +52,9 @@ void program_startup()
 void Reset_Handler() __attribute__((__interrupt__, noreturn));
 void Reset_Handler()
 {
+	#pragma GCC diagnostic push
+  	#pragma GCC diagnostic ignored "-Wextra"
+
     /*
      * SystemInit() is called *before* initializing .data and zeroing .bss
      * Despite all startup files provided by ATMEL do the opposite, there are
@@ -82,6 +85,8 @@ void Reset_Handler()
                  "isb                          \n\t":::"r0");
 
     program_startup();
+
+  	#pragma GCC diagnostic pop
 }
 
 /**
