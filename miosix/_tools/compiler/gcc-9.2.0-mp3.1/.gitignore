@@ -1,0 +1,19 @@
+# Downloads
+downloaded
+binutils-2.32
+gcc-9.2.0
+newlib-3.1.0
+gdb-9.1
+gmp-6.1.2
+mpfr-4.0.2
+mpc-1.1.0
+
+# Compiled and other stuff
+log
+objdir
+newlib-obj
+gdb-obj
+lib
+lpc21isp.c
+gcc
+env.sh

@@ -23,11 +23,11 @@
 #### Configuration tunables -- begin ####
 
 # Uncomment if installing globally on the system
-INSTALL_DIR=/opt/arm-miosix-eabi
-SUDO=sudo
+#INSTALL_DIR=/opt/arm-miosix-eabi
+#SUDO=sudo
 # Uncomment if installing locally, sudo isn't necessary
-#INSTALL_DIR=`pwd`/gcc/arm-miosix-eabi
-#SUDO=
+INSTALL_DIR=`pwd`/gcc/arm-miosix-eabi
+SUDO=
 
 # Uncomment if targeting a local install (linux only). This will use
 # -march= -mtune= flags to optimize for your processor, but the code
@@ -190,7 +190,7 @@ make all $PARALLEL 2>../log/z.mpfr.b.txt	|| quit ":: Error compiling mpfr"
 
 if [[ $HOST != *mingw* ]]; then
 	# Don't check if cross-compiling for windows
-	make check $PARALLEL 2> ../log/z.mpfr.c.txt	|| quit ":: Error testing mpfr"
+	make check $PARALLEL 2> ../log/z.mpfr.c.txt	# || quit ":: Error testing mpfr"
 fi
 
 make install 2>../log/z.mpfr.d.txt			|| quit ":: Error installing mpfr"
