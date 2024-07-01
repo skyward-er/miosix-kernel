@@ -34,7 +34,7 @@ void delayMs(unsigned int mseconds)
     #ifndef __CODE_IN_XRAM
 
     #ifdef SYSCLK_FREQ_16MHz
-    register const unsigned int count=4000;
+    const unsigned int count=4000;
     #else
     #warning "Delays are uncalibrated for this clock frequency"    
     #endif

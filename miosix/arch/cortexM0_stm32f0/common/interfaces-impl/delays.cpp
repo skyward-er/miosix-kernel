@@ -32,7 +32,7 @@ namespace miosix {
 void delayMs(unsigned int mseconds)
 {
     #ifdef SYSCLK_FREQ_32MHz
-    register const unsigned int count=4000;
+    const unsigned int count=4000;
     #else
     #error "Delays are uncalibrated for this clock frequency"
     #endif
