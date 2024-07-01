@@ -71,6 +71,9 @@ extern "C" __attribute__((naked, noreturn)) void entryPoint()
  */
 void Reset_Handler()
 {
+	#pragma GCC diagnostic push
+  	#pragma GCC diagnostic ignored "-Wextra"
+
     /*
      * Check if we are core 0. If it's not the case, go back to the bootrom.
      * This should not be necessary, but the Pico SDK does this check to play it
@@ -105,6 +108,8 @@ void Reset_Handler()
         :::"r0");
 
     programStartup();
+
+  	#pragma GCC diagnostic pop
 }
 
 /**
