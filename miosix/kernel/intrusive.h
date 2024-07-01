@@ -377,6 +377,7 @@ intrusive_ref_ptr<T> intrusive_ref_ptr<T>::atomic_load() const
     // virtual base classes, but that's an acceptable limitation, especially
     // considering that you get a meaningful compiler error if accidentally
     // trying to use it in such a case.
+    #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Winvalid-offsetof"
     const int offsetBytes=offsetof(T,intrusive.referenceCount);
     #pragma GCC diagnostic pop
