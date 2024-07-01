@@ -40,7 +40,7 @@ void delayMs(unsigned int mseconds)
 {
     //The inner loop takes 4 cycles, so
     //count = EFM32_HFXO_FREQ*0.001/4 = EFM32_HFXO_FREQ/4000
-    register const unsigned int count=EFM32_HFXO_FREQ/4000;
+    const unsigned int count=EFM32_HFXO_FREQ/4000;
 
     for(unsigned int i=0;i<mseconds;i++)
     {

@@ -135,7 +135,7 @@ inline void doEnableInterrupts()
 
 inline bool checkAreInterruptsEnabled()
 {
-    register int i;
+    int i;
     asm volatile("mrs   %0, primask    \n\t":"=r"(i));
     if(i!=0) return false;
     return true;
