@@ -1033,7 +1033,8 @@ void STM32Serial::IRQhandleInterrupt()
         #endif //_ARCH_CORTEXM7_STM32F7/H7
         //If no error put data in buffer
         if((status & USART_SR_FE)==0)
-            if(rxQueue.tryPut(c)==false) /*fifo overflow*/;
+            if(rxQueue.tryPut(c)==false) /*fifo overflow*/
+                ;
         idle=false;
     }
     if(status & USART_SR_IDLE)
@@ -1288,7 +1289,8 @@ void STM32Serial::IRQreadDma()
     int elem=IRQdmaReadStop();
     markBufferAfterDmaRead(rxBuffer,rxQueueMin);
     for(int i=0;i<elem;i++)
-        if(rxQueue.tryPut(rxBuffer[i])==false) /*fifo overflow*/;
+        if(rxQueue.tryPut(rxBuffer[i])==false) /*fifo overflow*/
+            ;
     IRQdmaReadStart();
 }
 
