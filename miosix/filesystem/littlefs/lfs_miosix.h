@@ -164,7 +164,7 @@ private:
     struct lfs_config config;
 
     lfs_t lfs;
-    lfs_file_t file;
+    // lfs_file_t file;
 
     lfs_driver_context context;
 };
