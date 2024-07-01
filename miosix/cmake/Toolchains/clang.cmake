@@ -30,25 +30,27 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/..)
 # Tell CMake that we are building for an embedded ARM system
 set(CMAKE_SYSTEM_NAME Miosix)
 
+set(MIOSIX_PREFIX      llvm)
+
 # Names of the compiler and other tools
 set(CMAKE_ASM_COMPILER clang)
 set(CMAKE_C_COMPILER   clang)
 set(CMAKE_CXX_COMPILER clang++)
-set(CMAKE_AR           llvm-ar)
-set(CMAKE_OBJCOPY      llvm-objcopy)
-set(CMAKE_OBJDUMP      llvm-objdump)
-set(CMAKE_SIZE         llvm-size)
+set(CMAKE_AR           ${MIOSIX_PREFIX}-ar)
+set(CMAKE_OBJCOPY      ${MIOSIX_PREFIX}-objcopy)
+set(CMAKE_OBJDUMP      ${MIOSIX_PREFIX}-objdump)
+set(CMAKE_SIZE         ${MIOSIX_PREFIX}-size)
 
 # Optimization flags for each language and build configuration
 set(CMAKE_ASM_FLAGS_DEBUG "")
-set(CMAKE_C_FLAGS_DEBUG "-Og -g")
-set(CMAKE_CXX_FLAGS_DEBUG "-Og -g")
+set(CMAKE_C_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_ASM_FLAGS_RELEASE "")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_ASM_FLAGS_RELWITHDEBINFO "")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g -O2")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2")
 set(CMAKE_ASM_FLAGS_MINSIZEREL "")
 set(CMAKE_C_FLAGS_MINSIZEREL "-Os")
 set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os")
@@ -60,11 +62,8 @@ set(CMAKE_ASM_COMPILER_TARGET ${CLANG_TARGET_TRIPLE})
 set(CMAKE_C_COMPILER_TARGET   ${CLANG_TARGET_TRIPLE})
 set(CMAKE_CXX_COMPILER_TARGET ${CLANG_TARGET_TRIPLE})
 
-# Setting the include paths for system libraries
-include_directories(SYSTEM 
-    "/opt/arm-miosix-eabi/arm-miosix-eabi/include/c++/9.2.0/arm-miosix-eabi"
-    "/opt/arm-miosix-eabi/arm-miosix-eabi/include/c++/9.2.0"
-    "/opt/arm-miosix-eabi/arm-miosix-eabi/include"
+set(CMAKE_SYSROOT
+    /opt/arm-miosix-eabi/arm-miosix-eabi/lib
 )
 
 # We want to test for a static library and not an executable
@@ -76,13 +75,3 @@ add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:__GXX_TYPEINFO_EQUALITY_INLI
 add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:_MIOSIX>)
 add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:_MIOSIX_GCC_PATCH_MAJOR=3>)
 add_compile_definitions($<$<COMPILE_LANGUAGE:C,CXX>:_MIOSIX_GCC_PATCH_MINOR=1>)
-
-link_directories(SYSTEM
-    # /opt/arm-miosix-eabi/arm-miosix-eabi/lib/thumb/cm4/hardfp/fpv4sp
-    /opt/arm-miosix-eabi/lib/gcc/arm-miosix-eabi/9.2.0/thumb/cm4/hardfp/fpv4sp
-)
-set(CMAKE_SYSROOT
-    /opt/arm-miosix-eabi/arm-miosix-eabi
-#     # /opt/arm-miosix-eabi/lib/gcc/arm-miosix-eabi/9.2.0
-)
-# add_link_options("-fuse-ld=/usr/bin/arm-miosix-eabi-ld")

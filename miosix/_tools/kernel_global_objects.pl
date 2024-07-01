@@ -46,14 +46,16 @@ my @files_broken;
 
 # Step #1: check all kernel object files and categorize them based on the
 # relevant sections
-foreach my $filename (@ARGV)
+foreach my $idx (1 .. $#ARGV)
 {
+	my $filename=$ARGV[$idx];
+
 	# First, check that the argument is really an object file
 	die "$filename is not a file name."    unless -f $filename;
 	die "$filename is not an object file." unless    $filename=~/\.o$/;
 
 	# Then use readelf to dump all sections of the file
-	my $output=`arm-miosix-eabi-readelf -SW \"$filename\"`;
+	my $output=`$ARGV[0]-readelf -SW \"$filename\"`;
 	my @lines=split("\n",$output);
 
 	my $sections=0;
@@ -98,7 +100,7 @@ foreach my $filename (@ARGV)
 # started, not after
 foreach my $filename (@files_to_fix)
 {
-	my $exitcode=system("arm-miosix-eabi-objcopy \"$filename\" --rename-section .init_array=.miosix_init_array");
+	my $exitcode=system("$ARGV[0]-objcopy \"$filename\" --rename-section .init_array=.miosix_init_array");
 	die "Error calling objcopy" unless($exitcode==0);
 }
 

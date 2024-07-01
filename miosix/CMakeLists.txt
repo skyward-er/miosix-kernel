@@ -138,7 +138,7 @@ target_link_options(miosix PUBLIC ${LFLAGS_BASE})
 # Run the kernel_global_objects.pl script on all kernel objects
 add_custom_command(
     TARGET miosix PRE_LINK
-    COMMAND perl ${KPATH}/_tools/kernel_global_objects.pl $<TARGET_OBJECTS:miosix>
+    COMMAND perl ${KPATH}/_tools/kernel_global_objects.pl ${MIOSIX_PREFIX} $<TARGET_OBJECTS:miosix>
     VERBATIM
     COMMAND_EXPAND_LISTS
 )
@@ -150,4 +150,18 @@ if(MIOSIX_PRINT_BOARD_LIST)
     foreach(MIOSIX_OPT_BOARD ${BOARDS})
         message(STATUS "\t${MIOSIX_OPT_BOARD}")
     endforeach()
+endif()
+
+# Set multilib paths for Clang
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_include_directories(miosix PUBLIC 
+        /opt/arm-miosix-eabi/arm-miosix-eabi/include/c++/9.2.0/arm-miosix-eabi
+        /opt/arm-miosix-eabi/arm-miosix-eabi/include/c++/9.2.0
+        /opt/arm-miosix-eabi/arm-miosix-eabi/include
+    )
+
+    target_link_directories(miosix PUBLIC
+        /opt/arm-miosix-eabi/arm-miosix-eabi/lib/${MULTILIB_PATH}
+        /opt/arm-miosix-eabi/lib/gcc/arm-miosix-eabi/9.2.0/${MULTILIB_PATH}
+    )
 endif()

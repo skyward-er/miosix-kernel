@@ -34,6 +34,7 @@ string(TOUPPER ${ARCH_NAME} ARCH_NAME_UPPER)
 
 # Select appropriate compiler flags for both ASM/C/C++/linker
 set(CPU -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16)
+set(MULTILIB_PATH thumb/cm4/hardfp/fpv4sp)
 set(AFLAGS_BASE ${CPU})
 list(APPEND CFLAGS_BASE
     -D_ARCH_${ARCH_NAME_UPPER} ${MIOSIX_HSE_VALUE} ${MIOSIX_SYSCLK_FREQ} ${XRAM}
