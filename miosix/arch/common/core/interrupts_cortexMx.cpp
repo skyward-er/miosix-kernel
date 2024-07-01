@@ -66,7 +66,7 @@ static void printUnsignedInt(unsigned int x)
  */
 static unsigned int getProgramCounter()
 {
-    register unsigned int result;
+    unsigned int result;
     // Get program counter when the exception was thrown from stack frame
     asm volatile("mrs   %0,  psp    \n\t"
                  "add   %0, %0, #24 \n\t"

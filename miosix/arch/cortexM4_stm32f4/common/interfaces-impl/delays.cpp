@@ -32,13 +32,13 @@ namespace miosix {
 void delayMs(unsigned int mseconds)
 {
     #ifdef SYSCLK_FREQ_180MHz
-    register const unsigned int count=45000;
+    const unsigned int count=45000;
     #elif defined(SYSCLK_FREQ_168MHz)
-    register const unsigned int count=42000;
+    const unsigned int count=42000;
     #elif defined(SYSCLK_FREQ_100MHz)
-    register const unsigned int count=25000;
+    const unsigned int count=25000;
     #elif SYSCLK_FREQ_84MHz
-    register const unsigned int count=21000;
+    const unsigned int count=21000;
     #else
     #warning "Delays are uncalibrated for this clock frequency"
     #endif

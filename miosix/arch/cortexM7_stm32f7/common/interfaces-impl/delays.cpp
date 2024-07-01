@@ -33,7 +33,7 @@ void delayMs(unsigned int mseconds)
 {
     //Note: flash wait state don't matter because of icache
     #ifdef SYSCLK_FREQ_216MHz
-    register const unsigned int count=216000;
+    const unsigned int count=216000;
     #else
     #warning "Delays are uncalibrated for this clock frequency"
     #endif

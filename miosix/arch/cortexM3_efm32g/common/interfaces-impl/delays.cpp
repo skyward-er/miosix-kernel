@@ -43,7 +43,7 @@ namespace miosix {
 
 void delayMs(unsigned int mseconds)
 {
-    register const unsigned int count=FREQ/4000;
+    const unsigned int count=FREQ/4000;
 
     for(unsigned int i=0;i<mseconds;i++)
     {

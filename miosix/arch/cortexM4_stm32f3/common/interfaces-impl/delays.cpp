@@ -35,17 +35,17 @@ void delayMs(unsigned int mseconds)
 {
     #ifdef SYSCLK_FREQ_72MHz
     #warning delayMs has not been calibrated yet with 72MHz clock
-    register const unsigned int count=5350;
+    const unsigned int count=5350;
     #elif SYSCLK_FREQ_56MHz
-    register const unsigned int count=5350;
+    const unsigned int count=5350;
     #elif SYSCLK_FREQ_48MHz
-    register const unsigned int count=5350;
+    const unsigned int count=5350;
     #elif SYSCLK_FREQ_36MHz
-    register const unsigned int count=4010;
+    const unsigned int count=4010;
     #elif SYSCLK_FREQ_24MHz
-    register const unsigned int count=4010;
+    const unsigned int count=4010;
     #else // 8MHz clock
-    register const unsigned int count=2000;
+    const unsigned int count=2000;
     #endif
 
     for(unsigned int i=0;i<mseconds;i++)
