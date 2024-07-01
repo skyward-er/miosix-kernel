@@ -32,14 +32,14 @@ namespace miosix {
 inline int atomicSwap(volatile int *p, int v)
 {
     //This is the only atomic operation in the ARM7 assembler
-    register int result;
+    int result;
     asm volatile("swp %0, %1, [%2]" : "=&r"(result) : "r"(v),"r"(p) : "memory");
     return result;
 }
 
 inline void atomicAdd(volatile int *p, int incr)
 {
-    register int a,b; //Temporaries used by ASM code
+    int a,b; //Temporaries used by ASM code
     asm volatile("    mrs   %0,     cpsr         \n"
                  "    tst   %0,     #0x80        \n"
                  "    orreq %1,     %0,    #0x80 \n"
@@ -56,8 +56,8 @@ inline void atomicAdd(volatile int *p, int incr)
 
 inline int atomicAddExchange(volatile int *p, int incr)
 {
-    register int a; //Temporaries used by ASM code
-    register int result;
+    int a; //Temporaries used by ASM code
+    int result;
     asm volatile("    mrs   %0,     cpsr         \n"
                  "    tst   %0,     #0x80        \n"
                  "    orreq %1,     %0,    #0x80 \n"
@@ -75,8 +75,8 @@ inline int atomicAddExchange(volatile int *p, int incr)
 
 inline int atomicCompareAndSwap(volatile int *p, int prev, int next)
 {
-    register int a; //Temporaries used by ASM code
-    register int result;
+    int a; //Temporaries used by ASM code
+    int result;
     asm volatile("    mrs   %0,     cpsr         \n"
                  "    tst   %0,     #0x80        \n"
                  "    orreq %1,     %0,    #0x80 \n"
@@ -95,8 +95,8 @@ inline int atomicCompareAndSwap(volatile int *p, int prev, int next)
 inline void *atomicFetchAndIncrement(void * const volatile * p, int offset,
         int incr)
 {
-    register int a,b; //Temporaries used by ASM code
-    register void *result;
+    int a,b; //Temporaries used by ASM code
+    void *result;
     asm volatile("    mrs   %0,     cpsr             \n"
                  "    tst   %0,     #0x80            \n"
                  "    orreq %1,     %0,    #0x80     \n"

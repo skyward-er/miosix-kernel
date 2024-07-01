@@ -34,7 +34,7 @@ void delayMs(unsigned int mseconds)
     #ifndef __CODE_IN_XRAM
 
     #ifdef SYSCLK_FREQ_120MHz
-    register const unsigned int count=40000; //Flash 3 wait state
+    const unsigned int count=40000; //Flash 3 wait state
     #else //SYSCLK_FREQ_120MHz
     #error "Delays are uncalibrated for this clock frequency"
     #endif //SYSCLK_FREQ_120MHz
@@ -45,9 +45,9 @@ void delayMs(unsigned int mseconds)
 
     //When running code from external RAM delays depend on the RAM timings
     #if defined(_BOARD_STM3220G_EVAL)
-    register const unsigned int count=5000;
+    const unsigned int count=5000;
     #elif defined(_BOARD_ETHBOARDV2)
-    register const unsigned int count=6000;
+    const unsigned int count=6000;
     #else
     #error "Delays are uncalibrated for this clock board"
     #endif

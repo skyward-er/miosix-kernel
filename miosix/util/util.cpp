@@ -94,7 +94,7 @@ unsigned int MemoryProfiling::getAbsoluteFreeStack()
 
 unsigned int MemoryProfiling::getCurrentFreeStack()
 {
-    register int *stack_ptr asm("sp");
+    int *stack_ptr;
     const unsigned int *walk=Thread::getStackBottom();
     unsigned int freeStack=(reinterpret_cast<unsigned int>(stack_ptr)
                           - reinterpret_cast<unsigned int>(walk));

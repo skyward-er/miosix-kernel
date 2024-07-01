@@ -33,33 +33,33 @@ void delayMs(unsigned int mseconds)
 {
     #ifndef __CODE_IN_XRAM
     #ifdef SYSCLK_FREQ_72MHz
-    register const unsigned int count=12000; //Flash 2 wait state
+    const unsigned int count=12000; //Flash 2 wait state
     #elif SYSCLK_FREQ_56MHz
-    register const unsigned int count=9333;  //Flash 2 wait state
+    const unsigned int count=9333;  //Flash 2 wait state
     #elif SYSCLK_FREQ_48MHz
-    register const unsigned int count=12000; //Flash 1 wait state
+    const unsigned int count=12000; //Flash 1 wait state
     #elif SYSCLK_FREQ_36MHz
-    register const unsigned int count=9000;  //Flash 1 wait state
+    const unsigned int count=9000;  //Flash 1 wait state
     #elif SYSCLK_FREQ_24MHz
-    register const unsigned int count=8000;  //Flash 0 wait state
+    const unsigned int count=8000;  //Flash 0 wait state
     #else
-    register const unsigned int count=2678;  //Flash 0 wait state
+    const unsigned int count=2678;  //Flash 0 wait state
     #endif
     #else //__CODE_IN_XRAM
     //These delays are calibrated on an stm3210e-eval, and are only correct when
     //running from ram memories with similar access timings
     #ifdef SYSCLK_FREQ_72MHz
-    register const unsigned int count=1889; //Linear scaling, factor 26.236
+    const unsigned int count=1889; //Linear scaling, factor 26.236
     #elif SYSCLK_FREQ_56MHz
-    register const unsigned int count=1469;
+    const unsigned int count=1469;
     #elif SYSCLK_FREQ_48MHz
-    register const unsigned int count=1259;
+    const unsigned int count=1259;
     #elif SYSCLK_FREQ_36MHz
-    register const unsigned int count=945;
+    const unsigned int count=945;
     #elif SYSCLK_FREQ_24MHz
-    register const unsigned int count=630;
+    const unsigned int count=630;
     #else
-    register const unsigned int count=210;
+    const unsigned int count=210;
     #endif
     #endif //__CODE_IN_XRAM
     for(unsigned int i=0;i<mseconds;i++)
