@@ -127,7 +127,7 @@ inline void doYield()
 {
     asm volatile("movs r3, #0\n\t"
                  "svc  0"
-                 :::"r3");
+                 :::"r3","cc");
 }
 
 inline void doDisableInterrupts()

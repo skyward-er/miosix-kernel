@@ -122,7 +122,7 @@ inline void doYield()
 {
     asm volatile("movs r3, #0\n\t"
                  "svc  0"
-                 :::"r3");
+                 :::"r3","cc");
 }
 
 inline void doDisableInterrupts()
@@ -195,7 +195,7 @@ inline void portableSwitchToUserspace()
 {
     asm volatile("movs r3, #1\n\t"
                  "svc  0"
-                 :::"r3");
+                 :::"r3","cc");
 }
 
 #endif //WITH_PROCESSES

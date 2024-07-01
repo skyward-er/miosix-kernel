@@ -122,7 +122,7 @@ const int stackPtrOffsetInCtxsave=13; ///< Allows to locate the stack pointer
                     "nop                                \n\t"                   \
                     /*now that lr points to return address, return from interrupt*/         \
                     "ldr	lr,[lr]			\n\t"                   \
-                    "movs	pc,lr			\n\t");
+                    "movs	pc,lr			\n\t":::"lr","cc");
 
 /**
  * Enable interrupts (both irq and fiq)<br>
@@ -174,7 +174,7 @@ inline void doYield()
 {
     asm volatile("movs  r3, #0\n\t"
                  "swi   0"
-                 :::"r3");
+                 :::"r3","cc");
 }
 
 inline void doDisableInterrupts()
