@@ -78,7 +78,7 @@ inline long long timespec2ll(const struct timespec *tp)
  */
 inline void ll2timespec(long long ns, struct timespec *tp)
 {
-    #ifdef __ARM_EABI__
+    #if defined(__ARM_EABI__) && defined(__GNUC__) && !defined(__clang__)
     // Despite there being a single intrinsic, __aeabi_ldivmod, that computes
     // both the result of the / and % operator, GCC 9.2.0 isn't smart enough and
     // calls the intrinsic twice. This asm implementation takes ~188 cycles
@@ -91,11 +91,11 @@ inline void ll2timespec(long long ns, struct timespec *tp)
     asm volatile("bl	__aeabi_ldivmod" : "+r"(a), "+r"(b) :: "lr");
     tp->tv_sec = a;
     tp->tv_nsec = static_cast<long>(b);
-    #else //__ARM_EABI__
+    #else
     #warning Warning POSIX time API not optimized for this platform
     tp->tv_sec = ns / nsPerSec;
     tp->tv_nsec = static_cast<long>(ns % nsPerSec);
-    #endif //__ARM_EABI__
+    #endif
 }
 
 } //namespace miosix
