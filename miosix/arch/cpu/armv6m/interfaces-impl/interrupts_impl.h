@@ -57,7 +57,7 @@ inline void fastEnableInterrupts() noexcept
 
 inline bool areInterruptsEnabled() noexcept
 {
-    register int i;
+    int i;
     asm volatile("mrs   %0, primask    \n\t":"=r"(i));
     if(i!=0) return false;
     return true;

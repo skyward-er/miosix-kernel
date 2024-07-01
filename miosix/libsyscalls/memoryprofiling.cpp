@@ -107,7 +107,7 @@ unsigned int MemoryProfiling::getAbsoluteFreeStack()
 unsigned int MemoryProfiling::getCurrentFreeStack()
 {
     unsigned int stackOccupiedByCtxsave=sysconf(ctxsaveOnStack);
-    register int *stack_ptr asm("sp");
+    int *stack_ptr asm("sp");
     const unsigned int *walk=getStackBottom();
     unsigned int freeStack=(reinterpret_cast<unsigned int>(stack_ptr)
                           - reinterpret_cast<unsigned int>(walk));
