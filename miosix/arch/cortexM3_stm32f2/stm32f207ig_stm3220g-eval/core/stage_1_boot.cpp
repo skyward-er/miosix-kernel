@@ -60,6 +60,9 @@ void program_startup()
 void Reset_Handler() __attribute__((__interrupt__, noreturn));
 void Reset_Handler()
 {
+	#pragma GCC diagnostic push
+  	#pragma GCC diagnostic ignored "-Wextra"
+
    #ifdef __CODE_IN_XRAM
     /**
      * Before calling the initalization code, set the stack pointer to the
@@ -121,6 +124,8 @@ void Reset_Handler()
                  "isb                          \n\t":::"r0");
 
     program_startup();
+
+  	#pragma GCC diagnostic pop
 }
 
 /**
