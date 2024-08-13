@@ -37,7 +37,7 @@ set(BOARDS
     stm32f429zi_stm32f4discovery
 )
 
-set(KPATH ${CMAKE_CURRENT_LIST_DIR})
+set(KPATH ${CMAKE_CURRENT_LIST_DIR} CACHE PATH "Path to the miosix kernel")
 
 set(KERNEL_SRC
     ${KPATH}/kernel/kernel.cpp

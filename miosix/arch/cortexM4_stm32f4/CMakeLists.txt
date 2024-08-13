@@ -24,7 +24,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>
 
 # Base directory with common header files for this board
-set(ARCH_INC ${KPATH}/arch/${ARCH_NAME}/common)
+set(ARCH_INC ${KPATH}/arch/${ARCH_NAME}/common CACHE PATH "Include directory for arch_settings.h")
 
 # Including board specific options
 include(${KPATH}/arch/${ARCH_NAME}/${MIOSIX_OPT_BOARD}/CMakeLists.txt)
@@ -44,7 +44,7 @@ list(APPEND CXXFLAGS_BASE
     ${SRAM_BOOT} ${CPU} ${OPT_EXCEPT} -c
 )
 set(LFLAGS_BASE
-    ${CPU} -Wl,--gc-sections,-Map,main.map
+    ${CPU} -Wl,--gc-sections,-Map,main.map # TODO: Check main.map
     -Wl,-T${MIOSIX_LINKER_SCRIPT} ${OPT_EXCEPT} -nostdlib
 )
 
