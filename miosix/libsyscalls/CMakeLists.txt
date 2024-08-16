@@ -62,7 +62,7 @@ target_include_directories(syscalls PUBLIC
 set(MIOSIX_PROCESSES_A_FLAGS ${MIOSIX_CPU_FLAGS})
 set(MIOSIX_PROCESSES_C_FLAGS
     ${MIOSIX_CPU_FLAGS} -fpie -msingle-pic-base -ffunction-sections -Wall
-    -Werror=return-type -D_DEFAULT_SOURCE=1 -c
+    -fshort-enums -Werror=return-type -D_DEFAULT_SOURCE=1 -c
 )
 set(MIOSIX_PROCESSES_CXX_FLAGS -std=c++14 ${MIOSIX_OPT_EXCEPT} ${MIOSIX_PROCESSES_C_FLAGS})
 target_compile_options(syscalls PUBLIC
@@ -73,9 +73,25 @@ target_compile_options(syscalls PUBLIC
 
 # Configure linker file and options needed to link agains this library
 set(MIOSIX_PROCESSES_L_FLAGS
-    ${MIOSIX_CPU_FLAGS} -fpie -msingle-pic-base -nostdlib -Wl,--gc-sections
+    ${MIOSIX_CPU_FLAGS} -fpie -fshort-enums -msingle-pic-base -nostdlib -Wl,--gc-sections
     -Wl,-T${MIOSIX_KPATH}/libsyscalls/process.ld
-    -Wl,-n,-pie,--spare-dynamic-tags,3,--target2=mx-data-rel
+    -Wl,-n,-pie,--spare-dynamic-tags=3,--target2=mx-data-rel
 )
 set_property(TARGET syscalls PROPERTY LINK_DEPENDS ${MIOSIX_KPATH}/libsyscalls/process.ld)
 target_link_options(syscalls INTERFACE ${MIOSIX_PROCESSES_L_FLAGS})
+
+# Set multilib paths for Clang
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_include_directories(syscalls PUBLIC
+        /opt/arm-miosix-eabi/arm-miosix-eabi/include/c++/9.2.0/arm-miosix-eabi
+        /opt/arm-miosix-eabi/arm-miosix-eabi/include/c++/9.2.0
+        /opt/arm-miosix-eabi/arm-miosix-eabi/include
+    )
+
+    target_link_directories(syscalls PUBLIC
+        /opt/arm-miosix-eabi/arm-miosix-eabi/lib/${MIOSIX_MULTILIB_PATH}/pie/single-pic-base/
+        /opt/arm-miosix-eabi/lib/gcc/arm-miosix-eabi/9.2.0/${MIOSIX_MULTILIB_PATH}/pie/single-pic-base/
+    )
+
+    target_link_options(miosix PUBLIC -fuse-ld=/usr/bin/arm-miosix-eabi-ld)
+endif()
