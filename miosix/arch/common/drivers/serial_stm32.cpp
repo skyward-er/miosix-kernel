@@ -1364,14 +1364,14 @@ int STM32Serial::IRQdmaReadStop()
 
 
     #ifdef _ARCH_CORTEXM7_STM32H7
-    static const unsigned int irqMask[]=
+    static const uint32_t irqMask[]=
     {
         (DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5),
         (DMA_HIFCR_CTCIF4 | DMA_HIFCR_CHTIF4 | DMA_HIFCR_CTEIF4 | DMA_HIFCR_CDMEIF4 | DMA_HIFCR_CFEIF4),
         (DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1 | DMA_LIFCR_CTEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CFEIF1)
     };
     #else
-    static const unsigned int irqMask[]=
+    static const uint32_t irqMask[]=
     {
         (DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5),
         (DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5),
@@ -1380,14 +1380,14 @@ int STM32Serial::IRQdmaReadStop()
     #endif
 
     #ifdef _ARCH_CORTEXM7_STM32H7
-    static volatile unsigned long * const irqRegs[]=
+    static volatile uint32_t * const irqRegs[]=
     {
         &DMA1->HIFCR,
         &DMA1->HIFCR,
         &DMA1->LIFCR
     };
     #else
-    static volatile unsigned long * const irqRegs[]=
+    static volatile uint32_t * const irqRegs[]=
     {
         &DMA2->HIFCR,
         &DMA1->HIFCR,
