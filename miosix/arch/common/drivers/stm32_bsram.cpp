@@ -91,6 +91,9 @@ void init()
     // Enable PWR clock
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
 
+    // Enable write on BSRAM since we need it to write on the PWR peripheral
+    enableWrite();
+
     // Enable backup SRAM Clock
     RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN;
 
@@ -105,8 +108,13 @@ void init()
         ;
 #endif
 
-    // Retrive last reset reason
+    // Retrieve last reset reason
     lastReset = readResetRegister();
+
+    // Disable write on BSRAM since we don't need to write on the peripheral for
+    // now. It will be necessary to re-enable the write on the backup SRAM
+    // around a PRESERVED variable to effectively change its value.
+    disableWrite();
 }
 
 void disableWrite()
