@@ -128,6 +128,9 @@ void disableWrite()
 #else
     PWR->CR &= ~PWR_CR_DBP;
 #endif
+
+    // Ensure write is disabled when exiting this function
+    __DSB();
 }
 
 void enableWrite()
