@@ -70,5 +70,24 @@ void disableWrite();
  */
 void enableWrite();
 
+/**
+ * @brief This class is a RAII lock for disabling write protection on backup
+ * SRAM. This call avoids the error of not re-enabling write protection since it
+ * is done automatically.
+ */
+class EnableWriteLock
+{
+public:
+    EnableWriteLock() { enableWrite(); }
+
+    ~EnableWriteLock() { disableWrite(); }
+
+    ///< Delete copy/move constructors/operators.
+    EnableWriteLock(const EnableWriteLock& l)             = delete;
+    EnableWriteLock(const EnableWriteLock&& l)            = delete;
+    EnableWriteLock& operator=(const EnableWriteLock& l)  = delete;
+    EnableWriteLock& operator=(const EnableWriteLock&& l) = delete;
+};
+
 }  // namespace BSRAM
 }  // namespace miosix
