@@ -120,7 +120,7 @@ void init()
 void disableWrite()
 {
     // Ensure all memory instructions complete before disabling write
-    __DSB();
+    __DMB();
 
     // Enable backup domain write protection
 #ifdef _ARCH_CORTEXM7_STM32F7
@@ -130,7 +130,7 @@ void disableWrite()
 #endif
 
     // Ensure write is disabled when exiting this function
-    __DSB();
+    __DMB();
 }
 
 void enableWrite()
@@ -143,7 +143,7 @@ void enableWrite()
 #endif
 
     // Ensure writes to the control registers complete before returning
-    __DSB();
+    __DMB();
 }
 
 }  // namespace BSRAM
