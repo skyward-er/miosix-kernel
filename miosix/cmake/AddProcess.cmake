@@ -40,6 +40,9 @@ function(miosix_add_process TARGET SOURCES)
     target_link_libraries(${TARGET} PRIVATE
         -Wl,--start-group syscalls stdc++ c m gcc atomic -Wl,--end-group
     )
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_link_options(${TARGET} PRIVATE -fuse-ld=/usr/bin/arm-miosix-eabi-ld)
+    endif()
 
     # Tell the linker to produce the map file
     target_link_options(${TARGET} PRIVATE -Wl,-Map,$<TARGET_FILE_DIR:${TARGET}>/$<TARGET_FILE_BASE_NAME:${TARGET}>.map)
