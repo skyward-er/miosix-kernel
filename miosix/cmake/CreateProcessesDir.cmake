@@ -40,6 +40,7 @@ function(miosix_create_processes_dir)
     foreach(ROMFS_PROCESS ${ROMFS_PROCESSES})
         add_custom_command(
             OUTPUT ${PROJECT_BINARY_DIR}/${ROMFS_DIR_NAME}/${ROMFS_PROCESS}
+            DEPENDS ${ROMFS_PROCESS}
             COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${ROMFS_PROCESS}> ${PROJECT_BINARY_DIR}/${ROMFS_DIR_NAME}/${ROMFS_PROCESS}
             COMMENT "Copying process $<TARGET_FILE_BASE_NAME:${ROMFS_PROCESS}> into ${ROMFS_DIR_NAME} directory"
         )
