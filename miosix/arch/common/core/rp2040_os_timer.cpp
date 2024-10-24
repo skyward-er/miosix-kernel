@@ -32,8 +32,6 @@
 
 namespace miosix {
 
-namespace internal {
-
 static TimeConversion tc(48000000);
 static uint64_t lastAlarmTicks;
 
@@ -152,8 +150,6 @@ unsigned int osTimerGetFrequency()
     return 48000000;
 }
 
-} // namespace internal
-
 long long getTime() noexcept
 {
     FastInterruptDisableLock dLock;
@@ -162,8 +158,8 @@ long long getTime() noexcept
 
 long long IRQgetTime() noexcept
 {
-    long long ticks = (long long)internal::IRQgetTicks();
-    return internal::tc.tick2ns(ticks);
+    long long ticks = (long long)IRQgetTicks();
+    return tc.tick2ns(ticks);
 }
 
 } // namespace miosix
@@ -171,6 +167,6 @@ long long IRQgetTime() noexcept
 void __attribute__((naked)) TIMER_IRQ_0_Handler()
 {
     saveContext();
-    asm volatile("bl %a0"::"i"(miosix::internal::IRQtimerInterruptHandler):);
+    asm volatile("bl %a0"::"i"(miosix::IRQtimerInterruptHandler):);
     restoreContext();
 }

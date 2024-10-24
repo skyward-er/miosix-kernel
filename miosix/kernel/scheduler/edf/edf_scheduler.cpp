@@ -125,7 +125,7 @@ static void IRQsetNextPreemption()
     //We could not set an interrupt if the sleeping list is empty, but then we
     //would spuriously run the scheduler at every rollover of the hardware timer
     //and this could waste more cycles than setting the interrupt
-    internal::IRQosTimerSetInterrupt(nextPreemption);
+    IRQosTimerSetInterrupt(nextPreemption);
 }
 
 void EDFScheduler::IRQrunScheduler()

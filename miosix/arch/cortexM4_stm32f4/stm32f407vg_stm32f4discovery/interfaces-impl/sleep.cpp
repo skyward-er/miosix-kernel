@@ -137,7 +137,7 @@ bool IRQdeepSleep(long long int abstime)
 #ifdef DEBUG_DEEP_SLEEP
         _led::low();
 #endif
-        internal::IRQosTimerSetTime(abstime);
+        IRQosTimerSetTime(abstime);
     }
     return true;
 }

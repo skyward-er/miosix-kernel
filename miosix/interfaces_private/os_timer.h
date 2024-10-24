@@ -65,8 +65,6 @@ namespace miosix {
 // application code. For comments about the intended behavior, see kernel.h
 //long long getTime() noexcept;
 //long long IRQgetTime() noexcept;
-    
-namespace internal {
 
 /**
  * \internal
@@ -116,8 +114,6 @@ void IRQosTimerSetTime(long long ns) noexcept;
  * an observable way through IRQgetCurrentTime()
  */
 unsigned int osTimerGetFrequency();
-
-} //namespace internal
 
 /**
  * Helper class providing a generic implementation capable of providing time
@@ -389,12 +385,12 @@ public:
  * 
  * static MyHwTimer timer;
  * DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
- * }
  * 
  * void timerInterruptRoutine()
  * {
- *     miosix::timer.IRQhandler();
+ *     timer.IRQhandler();
  * }
+ * } //namespace miosix
  * \endcode
  */
 #define DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer) \
@@ -408,8 +404,6 @@ long long IRQgetTime() noexcept                    \
 {                                                  \
     return timer.IRQgetTimeNs();                   \
 }                                                  \
-                                                   \
-namespace internal {                               \
                                                    \
 void IRQosTimerInit()                              \
 {                                                  \
@@ -430,9 +424,7 @@ unsigned int osTimerGetFrequency()                 \
 {                                                  \
     FastInterruptDisableLock dLock;                \
     return timer.IRQTimerFrequency();              \
-}                                                  \
-                                                   \
-} //namespace internal
+}
 
 /**
  * \}

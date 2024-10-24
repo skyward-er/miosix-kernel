@@ -391,7 +391,7 @@ void PowerManagement::setCoreFrequency(CoreFrequency cf)
         
         //Miosix's os timer
         SystemCoreClockUpdate();
-        internal::IRQosTimerInit();
+        IRQosTimerInit();
     }
     
     //And also reconfigure the I2C (can't change this with IRQ disabled)

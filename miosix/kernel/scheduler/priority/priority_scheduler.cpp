@@ -217,7 +217,7 @@ static long long IRQsetNextPreemption(bool runningIdleThread)
 
     //We could not set an interrupt if the sleeping list is empty and runningThread
     //is idle but there's no such hurry to run idle anyway, so why bother?
-    internal::IRQosTimerSetInterrupt(nextPeriodicPreemption);
+    IRQosTimerSetInterrupt(nextPeriodicPreemption);
     return t;
 }
 

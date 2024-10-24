@@ -58,7 +58,7 @@ static inline void IRQsetNextPreemptionForIdle()
     #endif // WITH_CPU_TIME_COUNTER
     //We could not set an interrupt if the sleeping list is empty but there's
     //no such hurry to run idle anyway, so why bother?
-    internal::IRQosTimerSetInterrupt(nextPreemption);
+    IRQosTimerSetInterrupt(nextPreemption);
 }
 
 // Should be called for threads other than idle thread
@@ -69,7 +69,7 @@ static inline void IRQsetNextPreemption(long long burst)
     else firstWakeupInList=sleepingList.front()->wakeupTime;
     burstStart=IRQgetTime();
     nextPreemption=min(firstWakeupInList,burstStart+burst);
-    internal::IRQosTimerSetInterrupt(nextPreemption);
+    IRQosTimerSetInterrupt(nextPreemption);
 }
 
 #ifndef SCHED_CONTROL_MULTIBURST

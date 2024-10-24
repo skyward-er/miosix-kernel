@@ -1127,7 +1127,7 @@ int clock_getres(clockid_t clock_id, struct timespec *res)
     //TODO: support CLOCK_REALTIME
 
     //Integer division with round-to-nearest for better accuracy
-    int resolution=2*miosix::nsPerSec/miosix::internal::osTimerGetFrequency();
+    int resolution=2*miosix::nsPerSec/miosix::osTimerGetFrequency();
     resolution=(resolution & 1) ? resolution/2+1 : resolution/2;
 
     res->tv_sec=0;

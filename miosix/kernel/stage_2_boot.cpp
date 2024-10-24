@@ -91,7 +91,7 @@ void *mainLoader(void *argv)
     callConstructors(&__init_array_start, &__init_array_end);
     callConstructors(&_ctor_start, &_ctor_end);
     
-    bootlog("OS Timer freq = %d Hz\n", internal::osTimerGetFrequency());
+    bootlog("OS Timer freq = %d Hz\n", osTimerGetFrequency());
     bootlog("Available heap %d out of %d Bytes\n",
             MemoryProfiling::getCurrentFreeHeap(),
             MemoryProfiling::getHeapSize());
@@ -128,7 +128,7 @@ extern "C" void _init()
 
     if(areInterruptsEnabled()) errorHandler(INTERRUPTS_ENABLED_AT_BOOT);
     IRQbspInit();
-    internal::IRQosTimerInit();
+    IRQosTimerInit();
     #ifdef WITH_DEEP_SLEEP
     IRQdeepSleepInit();
     #endif // WITH_DEEP_SLEEP

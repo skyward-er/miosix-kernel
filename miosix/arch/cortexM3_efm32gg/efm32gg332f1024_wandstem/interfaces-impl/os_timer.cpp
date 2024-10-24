@@ -49,8 +49,6 @@ long long IRQgetTime() noexcept
     return tc.tick2ns(vt->uncorrected2corrected(vht->uncorrected2corrected(b->addBasicCorrection(b->IRQgetCurrentTick()))));
 }
 
-namespace internal {
-
 void IRQosTimerInit()
 {
     b=&HRTB::instance();
@@ -78,7 +76,5 @@ unsigned int osTimerGetFrequency()
 {
     return b->getTimerFrequency();
 }
-
-} //namespace internal
 
 } //namespace miosix
