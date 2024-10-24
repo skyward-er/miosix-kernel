@@ -25,8 +25,8 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "cache_cortexMx.h"
-#include "mpu_cortexMx.h"
+#include "cortexMx_cache.h"
+#include "interfaces_private/userspace.h" //For IRQenableMPUatBoot
 #include <utility>
 
 using namespace std;

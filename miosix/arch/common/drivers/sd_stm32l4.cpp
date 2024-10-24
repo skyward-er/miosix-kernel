@@ -2,7 +2,7 @@
 #include "sd_stm32l4.h"
 #include "interfaces/bsp.h"
 #include "interfaces/arch_registers.h"
-#include "core/cache_cortexMx.h"
+#include "cache/cortexMx_cache.h"
 #include "kernel/scheduler/scheduler.h"
 #include "interfaces/delays.h"
 #include "kernel/kernel.h"

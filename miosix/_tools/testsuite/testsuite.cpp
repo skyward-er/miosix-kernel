@@ -64,7 +64,7 @@
 
 #if defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
 #include <kernel/scheduler/scheduler.h>
-#include <core/cache_cortexMx.h>
+#include <cache/cortexMx_cache.h>
 #endif //_ARCH_CORTEXM7_STM32F7/H7
 
 #include <ctime>

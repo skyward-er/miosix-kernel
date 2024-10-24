@@ -2,7 +2,7 @@
 #include <cmath>
 #include <cassert>
 
-#include "core/cache_cortexMx.h"
+#include "cache/cortexMx_cache.h"
 #include "core/interrupts.h"  //For the unexpected interrupt call
 #include "core/interrupts_cortexMx.h"
 #include "interfaces/arch_registers.h"

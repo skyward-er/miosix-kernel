@@ -32,7 +32,7 @@
 #include "kernel/sync.h"
 #include "kernel/scheduler/scheduler.h"
 #include "filesystem/ioctl.h"
-#include "core/cache_cortexMx.h"
+#include "cache/cortexMx_cache.h"
 
 using namespace std;
 using namespace miosix;

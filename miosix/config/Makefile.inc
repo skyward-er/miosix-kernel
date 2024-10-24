@@ -999,7 +999,7 @@ ifeq ($(ARCH),arm7_lpc2000)
         ARCH_SRC :=                                  \
         $(BOARD_INC)/core/stage_1_boot.s             \
         $(BOARD_INC)/interfaces-impl/sleep.cpp       \
-        $(BOARD_INC)/interfaces-impl/os_timer.cpp    \
+        arch/common/os_timer/lpc2000_os_timer.cpp    \
         arch/common/drivers/sd_lpc2000.cpp           \
         $(BOARD_INC)/interfaces-impl/delays.cpp      \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
@@ -1501,14 +1501,14 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp               \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp         \
     arch/common/core/interrupts_cortexMx.cpp              \
-    arch/common/core/sleep_cortexMx.cpp                   \
+    arch/common/sleep/cortexMx_sleep.cpp                  \
     arch/common/drivers/serial_stm32.cpp                  \
     arch/common/drivers/dcc.cpp                           \
     $(ARCH_INC)/interfaces-impl/delays.cpp                \
     $(ARCH_INC)/interfaces-impl/sleep.cpp                 \
     arch/common/drivers/stm32f1_gpio.cpp                  \
-    arch/common/core/stm32_16bit_os_timer.cpp             \
-    arch/common/core/stm32_rtc_os_timer.cpp               \
+    arch/common/os_timer/stm32_16bit_os_timer.cpp         \
+    arch/common/os_timer/stm32_rtc_os_timer.cpp           \
     arch/common/CMSIS/Device/ST/STM32F1xx/Source/Templates/system_stm32f1xx.c
 
 ##-----------------------------------------------------------------------------
@@ -1968,13 +1968,13 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                   \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp             \
     arch/common/core/interrupts_cortexMx.cpp                  \
-    arch/common/core/sleep_cortexMx.cpp                       \
+    arch/common/sleep/cortexMx_sleep.cpp                      \
     arch/common/drivers/serial_stm32.cpp                      \
     arch/common/drivers/dcc.cpp                               \
     $(ARCH_INC)/interfaces-impl/delays.cpp                    \
     arch/common/drivers/stm32_gpio.cpp                        \
     arch/common/drivers/sd_stm32f2_f4_f7.cpp                  \
-    arch/common/core/stm32_32bit_os_timer.cpp                 \
+    arch/common/os_timer/stm32_32bit_os_timer.cpp             \
     arch/common/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
 
 ##-----------------------------------------------------------------------------
@@ -2253,13 +2253,13 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     arch/common/drivers/dcc.cpp                              \
     arch/common/drivers/stm32_hardware_rng.cpp               \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/core/stm32_32bit_os_timer.cpp                \
+    arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/CMSIS/Device/ST/STM32F2xx/Source/Templates/system_stm32f2xx.c
 
 ##-----------------------------------------------------------------------------
@@ -2327,11 +2327,11 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
-    arch/common/core/stm32_16bit_os_timer.cpp                \
+    arch/common/os_timer/stm32_16bit_os_timer.cpp            \
     arch/common/CMSIS/Device/ST/STM32L1xx/Source/Templates/system_stm32l1xx.c
 
 ##-----------------------------------------------------------------------------
@@ -2410,7 +2410,7 @@ else ifeq ($(ARCH),cortexM3_efm32gg)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/efm32_serial.cpp                     \
     arch/common/drivers/efm32_adc.cpp                        \
     arch/common/drivers/efm32_gpio.cpp                       \
@@ -2595,14 +2595,14 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
-    arch/common/core/cache_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
+    arch/common/cache/cortexMx_cache.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     arch/common/drivers/sd_stm32f2_f4_f7.cpp                 \
     arch/common/drivers/dcc.cpp                              \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/core/stm32_32bit_os_timer.cpp                \
+    arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c
 
 ##-----------------------------------------------------------------------------
@@ -2741,16 +2741,16 @@ else ifeq ($(ARCH),cortexM7_stm32h7)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     arch/common/drivers/sd_stm32h7.cpp                       \
-    arch/common/core/cache_cortexMx.cpp                      \
+    arch/common/cache/cortexMx_cache.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     arch/common/drivers/dcc.cpp                              \
     $(ARCH_INC)/drivers/pll.cpp                              \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/core/stm32_32bit_os_timer.cpp                \
+    arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/CMSIS/Device/ST/STM32H7xx/Source/Templates/system_stm32h7xx.c
 
 ##-----------------------------------------------------------------------------
@@ -2772,10 +2772,10 @@ else ifeq ($(ARCH),cortexM0_stm32f0)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
-        ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
-        $(BOARD_INC)/interfaces-impl/bsp.cpp         \
-        arch/common/core/stm32_32bit_os_timer.cpp
+        ARCH_SRC :=                                   \
+        $(BOARD_INC)/core/stage_1_boot.cpp            \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp          \
+        arch/common/os_timer/stm32_32bit_os_timer.cpp
 
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F072RB_DISCO -DSTM32F072xB
@@ -2805,10 +2805,10 @@ else ifeq ($(ARCH),cortexM0_stm32f0)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
-        ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
-        $(BOARD_INC)/interfaces-impl/bsp.cpp         \
-        arch/common/core/stm32_16bit_os_timer.cpp
+        ARCH_SRC :=                                   \
+        $(BOARD_INC)/core/stage_1_boot.cpp            \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp          \
+        arch/common/os_timer/stm32_16bit_os_timer.cpp
 
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32F030R8_DISCO -DSTM32F030x8
@@ -2854,7 +2854,7 @@ else ifeq ($(ARCH),cortexM0_stm32f0)
     ARCH_SRC +=                                              \
     arch/cpu/armv6m/interfaces-impl/cpu.cpp                  \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/drivers/stm32_gpio.cpp                       \
@@ -2924,11 +2924,11 @@ else ifeq ($(ARCH),cortexM4_stm32f3)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
-    arch/common/core/stm32_32bit_os_timer.cpp                \
+    arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c
 
 ##-----------------------------------------------------------------------------
@@ -3025,11 +3025,11 @@ else ifeq ($(ARCH),cortexM4_stm32l4)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
-    arch/common/core/stm32_32bit_os_timer.cpp                \
+    arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/CMSIS/Device/ST/STM32L4xx/Source/Templates/system_stm32l4xx.c
 
 ##-----------------------------------------------------------------------------
@@ -3097,11 +3097,11 @@ else ifeq ($(ARCH),cortexM4_atsam4l)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_atsam4l.cpp                   \
+    arch/common/os_timer/atsam4l_os_timer.cpp                \
     $(ARCH_INC)/drivers/clock.cpp                            \
     $(ARCH_INC)/drivers/lcd.cpp                              \
-    $(ARCH_INC)/interfaces-impl/os_timer.cpp                 \
     $(ARCH_INC)/interfaces-impl/sleep.cpp                    \
     $(ARCH_INC)/interfaces-impl/gpio_impl.cpp                \
     $(ARCH_INC)/interfaces-impl/delays.cpp
@@ -3169,8 +3169,8 @@ else ifeq ($(ARCH),cortexM3_efm32g)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
-    arch/common/core/efm32_os_timer.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
+    arch/common/os_timer/efm32_os_timer.cpp                  \
     arch/common/drivers/efm32_serial.cpp                     \
     arch/common/drivers/efm32_adc.cpp                        \
     arch/common/drivers/efm32_gpio.cpp                       \
@@ -3244,11 +3244,11 @@ else ifeq ($(ARCH),cortexM0plus_stm32l0)
     ARCH_SRC +=                                              \
     arch/cpu/armv6m/interfaces-impl/cpu.cpp                  \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/serial_stm32.cpp                     \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/core/stm32_16bit_os_timer.cpp                \
+    arch/common/os_timer/stm32_16bit_os_timer.cpp            \
     arch/common/CMSIS/Device/ST/STM32L0xx/Source/Templates/system_stm32l0xx.c
 
 ##-----------------------------------------------------------------------------
@@ -3312,9 +3312,9 @@ else ifeq ($(ARCH),cortexM0plus_rp2040)
     ARCH_SRC +=                                              \
     arch/cpu/armv6m/interfaces-impl/cpu.cpp                  \
     arch/common/core/interrupts_cortexMx.cpp                 \
-    arch/common/core/sleep_cortexMx.cpp                      \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
-    arch/common/core/rp2040_os_timer.cpp                     \
+    arch/common/os_timer/rp2040_os_timer.cpp                 \
     arch/common/drivers/rp2040_serial.cpp                    \
     arch/common/CMSIS/Device/RaspberryPi/RP2040/Source/system_RP2040.c
 
