@@ -51,9 +51,13 @@
  * requires to write device specific code to wakeup from deep sleep after a
  * given time to support delays in threads, usually by means of the RTC or a
  * timer that can function also in the deep sleep state.
+ *
+ * NOTE: deep sleep support is optional as it is only required when the kernel
+ * is configured with the WITH_DEEP_SLEEP option, which is disabled by default
  * 
- * NOTE: this interface is meant to be used only by the kernel and not by user
- * code. When automatic deep sleep is enabled, it is transparent to applications.
+ * NOTE: this interface is meant to be used only by the kernel to implement
+ * sleep, not by user code to enter sleep states.
+ * When automatic sleep/deep sleep is enabled, it is transparent to applications.
  */
 
 namespace miosix {
