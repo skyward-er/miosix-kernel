@@ -60,9 +60,8 @@ extern "C" void kernel_SWI_Routine()
     restoreContext();
 }
 
-void initCtxsave(unsigned int *ctxsave, unsigned int *sp,
-                 void (*pc)(void *(*)(void*),void*),
-                 void *(*arg0)(void*), void *arg1)
+void initKernelThreadCtxsave(unsigned int *ctxsave, void (*pc)(void *(*)(void*),void*),
+                             unsigned int *sp, void *(*arg0)(void*), void *arg1)
 {
     ctxsave[0]=reinterpret_cast<unsigned int>(arg0);
     ctxsave[1]=reinterpret_cast<unsigned int>(arg1);

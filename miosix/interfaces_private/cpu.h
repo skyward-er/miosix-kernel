@@ -76,19 +76,18 @@ namespace miosix {
  * userspace thread that is being created.
  * \param ctxsave a pointer to a field ctxsave inside a Thread class that need
  * to be filled
+ * \param pc starting program counter of newly created kernel thread,
  * \param sp starting stack pointer of newly created thread. For architectures
  * that save all registers in ctxsave, this value will be used to initialize the
  * stack pointer register in ctxsave. Additionally, for architectures that save
  * some of the registers on the stack, this function will need to push on the
  * stack a frame with the initial values of the stack-saved registers
- * \param pc starting program counter of newly created kernel thread,
  * corresponds to the entry point of a function taking two arguments
  * \param arg0 first argument of the thread entry function
  * \param arg1 second argument of the thread entry function
  */
-void initCtxsave(unsigned int *ctxsave, unsigned int *sp,
-                 void (*pc)(void *(*)(void*),void*),
-                 void *(*arg0)(void*), void *arg1);
+void initKernelThreadCtxsave(unsigned int *ctxsave, void (*pc)(void *(*)(void*),void*),
+                             unsigned int *sp, void *(*arg0)(void*), void *arg1);
 
 /**
  * \internal

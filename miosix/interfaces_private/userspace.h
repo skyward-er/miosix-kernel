@@ -64,7 +64,7 @@ namespace miosix {
  * this value is irrelevant. In Miosix sbrk is not a syscall for processes as
  * the memory area allocated to a process is fixed at process creation
  */
-void initCtxsave(unsigned int *ctxsave, void *(*pc)(void *), int argc,
+void initUserThreadCtxsave(unsigned int *ctxsave, unsigned int pc, int argc,
         void *argvSp, void *envp, unsigned int *gotBase, unsigned int *heapEnd);
 
 /**

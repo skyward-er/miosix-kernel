@@ -37,13 +37,13 @@ namespace miosix {
 
 #ifdef WITH_PROCESSES
 
-void initCtxsave(unsigned int *ctxsave, void *(*pc)(void *), int argc,
+void initUserThreadCtxsave(unsigned int *ctxsave, unsigned int pc, int argc,
     void *argvSp, void *envp, unsigned int *gotBase, unsigned int *heapEnd)
 {
     unsigned int *stackPtr=reinterpret_cast<unsigned int*>(argvSp);
     //Stack is full descending, so decrement first
     stackPtr--; *stackPtr=0x01000000;                                 //--> xPSR
-    stackPtr--; *stackPtr=reinterpret_cast<unsigned int>(pc);         //--> pc
+    stackPtr--; *stackPtr=pc;                                         //--> pc
     stackPtr--; *stackPtr=0xffffffff;                                 //--> lr
     stackPtr--; *stackPtr=0;                                          //--> r12
     stackPtr--; *stackPtr=reinterpret_cast<unsigned int>(heapEnd);    //--> r3

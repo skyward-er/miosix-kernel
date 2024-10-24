@@ -729,13 +729,12 @@ void Thread::setupUserspaceContext(unsigned int entry, int argc, void *argvSp,
     memset(base+WATERMARK_LEN, STACK_FILL, stackSize);
     runningThread->userWatermark=reinterpret_cast<unsigned int*>(base);
     //Initialize registers
-    void *(*startfunc)(void*)=reinterpret_cast<void *(*)(void*)>(entry);
     //NOTE: for the main thread in a process userWatermark is also the end of
     //the heap, used by _sbrk_r. When we'll implement threads in processes that
     //pointer will just point to the watermark end of the thread, but userspace
     //threads can just ignore that value so we'll pass it unconditionally
-    initCtxsave(runningThread->userCtxsave,startfunc,argc,argvSp,envp,gotBase,
-                runningThread->userWatermark);
+    initUserThreadCtxsave(runningThread->userCtxsave,entry,argc,argvSp,envp,
+                          gotBase,runningThread->userWatermark);
 }
 
 #endif //WITH_PROCESSES
@@ -801,9 +800,10 @@ Thread *Thread::doCreate(void*(*startfunc)(void*) , unsigned int stacksize,
     memset(base, STACK_FILL, fullStackSize-WATERMARK_LEN);
 
     //On some architectures some registers are saved on the stack, therefore
-    //initCtxsave *must* be called after filling the stack.
-    initCtxsave(thread->ctxsave,reinterpret_cast<unsigned int*>(thread),
-                &Thread::threadLauncher,startfunc,argv);
+    //initKernelThreadCtxsave *must* be called after filling the stack.
+    initKernelThreadCtxsave(thread->ctxsave,&Thread::threadLauncher,
+                            reinterpret_cast<unsigned int*>(thread),
+                            startfunc,argv);
 
     if((options & JOINABLE)==0) thread->flags.IRQsetDetached();
     return thread;

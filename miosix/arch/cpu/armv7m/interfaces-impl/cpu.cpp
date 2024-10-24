@@ -31,9 +31,8 @@
 
 namespace miosix {
 
-void initCtxsave(unsigned int *ctxsave, unsigned int *sp,
-                 void (*pc)(void *(*)(void*),void*),
-                 void *(*arg0)(void*), void *arg1)
+void initKernelThreadCtxsave(unsigned int *ctxsave, void (*pc)(void *(*)(void*),void*),
+                             unsigned int *sp, void *(*arg0)(void*), void *arg1)
 {
     unsigned int *stackPtr=sp;
     //Stack is full descending, so decrement first
