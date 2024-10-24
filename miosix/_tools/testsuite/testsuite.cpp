@@ -230,7 +230,7 @@ int main()
                 break;
             case 's':
                 iprintf("Shutting down\n");
-                shutdown();
+                return 0;
             default:
                 iprintf("Unrecognized option\n");
         }
