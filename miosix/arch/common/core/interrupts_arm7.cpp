@@ -26,7 +26,7 @@
  ***************************************************************************/ 
 
 #include "kernel/logging.h"
-#include "interfaces_private/cpu.h"
+#include "interfaces/poweroff.h"
 #include "config/miosix_settings.h"
 
 using namespace miosix;

@@ -31,11 +31,6 @@
 
 namespace miosix {
 
-void IRQsystemReboot()
-{
-    NVIC_SystemReset();
-}
-
 void initCtxsave(unsigned int *ctxsave, unsigned int *sp,
                  void (*pc)(void *(*)(void*),void*),
                  void *(*arg0)(void*), void *arg1)
@@ -79,6 +74,12 @@ void IRQportableStartKernel()
     __enable_irq();
     miosix::Thread::yield();
     //Never reaches here
+}
+
+//TODO: here for historical reason, move to arch- or board-specific file
+void IRQsystemReboot()
+{
+    NVIC_SystemReset();
 }
 
 } //namespace miosix

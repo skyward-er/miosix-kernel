@@ -33,34 +33,65 @@
  */
 
 /**
- * \file bsp.h
- * This file provides architecture specific initialization code that the kernel
- * will call during boot.
+ * \file poweroff.h
+ * This file must provide these functions:
+ *
+ * shutdown(), for system shutdown. This function is called in case main()
+ * returns, and is available to be called by user code.
+ *
+ * reboot(), a function that can be called to reboot the system under normal
+ * (non error) conditions. It should sync and unmount the filesystem, and
+ * perform a reboot. This function is available for user code.
+ *
+ * IRQsystemReboot(), a low-level function to reboot the system in case of an
+ * unrecoverablle error. You should probably not use it unless really needed
+ * as it does not cleanly unmount the filesystem and could thus lead to data
+ * loss.
  */
 
 namespace miosix {
 
 /**
- * \internal
- * First part of BSP initialization. This function should perform the initial
- * board initialization. This function is called during boot before the kernel
- * is started, while interrupts are still disabled.
+ * This function should flush the default console with
+ * \code
+ * ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
+ * \endcode
+ * close all files and unmount all filesystems by caling
+ * \code
+ * FilesystemManager::instance().umountAll()
+ * \endcode
+ * and finally shut down the system, usually by putting the procesor in a deep
+ * sleep state until some board specific condition occurs (which could even
+ * be a processor reset or powercycle).
  *
- * After this function is called, the kernel will start printing boot logs, so
- * the console device should be initialized here, typically writing to a serial
- * port.
+ * This function does not return.
+ *
+ * For architecture where it does not make sense to perform a shutdown, or for
+ * safety reasons it is not advisable to enter a state where execution stops,
+ * it is suggested to implement this function by performing a reboot instead.
  */
-void IRQbspInit();
+void shutdown();
 
 /**
- * \internal
- * Second part of BSP initialization. This function should complete the board
- * initialization with the steps that requires the kernel to be started and
- * interrupts to be enabled.
- *
- * Typically, filesystem initialization and mounting partitions goes here.
+ * This function should flush the default console with
+ * \code
+ * ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
+ * \endcode
+ * close all files and unmount all filesystems by caling
+ * \code
+ * FilesystemManager::instance().umountAll()
+ * \endcode
+ * and finally reboot the system.
  */
-void bspInit2();
+void reboot();
+
+/**
+ * Used after an unrecoverable error condition to restart the system, even from
+ * within an interrupt routine.
+ * WARNING: this function does not close files nor unmount filesystems, so using
+ * it could lead to data corruption.
+ */
+void IRQsystemReboot();
 
 } //namespace miosix
 

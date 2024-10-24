@@ -1,6 +1,5 @@
 
 #include "interfaces/arch_registers.h"
-#include "interfaces_private/bsp.h"
 #include "core/interrupts.h" //For the unexpected interrupt call
 #include "kernel/stage_2_boot.h"
 #include <string.h>

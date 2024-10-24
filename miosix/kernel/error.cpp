@@ -27,7 +27,7 @@
 
 #include "error.h"
 #include "kernel.h"
-#include "interfaces_private/cpu.h"
+#include "interfaces/poweroff.h"
 #include "logging.h"
 
 namespace miosix {

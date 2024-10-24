@@ -31,9 +31,11 @@
 #include "kernel/scheduler/scheduler.h"
 #include "kernel/stage_2_boot.h"
 #include "config/miosix_settings.h"
+#include "interfaces/poweroff.h"
 #include "interfaces_private/cpu.h"
 #include "interfaces/arch_registers.h"
 #include "interfaces/interrupts.h"
+#include "interfaces/poweroff.h"
 
 namespace miosix {
 

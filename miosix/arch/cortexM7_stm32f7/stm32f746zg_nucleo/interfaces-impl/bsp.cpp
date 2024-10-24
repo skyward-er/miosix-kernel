@@ -30,7 +30,7 @@
  * Board support package, this file initializes hardware.
  ************************************************************************/
 
-#include "interfaces_private/bsp.h"
+#include "interfaces_private/bsp_private.h"
 
 #include <inttypes.h>
 #include <sys/ioctl.h>
@@ -45,7 +45,7 @@
 #include "filesystem/file_access.h"
 #include "interfaces/arch_registers.h"
 #include "interfaces/delays.h"
-#include "interfaces_private/cpu.h"
+#include "interfaces/poweroff.h"
 #include "kernel/kernel.h"
 #include "kernel/logging.h"
 #include "kernel/sync.h"

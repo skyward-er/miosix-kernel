@@ -112,13 +112,6 @@ void IRQportableStartKernel();
  */
 inline void doYield();
 
-/**
- * \internal
- * Used after an unrecoverable error condition to restart the system, even from
- * within an interrupt routine.
- */
-void IRQsystemReboot();
-
 } //namespace miosix
 
 /**

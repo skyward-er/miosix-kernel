@@ -47,6 +47,7 @@
 #include "kernel/kernel.h"
 #include "kernel/process.h"
 #include "interfaces/bsp.h"
+#include "interfaces/poweroff.h"
 #include "interfaces_private/os_timer.h"
 
 using namespace std;

@@ -35,48 +35,11 @@
 /**
  * \file bsp.h
  * This file contains architecture specific board support package.
- * It must at least provide these functions:
  *
- * shutdown(), for system shutdown. This function is called in case main()
- * returns, and is available to be called by user code.
- *
- * reboot(), a function that can be called to reboot the system under normal
- * (non error) conditions. It should sync and unmount the filesystem, and
- * perform a reboot. This function is available for user code.
- *
- * Other than this, the board support package might contain other functions,
- * classes, macros etc. to support peripherals and or board hardware.
+ * What it should provide is, by definition, board-specific.
+ * As an example, it the board has at least one software-controlled LED, it is
+ * common for the BSP to provide two functions ledOn() and ledOff().
  */
-
-namespace miosix {
-
-/**
- * This function disables filesystem (if enabled), serial port (if enabled) and
- * shuts down the system, usually by putting the procesor in a deep sleep
- * state.<br>
- * The action to start a new boot is system-specific, can be for example a
- * reset, powercycle or a special GPIO configured to wakeup the processor from
- * deep sleep.<br>
- * This function does not return.<br>
- * WARNING: close all files before using this function, since it unmounts the
- * filesystem.<br>
- */
-void shutdown();
-
-/**
- * The difference between this function and IRQsystemReboot()
- * is that this function disables filesystem (if enabled), serial port
- * (if enabled) while system_reboot() does not do all these
- * things. IRQsystemReboot() is designed to reboot the system
- * when an unrecoverable error occurs, and is used primarily in kernel code,
- * reboot() is designed to reboot the system in normal conditions.<br>
- * This function does not return.<br>
- * WARNING: close all files before using this function, since it unmounts the
- * filesystem.
- */
-void reboot();
-
-} //namespace miosix
 
 /**
  * \}

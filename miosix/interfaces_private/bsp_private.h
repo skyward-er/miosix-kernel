@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2015, 2016, 2017, 2018 by Terraneo Federico             *
+ *   Copyright (C) 2010-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,66 +23,47 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
-/***********************************************************************
- * bsp.cpp Part of the Miosix Embedded OS.
- * Board support package, this file initializes hardware.
- ************************************************************************/
+#pragma once
 
-#include <utility>
-#include <sys/ioctl.h>
-#include "interfaces_private/bsp_private.h"
-#include "interfaces/delays.h"
-#include "interfaces/arch_registers.h"
-#include "config/miosix_settings.h"
-#include "filesystem/file_access.h"
-#include "filesystem/console/console_device.h"
-#include "drivers/serial.h"
-#include "board_settings.h"
+/**
+ * \addtogroup Interfaces
+ * \{
+ */
 
-using namespace std;
+/**
+ * \file bsp_private.h
+ * This file provides architecture specific initialization code that the kernel
+ * will call during boot.
+ */
 
 namespace miosix {
 
-//
-// Initialization
-//
+/**
+ * \internal
+ * First part of BSP initialization. This function should perform the initial
+ * board initialization. This function is called during boot before the kernel
+ * is started, while interrupts are still disabled.
+ *
+ * After this function is called, the kernel will start printing boot logs, so
+ * the console device should be initialized here, typically writing to a serial
+ * port.
+ */
+void IRQbspInit();
 
-void IRQbspInit()
-{
-    //Enable all gpios, as well as AFIO
-    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN |
-                    RCC_APB2ENR_IOPCEN | RCC_APB2ENR_IOPDEN |
-                    RCC_APB2ENR_AFIOEN;
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-    RCC_SYNC();
-
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
-}
-
-void bspInit2()
-{
-    
-}
-
-//
-// Shutdown and reboot
-//
-
-void shutdown()
-{
-    reboot(); //This board has no shutdown support, so we reboot on shutdown
-}
-
-void reboot()
-{
-    ioctl(STDOUT_FILENO,IOCTL_SYNC,0);
-
-    disableInterrupts();
-    IRQsystemReboot();
-}
+/**
+ * \internal
+ * Second part of BSP initialization. This function should complete the board
+ * initialization with the steps that requires the kernel to be started and
+ * interrupts to be enabled.
+ *
+ * Typically, filesystem initialization and mounting partitions goes here.
+ */
+void bspInit2();
 
 } //namespace miosix
+
+/**
+ * \}
+ */

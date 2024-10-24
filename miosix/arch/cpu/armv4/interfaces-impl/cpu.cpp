@@ -60,12 +60,6 @@ extern "C" void kernel_SWI_Routine()
     restoreContext();
 }
 
-void IRQsystemReboot()
-{    
-    //Jump to reset vector
-    asm volatile("ldr pc, =0"::);
-}
-
 void initCtxsave(unsigned int *ctxsave, unsigned int *sp,
                  void (*pc)(void *(*)(void*),void*),
                  void *(*arg0)(void*), void *arg1)
@@ -97,6 +91,13 @@ void IRQportableStartKernel()
     ctxsave=s_ctxsave;//make global ctxsave point to it
     miosix::Thread::yield();//Note that this automatically enables interrupts
     //Never reaches here
+}
+
+//TODO: here for historical reason, move to arch- or board-specific file
+void IRQsystemReboot()
+{
+    //Jump to reset vector
+    asm volatile("ldr pc, =0"::);
 }
 
 } //namespace miosix

@@ -31,7 +31,6 @@
 #include <termios.h>
 #include "serial_atsam4l.h"
 #include "kernel/sync.h"
-#include "interfaces_private/cpu.h"
 #include "filesystem/ioctl.h"
 #include "interfaces/interrupts.h"
 
