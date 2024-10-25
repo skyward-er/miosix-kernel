@@ -15,7 +15,7 @@ kernel/kernel.cpp                                                          \
 kernel/sync.cpp                                                            \
 kernel/error.cpp                                                           \
 kernel/pthread.cpp                                                         \
-kernel/stage_2_boot.cpp                                                    \
+kernel/boot.cpp                                                            \
 kernel/elf_program.cpp                                                     \
 kernel/process.cpp                                                         \
 kernel/process_pool.cpp                                                    \

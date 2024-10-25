@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010, 2011, 2012, 2013, 2014 by Terraneo Federico       *
+ *   Copyright (C) 2010-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -29,7 +29,7 @@
 #include "kernel/kernel.h"
 #include "kernel/error.h"
 #include "kernel/scheduler/scheduler.h"
-#include "kernel/stage_2_boot.h"
+#include "kernel/boot.h"
 #include "config/miosix_settings.h"
 #include "interfaces/poweroff.h"
 #include "interfaces_private/cpu.h"
@@ -39,30 +39,163 @@
 
 namespace miosix {
 
-// Same code behavior but different code size TODO document or remove
-// #define VARIANT
+//
+// Declaration of interrupt handler functions, used to fill the interrupt table
+//
 
-static void unexpectedInterrupt(void*)
-{
-    #ifdef WITH_ERRLOG
-    IRQerrorLog("\r\n***Unexpected Peripheral interrupt\r\n");
-    #endif //WITH_ERRLOG
-    IRQsystemReboot();
-}
+extern char _main_stack_top asm("_main_stack_top"); //defined in the linker script
+void __attribute__((naked)) Reset_Handler();
+void NMI_Handler();
+void HardFault_Handler();
+#if __CORTEX_M != 0
+void MemManage_Handler();
+void BusFault_Handler();
+void UsageFault_Handler();
+void DebugMon_Handler();
+#endif //__CORTEX_M != 0
+void SVC_Handler();
+void __attribute__((naked)) PendSV_Handler();
+static void unexpectedInterrupt(void*);
+
+//
+// Code to build the interrupt table in FLASH and interrupt forwarding table in RAM
+//
 
 const unsigned int numInterrupts=MIOSIX_NUM_PERIPHERAL_IRQ;
 #ifdef VARIANT
-void (*irqTable[numInterrupts])(void *)={ &unexpectedInterrupt };
+void (*irqTable[numInterrupts])(void *);//={ &unexpectedInterrupt };
 void *irqArgs[numInterrupts];
 #else
 struct IrqForwardingEntry
 {
-    constexpr IrqForwardingEntry() : handler(&unexpectedInterrupt), arg(nullptr) {}
+    // constexpr IrqForwardingEntry() : handler(&unexpectedInterrupt), arg(nullptr) {}
     void (*handler)(void *);
     void *arg;
 };
 IrqForwardingEntry irqTable[numInterrupts];
 #endif
+
+// NOTE: more compact assembly is produced if this function is not marked noexcept
+template<int N> void irqProxy() /*noexcept*/
+{
+    #ifdef VARIANT
+    (*irqTable[N])(irqArgs[N]);
+    #else
+    (*irqTable[N].handler)(irqTable[N].arg);
+    #endif
+}
+
+// If all the ARM Cortex microcontrollers had the same number of interrupts, we
+// could just write the interrupt proxy table explicitly in the following way:
+//
+// extern const fnptr interruptProxyTable[numInterrupts]=
+// {
+//     &irqProxy<0>, &irqProxy<1>, ... &irqProxy<numInterrupts-1>
+// };
+//
+// However, numInterrupts is different in different microcontrollers, so we use
+// template metaprogramming to programmatically generate the interrupt proxy
+// table whose size is the value of numInterrupts.
+
+typedef void (*fnptr)();
+
+template<fnptr... args>
+struct InterruptProxyTable
+{
+    const fnptr entry[sizeof...(args)]={ args... };
+};
+
+template<unsigned N, fnptr... args>
+struct TableGenerator
+{
+    typedef typename TableGenerator<N-1, &irqProxy<N-1>, args...>::type type;
+    static const type table;
+};
+
+template<fnptr... args>
+struct TableGenerator<0, args...>
+{
+    typedef InterruptProxyTable<args...> type;
+    static const type table;
+};
+
+template<unsigned N, fnptr... args>
+const typename TableGenerator<N, args...>::type TableGenerator<N, args...>::table;
+
+struct InterruptTable
+{
+    constexpr InterruptTable(char* stackptr, fnptr i1, fnptr i2, fnptr i3,
+                             fnptr i4, fnptr i5, fnptr i6, fnptr i7,
+                             fnptr i8, fnptr i9, fnptr i10, fnptr i11,
+                             fnptr i12, fnptr i13, fnptr i14, fnptr i15,
+                             TableGenerator<numInterrupts>::type interruptProxyTable)
+    : stackptr(stackptr), i1(i1), i2(i2), i3(i3), i4(i4), i5(i5), i6(i6), i7(i7),
+      i8(i8), i9(i9), i10(i10), i11(i11), i12(i12), i13(i13), i14(i14), i15(i15),
+      interruptProxyTable(interruptProxyTable) {}
+
+    char *stackptr;
+    fnptr i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15;
+    // The rest of the interrupt table, the one for peripheral interrupts is
+    // generated programmatically using template metaprogramming to produce the
+    // proxy functions that allow dynamically registering interrupts.
+    TableGenerator<numInterrupts>::type interruptProxyTable;
+};
+
+__attribute__((section(".isr_vector"))) const InterruptTable systemInterruptTable
+(
+    #if __CORTEX_M != 0
+        &_main_stack_top,    // Stack pointer
+        Reset_Handler,       // Reset Handler
+        NMI_Handler,         // NMI Handler
+        HardFault_Handler,   // Hard Fault Handler
+        MemManage_Handler,   // MPU Fault Handler
+        BusFault_Handler,    // Bus Fault Handler
+        UsageFault_Handler,  // Usage Fault Handler
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        SVC_Handler,         // SVCall Handler
+        DebugMon_Handler,    // Debug Monitor Handler
+        nullptr,             // Reserved
+        PendSV_Handler,      // PendSV Handler
+        nullptr,             // SysTick Handler (Miosix does not use it)
+    #else //__CORTEX_M != 0
+        &_main_stack_top,    // Stack pointer
+        Reset_Handler,       // Reset Handler
+        NMI_Handler,         // NMI Handler
+        HardFault_Handler,   // Hard Fault Handler
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        SVC_Handler,         // SVCall Handler
+        nullptr,             // Reserved
+        nullptr,             // Reserved
+        PendSV_Handler,      // PendSV Handler
+        nullptr,             // SysTick Handler (Miosix does not use it)
+    #endif //__CORTEX_M != 0
+    TableGenerator<numInterrupts>::table
+);
+
+//
+// Implementation of the interrupts.h interface
+//
+
+void IRQinitIrqTable() noexcept
+{
+    //NOTE: needed by some MCUS such as ATSam4l where the SAM-BA bootloader
+    //does not relocate the vector table offset
+    SCB->VTOR = reinterpret_cast<unsigned int>(&systemInterruptTable);
+    #ifdef VARIANT
+    for(unsigned int i=0;i<numInterrupts;i++) irqTable[i]=&unexpectedInterrupt;
+    #else
+    for(unsigned int i=0;i<numInterrupts;i++) irqTable[i].handler=&unexpectedInterrupt;
+    #endif
+}
 
 bool IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexcept
 {
@@ -106,55 +239,11 @@ void IRQinvokeScheduler() noexcept
     doYield();
 }
 
-// NOTE: more compact assembly is produced if this function is not marked noexcept
-template<int N> void irqProxy() /*noexcept*/
-{
-    #ifdef VARIANT
-    (*irqTable[N])(irqArgs[N]);
-    #else
-    (*irqTable[N].handler)(irqTable[N].arg);
-    #endif
-}
-
-// If all the ARM Cortex microcontrollers had the same number of interrupts, we
-// could just write the interrupt proxy table explicitly in the following way:
 //
-// extern const fnptr interruptProxyTable[numInterrupts]=
-// {
-//     &irqProxy<0>, &irqProxy<1>, ... &irqProxy<numInterrupts-1>
-// };
+// Support functions to implement interrupt handlers
 //
-// However, numInterrupts is different in different microcontrollers, so we use
-// template metaprogramming to programmatically generate the interrupt proxy
-// table  whose size is the value of numInterrupts.
-
-typedef void (*fnptr)();
-
-template<fnptr... args>
-struct InterruptProxyTable
-{
-    const fnptr entry[sizeof...(args)]={ args... };
-};
-
-template<unsigned N, fnptr... args>
-struct TableGenerator
-{
-    typedef typename TableGenerator<N-1, &irqProxy<N-1>, args...>::type type;
-    static const type table;
-};
-
-template<fnptr... args>
-struct TableGenerator<0, args...>
-{
-    typedef InterruptProxyTable<args...> type;
-    static const type table;
-};
-
-template<unsigned N, fnptr... args>
-const typename TableGenerator<N, args...>::type TableGenerator<N, args...>::table;
 
 #ifdef WITH_ERRLOG
-
 /**
  * \internal
  * Used to print an unsigned int in hexadecimal format, and to reboot the system
@@ -173,11 +262,9 @@ static void printUnsignedInt(unsigned int x)
     }
     IRQerrorLog(result);
 }
-
 #endif //WITH_ERRLOG
 
 #if defined(WITH_PROCESSES) || defined(WITH_ERRLOG)
-
 /**
  * \internal
  * \return the program counter of the thread that was running when the exception
@@ -192,8 +279,73 @@ static unsigned int getProgramCounter()
                  "ldr   %0, [%0]    \n\t":"=r"(result));
     return result;
 }
-
 #endif //WITH_PROCESSES || WITH_ERRLOG
+
+//
+// Interrupt handlers
+//
+
+void __attribute__((naked)) Reset_Handler()
+{
+    /*
+     * The reset handler is the first function that is called by hardware at
+     * boot. The ARM Cortex cores come out of reset with the stack pointer
+     * already set, thus it should be possible to write the boot code straight
+     * in C/C++ but that's not so easy.
+     *
+     * The ARM Cortex cores have two stacks: main (MSP) and process (PSP).
+     * After booting, Miosix uses the MSP only for interrupt handlers, which
+     * are executed from a dedicated stack memory area placed in the
+     * microcontroller internal memory. The top of this stack is identified by
+     * the symbol _main_stack_top.
+     * Miosix uses the PSP as the stack of the currently running thread.
+     * Stack threads are allocated on the heap, which can also be in an external
+     * SRAM or SDRAM memory for boards that have one.
+     *
+     * During boot, we must consider that if the board uses external memory,
+     * this may not be available until we enable it. Part of the memory map
+     * in the linker script may thus not be accessible.
+     * Moreover, global variables in .data/.bss cannot be accessed because they
+     * are only initialized when kernelBootEntryPoint() is called.
+     *
+     * Thus the early stage of the boot proceeds as follows:
+     * The Cortex CPU comes out of reset using the MSP stack which points to
+     * a small stack (it's meant to be used only for interrupts, after all)
+     * that is always located in internal RAM. We take advantage of this stack
+     * to call a board-specific function that usually does only the following:
+     * - Enable PLL and configure FLASH wait states
+     * - Enable the external memory if available
+     * This board-specific function shall not access global variables, as they
+     * are surely not initialized and possibly located in an external memory
+     * that isn't accessible yet.
+     * When this function returns, though, the whole memory map is accessible.
+     * Thus, we abandon the MSP stack (leaving it empty as the only function we
+     * pushed just returned) and leave it for interrupts only, and use the PSP
+     * stack instead.
+     * Since we haven't booted yet and thus we are not inside a thread, we need
+     * to make the PSP point somewhere.
+     * Miosix reuses the top part of the heap for this. During this phase of
+     * the boot, before the first context switch, we thus have no heap-stack
+     * smashing protection, but we have access to a stack that is bigger than
+     * the interrupt-only stack. After the first context switch, this stack too
+     * will be abandoned although not in an empty state, but it doesn't matter
+     * as we'll never return to it and its memory will just be reused as heap.
+     *
+     * The code in this reset handler thus switches stack pointer mid-function,
+     * something that's best done in assembly, as the compiler may use the stack
+     * implicitly. That's why we don't write this part in C++.
+     *
+     * After switching stack we continue boot by calling kernelBootEntryPoint()
+     */
+    asm volatile("cpsid i                  \n\t" //Disable interrupts
+                 "bl  SystemInit           \n\t" //Initialize PLL,FLASH,XRAM
+                 "ldr r0,  =_heap_end      \n\t" //Get pointer to heap end
+                 "msr psp, r0              \n\t" //and use it as PSP
+                 "movs r0, #2              \n\n" //Privileged, process stack
+                 "msr control, r0          \n\t" //Activate PSP
+                 "isb                      \n\t" //Required when switching stack
+                 "bl  _ZN6miosix20kernelBootEntryPointEv"); //Continue boot
+}
 
 void NMI_Handler()
 {
@@ -213,20 +365,19 @@ void HardFault_Handler()
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected HardFault @ ");
     printUnsignedInt(getProgramCounter());
-    #if !defined(_ARCH_CORTEXM0_STM32F0) && !defined(_ARCH_CORTEXM0_STM32G0) && !defined(_ARCH_CORTEXM0PLUS_STM32L0) && !defined(_ARCH_CORTEXM0PLUS_RP2040)
+    #if __CORTEX_M != 0
     unsigned int hfsr=SCB->HFSR;
     if(hfsr & 0x40000000) //SCB_HFSR_FORCED
         IRQerrorLog("Fault escalation occurred\r\n");
     if(hfsr & 0x00000002) //SCB_HFSR_VECTTBL
         IRQerrorLog("A BusFault occurred during a vector table read\r\n");
-    #endif // !_ARCH_CORTEXM0_STM32F0 && !_ARCH_CORTEXM0_STM32G0 && !_ARCH_CORTEXM0PLUS_STM32L0
+    #endif //__CORTEX_M != 0
     #endif //WITH_ERRLOG
     IRQsystemReboot();
 }
 
-// Cortex M0/M0+ architecture does not have the interrupts handled by code
-// below this point
-#if !defined(_ARCH_CORTEXM0_STM32F0) && !defined(_ARCH_CORTEXM0_STM32G0) && !defined(_ARCH_CORTEXM0PLUS_STM32L0) && !defined(_ARCH_CORTEXM0PLUS_RP2040)
+// Cortex M0/M0+ architecture does not have these interrupt handlers
+#if __CORTEX_M != 0
 
 void MemManage_Handler()
 {
@@ -352,7 +503,7 @@ void DebugMon_Handler()
     IRQsystemReboot();
 }
 
-#endif // !defined(_ARCH_CORTEXM0_STM32F0) && !defined(_ARCH_CORTEXM0_STM32G0) && !defined(_ARCH_CORTEXM0PLUS_STM32L0) && !defined(_ARCH_CORTEXM0PLUS_RP2040)
+#endif //__CORTEX_M != 0
 
 void SVC_Handler()
 {
@@ -402,165 +553,49 @@ void SVC_Handler()
     #endif //WITH_PROCESSES
 }
 
-void PendSV_Handler() __attribute__((naked));
-void PendSV_Handler()
-{
-    saveContext();
-    //Call ISR_yield(). Name is a C++ mangled name.
-    asm volatile("bl _ZN6miosix9ISR_yieldEv");
-    restoreContext();
-}
-
 /**
  * \internal
- * Called by the software interrupt, yield to next thread
+ * Called by the PendSV interrupt, call the scheduler to yield to next thread
  * Declared noinline to avoid the compiler trying to inline it into the caller,
  * which would violate the requirement on naked functions. Function is not
  * static because otherwise the compiler optimizes it out...
  */
-void ISR_yield() __attribute__((noinline));
-void ISR_yield()
+void __attribute__((noinline)) pendsvImpl()
 {
     Thread::IRQstackOverflowCheck();
     Scheduler::IRQrunScheduler();
 }
 
-
-void Reset_Handler() __attribute__((__interrupt__, noreturn));
-//Stack top, defined in the linker script
-extern char _main_stack_top asm("_main_stack_top");
-
-struct InterruptTable
+void __attribute__((naked)) PendSV_Handler()
 {
-    constexpr InterruptTable(char* stackptr, fnptr i1, fnptr i2, fnptr i3,
-                             fnptr i4, fnptr i5, fnptr i6, fnptr i7,
-                             fnptr i8, fnptr i9, fnptr i10, fnptr i11,
-                             fnptr i12, fnptr i13, fnptr i14, fnptr i15,
-                             TableGenerator<numInterrupts>::type interruptProxyTable)
-    : stackptr(stackptr), i1(i1), i2(i2), i3(i3), i4(i4), i5(i5), i6(i6), i7(i7),
-      i8(i8), i9(i9), i10(i10), i11(i11), i12(i12), i13(i13), i14(i14), i15(i15),
-      interruptProxyTable(interruptProxyTable) {}
-
-    char *stackptr;
-    fnptr i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15;
-    // The rest of the interrupt table, the one for peripheral interrupts is
-    // generated programmatically using template metaprogramming to produce the
-    // proxy functions that allow dynamically registering interrupts.
-    TableGenerator<numInterrupts>::type interruptProxyTable;
-};
-
-__attribute__((section(".isr_vector"))) const InterruptTable systemInterruptTable
-(
-    #if !defined(_ARCH_CORTEXM0_STM32F0) && !defined(_ARCH_CORTEXM0_STM32G0) && !defined(_ARCH_CORTEXM0PLUS_STM32L0) && !defined(_ARCH_CORTEXM0PLUS_RP2040)
-        &_main_stack_top,    // Stack pointer
-        Reset_Handler,       // Reset Handler
-        NMI_Handler,         // NMI Handler
-        HardFault_Handler,   // Hard Fault Handler
-        MemManage_Handler,   // MPU Fault Handler
-        BusFault_Handler,    // Bus Fault Handler
-        UsageFault_Handler,  // Usage Fault Handler
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        SVC_Handler,         // SVCall Handler
-        DebugMon_Handler,    // Debug Monitor Handler
-        nullptr,             // Reserved
-        PendSV_Handler,      // PendSV Handler
-        nullptr,             // SysTick Handler (Miosix does not use it)
-    #else // !defined(_ARCH_CORTEXM0_STM32F0) && !defined(_ARCH_CORTEXM0_STM32G0) && !defined(_ARCH_CORTEXM0PLUS_STM32L0) && !defined(_ARCH_CORTEXM0PLUS_RP2040)
-        &_main_stack_top,    // Stack pointer
-        Reset_Handler,       // Reset Handler
-        NMI_Handler,         // NMI Handler
-        HardFault_Handler,   // Hard Fault Handler
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        SVC_Handler,         // SVCall Handler
-        nullptr,             // Reserved
-        nullptr,             // Reserved
-        PendSV_Handler,      // PendSV Handler
-        nullptr,             // SysTick Handler (Miosix does not use it)
-    #endif // !defined(_ARCH_CORTEXM0_STM32F0) && !defined(_ARCH_CORTEXM0_STM32G0) && !defined(_ARCH_CORTEXM0PLUS_STM32L0) && !defined(_ARCH_CORTEXM0PLUS_RP2040)
-    TableGenerator<numInterrupts>::table
-);
-
-/**
- * Called by Reset_Handler, performs initialization and calls main.
- * Never returns.
- */
-void program_startup() __attribute__((noreturn));
-void program_startup()
-{
-    //Cortex M3 core appears to get out of reset with interrupts already enabled
-    __disable_irq();
-    //NOTE: needed by some MCUS such as ATSam4l where the SAM-BA bootloader
-    //does not relocate the vector table offset
-    SCB->VTOR = reinterpret_cast<unsigned int>(&systemInterruptTable);
-
-    //These are defined in the linker script
-    extern unsigned char _etext asm("_etext");
-    extern unsigned char _data asm("_data");
-    extern unsigned char _edata asm("_edata");
-    extern unsigned char _bss_start asm("_bss_start");
-    extern unsigned char _bss_end asm("_bss_end");
-
-    //Initialize .data section, clear .bss section
-    unsigned char *etext=&_etext;
-    unsigned char *data=&_data;
-    unsigned char *edata=&_edata;
-    unsigned char *bss_start=&_bss_start;
-    unsigned char *bss_end=&_bss_end;
-    memcpy(data, etext, edata-data);
-    memset(bss_start, 0, bss_end-bss_start);
-
-    //Move on to stage 2
-    _init();
-
-    //If main returns, reboot
-    NVIC_SystemReset();
-    for(;;) ;
+    //In Miosix 3.0, this is the only interrupt from where it is possible to
+    //perform a context switch. If there is the need to perform a context switch
+    //from within another interrupt, such as if a peripheral driver interrupt
+    //has woken up a thread whose priority is higher than the one that was
+    //running when the interrupt occurred, the interrupt must call
+    //IRQinvokeScheduler which causes the PendSV interrupt (this interrupt) to
+    //become pending. When the peripheral interrupt complets, the PendSV
+    //interrupt is run calling the scheduler and performing the constext switch.
+    //Note that just like in Miosix 2.x, in order to perform a context switch we
+    //need to override the compiler generated function prologue and epilogue
+    //as we need to save the entire CPU context with our OS-specific code.
+    //To do so, we mark the function naked. As naked function can only contain
+    //assembly code, we save and restore the context with the saveContext and
+    //restoreContext macros written in assembly, and call the actual interrupt
+    //implementation which is written in C++ in the function pendsvImpl().
+    //Since we are forced to perform the function call in assembly, we need to
+    //call the C++ mangled name of pendsvImpl()
+    saveContext();
+    asm volatile("bl _ZN6miosix10pendsvImplEv");
+    restoreContext();
 }
 
-/**
- * Reset handler, called by hardware immediately after reset
- */
-void Reset_Handler()
+static void unexpectedInterrupt(void*)
 {
-    /*
-     * SystemInit() is called *before* initializing .data and zeroing .bss
-     * Despite all startup files provided by ATMEL do the opposite, there are
-     * three good reasons to do so:
-     * First, the CMSIS specifications say that SystemInit() must not access
-     * global variables, so it is actually possible to call it before
-     * Second, when running Miosix with the xram linker scripts .data and .bss
-     * are placed in the external RAM, so we *must* call SystemInit(), which
-     * enables xram, before touching .data and .bss
-     * Third, this is a performance improvement since the loops that initialize
-     * .data and zeros .bss now run with the CPU at full speed instead of 115kHz
-     * Note that it is called before switching stacks because the memory
-     * at _heap_end can be unavailable until the external RAM is initialized.
-     */
-    SystemInit();
-
-    /*
-     * Initialize process stack and switch to it.
-     * This is required for booting Miosix, a small portion of the top of the
-     * heap area will be used as stack until the first thread starts. After,
-     * this stack will be abandoned and the process stack will point to the
-     * current thread's stack.
-     */
-    asm volatile("ldr r0,  =_heap_end          \n\t"
-                 "msr psp, r0                  \n\t"
-                 "movw r0, #2                  \n\n" //Privileged, process stack
-                 "msr control, r0              \n\t"
-                 "isb                          \n\t":::"r0");
-
-    program_startup();
+    #ifdef WITH_ERRLOG
+    IRQerrorLog("\r\n***Unexpected peripheral interrupt\r\n");
+    #endif //WITH_ERRLOG
+    IRQsystemReboot();
 }
 
 } //namespace miosix

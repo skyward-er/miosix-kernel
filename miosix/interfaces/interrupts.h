@@ -34,6 +34,36 @@
  * \{
  */
 
+/**
+ * \file interrupts.h
+ * This file provides a common interface to register interrupts in the Miosix
+ * kernel. Contrary to Miosix 2.x that used the architecture-specific interrupt
+ * registration mechanism, from Miosix 3.0 interrupts are registered at run-time
+ * by calling IRQregisterIrq().
+ * Additionally, interrupts can be registered with an optional void* argument,
+ * or a non-static class member function can be registered as an interrupt.
+ *
+ * This interface is (currently) only concerned with registering the pointers
+ * to the interrupt handler functions, not to setting other properties of
+ * interrupts such as their priority, which if needed is still done with
+ * architecture-specific code.
+ *
+ * The interface in this header is meant to be used by all device drivers and
+ * code that deals with interrupt handlers.
+ *
+ * For people who need to implement this interface on a new CPU or architecture,
+ * there is one additional function to implement:
+ * \code
+ * namespace miosix {
+ * void IRQinitIrqTable() noexcept;
+ * }
+ * \endcode
+ * that is called during the boot phase to set un the interrupt table, whose
+ * implementation shall be to initialize all peripheral interrupt handlers to
+ * a default handler so that unexpected interrupts do not cause undefined
+ * behavior.
+ */
+
 namespace miosix {
 
 /**

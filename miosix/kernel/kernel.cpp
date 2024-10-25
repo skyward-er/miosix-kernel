@@ -29,7 +29,7 @@
 #include "error.h"
 #include "logging.h"
 #include "sync.h"
-#include "stage_2_boot.h"
+#include "boot.h"
 #include "process.h"
 #include "kernel/scheduler/scheduler.h"
 #include "stdlib_integration/libc_integration.h"

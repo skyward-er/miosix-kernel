@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 by Terraneo Federico *
+ *   Copyright (C) 2008-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,13 +24,6 @@
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
-
-/* *****************************************************
-Miosix boot system
-Stage 2 boot process
-This code will initialize system peripherals, and will
-start the kernel and filesystem.
-***************************************************** */
 
 #include <cstdio>
 #include <stdexcept>
@@ -57,6 +50,9 @@ int main(int argc, char *argv[]);
 
 namespace miosix {
 
+///<\internal Provided by the startup code
+void IRQinitIrqTable() noexcept;
+
 /**
  * \internal
  * Calls C++ global constructors
@@ -71,6 +67,51 @@ static void callConstructors(unsigned long *start, unsigned long *end)
         funcptr=reinterpret_cast<void (*)()>(*i);
         funcptr();
     }
+}
+
+void kernelBootEntryPoint()
+{
+    #ifndef __NO_EXCEPTIONS
+    try {
+    #endif //__NO_EXCEPTIONS
+        //These are defined in the linker script
+        extern unsigned char _etext asm("_etext");
+        extern unsigned char _data asm("_data");
+        extern unsigned char _edata asm("_edata");
+        extern unsigned char _bss_start asm("_bss_start");
+        extern unsigned char _bss_end asm("_bss_end");
+
+        //Initialize .data section, clear .bss section
+        unsigned char *etext=&_etext;
+        unsigned char *data=&_data;
+        unsigned char *edata=&_edata;
+        unsigned char *bss_start=&_bss_start;
+        unsigned char *bss_end=&_bss_end;
+        memcpy(data, etext, edata-data);
+        memset(bss_start, 0, bss_end-bss_start);
+
+        IRQinitIrqTable();
+
+        //Initialize kernel C++ global constructors (called before boot)
+        extern unsigned long __miosix_init_array_start asm("__miosix_init_array_start");
+        extern unsigned long __miosix_init_array_end asm("__miosix_init_array_end");
+        callConstructors(&__miosix_init_array_start, &__miosix_init_array_end);
+
+        if(areInterruptsEnabled()) errorHandler(INTERRUPTS_ENABLED_AT_BOOT);
+        IRQbspInit();
+        IRQosTimerInit();
+        #ifdef WITH_DEEP_SLEEP
+        IRQdeepSleepInit();
+        #endif // WITH_DEEP_SLEEP
+        //After IRQbspInit() serial port is initialized, so we can use IRQbootlog
+        IRQbootlog("Starting Kernel... ");
+        startKernel();
+    #ifndef __NO_EXCEPTIONS
+    } catch(...) {}
+    #endif //__NO_EXCEPTIONS
+    //If for some reason startKernel() fails and returns or an exception is
+    //thrown, reboot
+    IRQsystemReboot();
 }
 
 void *mainLoader(void *argv)
@@ -117,24 +158,3 @@ void *mainLoader(void *argv)
 }
 
 } //namespace miosix
-
-extern "C" void _init()
-{
-    using namespace miosix;
-
-    //Initialize kernel C++ global constructors (called before boot)
-    extern unsigned long __miosix_init_array_start asm("__miosix_init_array_start");
-    extern unsigned long __miosix_init_array_end asm("__miosix_init_array_end");
-    callConstructors(&__miosix_init_array_start, &__miosix_init_array_end);
-
-    if(areInterruptsEnabled()) errorHandler(INTERRUPTS_ENABLED_AT_BOOT);
-    IRQbspInit();
-    IRQosTimerInit();
-    #ifdef WITH_DEEP_SLEEP
-    IRQdeepSleepInit();
-    #endif // WITH_DEEP_SLEEP
-    //After IRQbspInit() serial port is initialized, so we can use IRQbootlog
-    IRQbootlog("Starting Kernel... ");
-    startKernel();
-    //Never reach here (unless startKernel fails)
-}
