@@ -27,6 +27,11 @@
 
 #pragma once
 
+#ifndef COMPILING_MIOSIX
+#error "This is header is private, it can't be used outside Miosix itself."
+#error "If your code depends on a private header, it IS broken."
+#endif //COMPILING_MIOSIX
+
 #include "config/miosix_settings.h"
 #include "kernel/timeconversion.h"
 #include "kernel/scheduler/timer_interrupt.h"
