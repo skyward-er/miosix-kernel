@@ -3103,7 +3103,7 @@ else ifeq ($(ARCH),cortexM4_atsam4l)
     $(ARCH_INC)/drivers/clock.cpp                            \
     $(ARCH_INC)/drivers/lcd.cpp                              \
     $(ARCH_INC)/interfaces-impl/sleep.cpp                    \
-    $(ARCH_INC)/interfaces-impl/gpio_impl.cpp                \
+    $(ARCH_INC)/interfaces-impl/gpio.cpp                     \
     $(ARCH_INC)/interfaces-impl/delays.cpp
     
 ##-----------------------------------------------------------------------------
