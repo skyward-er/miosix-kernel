@@ -46,11 +46,12 @@ RP2040PL011Serial::RP2040PL011Serial(int number, int baudrate, bool rts,
             unreset_block_wait(RESETS_RESET_UART1_BITS);
             uart=uart1_hw;
             irqn=UART1_IRQ_IRQn;
+            break;
         default:
             errorHandler(UNEXPECTED);
     }
     // UART IRQ saves context: its priority must be 3 (see portability.cpp)
-    if(IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this))
+    if(IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this)==false)
         errorHandler(UNEXPECTED);
     NVIC_SetPriority(irqn, 3);
     NVIC_EnableIRQ(irqn);
