@@ -120,7 +120,7 @@ private:
     /// Semaphore flagged when the hardware TX FIFO is ready to receive bytes
     Semaphore txLowWaterFlag;
     /// Software queue used for buffering bytes from the hardware RX FIFO
-    DynQueue<uint8_t> rxQueue;
+    DynQueue<unsigned char> rxQueue;
 };
 
 } //namespace miosix

@@ -64,16 +64,18 @@ RP2040PL011Serial::RP2040PL011Serial(int number, int baudrate, bool rts,
     uart->fbrd = frac;
     //Line configuration and UART enable
     uart->lcr_h = (3 << UART_UARTLCR_H_WLEN_LSB) | UART_UARTLCR_H_FEN_BITS;
-    uart->cr = UART_UARTCR_UARTEN_BITS | UART_UARTCR_TXE_BITS |
-            UART_UARTCR_RXE_BITS | (rts ? UART_UARTCR_RTSEN_BITS : 0) |
-            (cts ? UART_UARTCR_CTSEN_BITS : 0);
+    uart->cr = UART_UARTCR_UARTEN_BITS
+             | UART_UARTCR_TXE_BITS
+             | UART_UARTCR_RXE_BITS
+             | (rts ? UART_UARTCR_RTSEN_BITS : 0)
+             | (cts ? UART_UARTCR_CTSEN_BITS : 0);
 }
 
 ssize_t RP2040PL011Serial::readBlock(void *buffer, size_t size, off_t where)
 {
-    if (size == 0) return 0;
+    if(size == 0) return 0;
     Lock<FastMutex> lock(rxMutex);
-    uint8_t *bytes = reinterpret_cast<uint8_t *>(buffer);
+    auto bytes = reinterpret_cast<unsigned char *>(buffer);
     size_t i = 0;
     // Block until we can read the first byte
     rxQueue.get(bytes[i++]);
@@ -86,16 +88,16 @@ ssize_t RP2040PL011Serial::readBlock(void *buffer, size_t size, off_t where)
         rxQueue.get(bytes[i++]);
         // Ensure the read interrupts can be serviced to read the next byte.
         // The interrupt routine disables them on sw queue full.
-        if (rxQueue.free()>=32) enableAllInterrupts();
+        if(rxQueue.free()>=32) enableAllInterrupts();
     }
     return i;
 }
 
 ssize_t RP2040PL011Serial::writeBlock(const void *buffer, size_t size, off_t where)
 {
-    if (size == 0) return 0;
+    if(size == 0) return 0;
     Lock<FastMutex> lock(txMutex);
-    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(buffer);
+    auto bytes = reinterpret_cast<const unsigned char *>(buffer);
     size_t i=0;
     // Clear the low water semaphore in case it has been left set by a previous
     // transfer. Ordinarily the semaphore counter cannot exceed 1 (or 2, see
@@ -104,9 +106,8 @@ ssize_t RP2040PL011Serial::writeBlock(const void *buffer, size_t size, off_t whe
     // wakeups.
     txLowWaterFlag.reset();
     // Start by filling the hardware FIFO.
-    while (i<size && !(uart->fr & UART_UARTFR_TXFF_BITS))
-        uart->dr = bytes[i++];
-    while (i<size)
+    while(i<size && !(uart->fr & UART_UARTFR_TXFF_BITS)) uart->dr = bytes[i++];
+    while(i<size)
     {
         // Wait for more space in the FIFO to arrive.
         //   There should be at least 16 bytes free in the fifo (as we are
@@ -119,7 +120,7 @@ ssize_t RP2040PL011Serial::writeBlock(const void *buffer, size_t size, off_t whe
         // wakeup here.
         txLowWaterFlag.wait();
         // Fill the FIFO again
-        while (i<size && !(uart->fr & UART_UARTFR_TXFF_BITS))
+        while(i<size && !(uart->fr & UART_UARTFR_TXFF_BITS))
             uart->dr = bytes[i++];
     }
     return size;
@@ -132,13 +133,13 @@ void RP2040PL011Serial::IRQwrite(const char *str)
     bool interrupts=areInterruptsEnabled();
     if(interrupts) fastDisableInterrupts();
     // Write to the data register directly
-    for (int i=0; str[i] != '\0'; i++)
+    for(int i=0; str[i] != '\0'; i++)
     {
-        while (uart->fr & UART_UARTFR_TXFF_BITS) {}
+        while(uart->fr & UART_UARTFR_TXFF_BITS) ;
         uart->dr = str[i];
     }
     // Flush
-    while (!(uart->fr & UART_UARTFR_TXFE_BITS)) {}
+    while(!(uart->fr & UART_UARTFR_TXFE_BITS)) ;
     // We might be tempted to clear the TX interrupt status, but we shouldn't
     // do this as there might be another thread writing to the UART which needs
     // that interrupt to be signalled anyway.
@@ -152,7 +153,7 @@ int RP2040PL011Serial::ioctl(int cmd, void *arg)
     switch(cmd)
     {
         case IOCTL_SYNC:
-            while (!(uart->fr & UART_UARTFR_TXFE_BITS)) {}
+            while(!(uart->fr & UART_UARTFR_TXFE_BITS)) ;
             return 0;
         case IOCTL_TCGETATTR:
             t->c_iflag=IGNBRK | IGNPAR;
@@ -194,9 +195,9 @@ void RP2040PL011Serial::IRQhandleInterrupt()
     {
         // Read enough data to clear the interrupt status,
         // or until the software-side queue is full
-        while((uart->mis & (UART_UARTMIS_RXMIS_BITS|UART_UARTMIS_RTMIS_BITS))
+        while((uart->mis & (UART_UARTMIS_RXMIS_BITS | UART_UARTMIS_RTMIS_BITS))
                 && !rxQueue.isFull())
-            rxQueue.IRQput((uint8_t)uart->dr, hppw);
+            rxQueue.IRQput(static_cast<unsigned char>(uart->dr), hppw);
         // If the sw queue is full, mask RX interrupts temporarily. The
         // device read handler will un-mask them when the queue has some
         // space again. If there was more data to read and hence the interrupt
