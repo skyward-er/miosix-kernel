@@ -47,7 +47,7 @@ _process_pool_start = _heap_end;
 _process_pool_end = 0x20008000;                    /* end of available ram  */
 
 /* identify the Entry Point  */
-ENTRY(_Z13Reset_Handlerv)
+ENTRY(_ZN6miosix13Reset_HandlerEv)
 
 /* specify the memory areas  */
 MEMORY
