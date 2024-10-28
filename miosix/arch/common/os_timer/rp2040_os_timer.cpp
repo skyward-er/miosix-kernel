@@ -34,19 +34,19 @@
 namespace miosix {
 
 static TimeConversion tc(48000000);
-static uint64_t lastAlarmTicks;
+static long long lastAlarmTicks=0;
 
 /**
  * \internal
  * Get raw tick count from the timer.
  * \returns the current tick count.
  */
-static inline uint64_t IRQgetTicks() noexcept
+static inline long long IRQgetTicks() noexcept
 {
     //Latching reads: order matters!
-    uint32_t lo = timer_hw->timelr;
-    uint32_t hi = timer_hw->timehr;
-    return (uint64_t)lo + ((uint64_t)hi << 32);
+    unsigned int lo=timer_hw->timelr;
+    unsigned int hi=timer_hw->timehr;
+    return (static_cast<long long>(hi)<<32) | static_cast<long long>(lo);
 }
 
 /**
@@ -57,12 +57,12 @@ static inline uint64_t IRQgetTicks() noexcept
 static void IRQtimerInterruptHandler()
 {
     //Clear the timer IRQ (register is write clear (WC)!)
-    timer_hw->intr = 1;
-    uint64_t t = IRQgetTicks();
+    timer_hw->intr=1;
+    auto t=IRQgetTicks();
     //Check the full 64 bits. If the alarm deadline has passed, call the kernel.
     //Otherwise rearm the timer and try again.
-    if (t >= lastAlarmTicks) IRQtimerInterrupt(tc.tick2ns(t));
-    else timer_hw->armed = 1;
+    if(t>=lastAlarmTicks) IRQtimerInterrupt(tc.tick2ns(t));
+    else timer_hw->armed=1;
 }
 
 long long getTime() noexcept
@@ -84,19 +84,19 @@ long long IRQgetTime() noexcept
 void IRQosTimerInit()
 {
     //Bring timer out of reset
-    resets_hw->reset = resets_hw->reset & ~RESETS_RESET_TIMER_BITS;
-    while (~resets_hw->reset_done & RESETS_RESET_TIMER_BITS) {}
+    resets_hw->reset=resets_hw->reset & ~RESETS_RESET_TIMER_BITS;
+    while(~resets_hw->reset_done & RESETS_RESET_TIMER_BITS) {}
     //Enable timer interrupt
     //Timer IRQ saves context: its priority must be 3 (see portability.cpp)
     IRQregisterIrq(TIMER_IRQ_0_IRQn, &IRQtimerInterruptHandler);
     NVIC_SetPriority(TIMER_IRQ_0_IRQn, 3);
     NVIC_EnableIRQ(TIMER_IRQ_0_IRQn);
-    timer_hw->inte = TIMER_INTE_ALARM_0_BITS;
+    timer_hw->inte=TIMER_INTE_ALARM_0_BITS;
     //Toggle debug sleep mode. Works around a bug where the timer does not
     //start counting if it was reset while it was paused due to debug mode.
-    timer_hw->dbgpause = 0;
+    timer_hw->dbgpause=0;
     delayUs(1);
-    timer_hw->dbgpause = 3;
+    timer_hw->dbgpause=3;
 }
 
 /**
@@ -115,10 +115,10 @@ void IRQosTimerInit()
  */
 void IRQosTimerSetInterrupt(long long ns) noexcept
 {
-    lastAlarmTicks = (uint64_t)tc.ns2tick(ns);
+    lastAlarmTicks=tc.ns2tick(ns);
     //Writing to the ALARM register also enables the timer
-    timer_hw->alarm[0] = (uint32_t)lastAlarmTicks;
-    if(IRQgetTicks() >= lastAlarmTicks) NVIC_SetPendingIRQ(TIMER_IRQ_0_IRQn);
+    timer_hw->alarm[0]=static_cast<unsigned int>(lastAlarmTicks & 0xffffffff);
+    if(IRQgetTicks()>=lastAlarmTicks) NVIC_SetPendingIRQ(TIMER_IRQ_0_IRQn);
 }
 
 /**
@@ -137,17 +137,17 @@ void IRQosTimerSetInterrupt(long long ns) noexcept
  */
 void IRQosTimerSetTime(long long ns) noexcept
 {
-    uint64_t newTicks = (uint64_t)tc.ns2tick(ns);
-    timer_hw->pause = 1;
-    timer_hw->timelw = (uint32_t)newTicks;
-    timer_hw->timehw = (uint32_t)(newTicks >> 32);
+    auto newTicks=tc.ns2tick(ns);
+    timer_hw->pause=1;
+    timer_hw->timelw=static_cast<unsigned int>(newTicks & 0xffffffff);
+    timer_hw->timehw=static_cast<unsigned int>(newTicks>>32);
     //Check if the time is advancing past the last alarm deadline set
-    if ((timer_hw->armed & 1) && newTicks >= lastAlarmTicks)
+    if((timer_hw->armed & 1) && newTicks>=lastAlarmTicks)
     {
-        timer_hw->armed = 0;
+        timer_hw->armed=0;
         NVIC_SetPendingIRQ(TIMER_IRQ_0_IRQn);
     }
-    timer_hw->pause = 0;
+    timer_hw->pause=0;
 }
 
 /**
