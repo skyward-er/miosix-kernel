@@ -115,7 +115,7 @@ void IRQosTimerInit()
  */
 void IRQosTimerSetInterrupt(long long ns) noexcept
 {
-    uint64_t lastAlarmTicks = (uint64_t)tc.ns2tick(ns);
+    lastAlarmTicks = (uint64_t)tc.ns2tick(ns);
     //Writing to the ALARM register also enables the timer
     timer_hw->alarm[0] = (uint32_t)lastAlarmTicks;
     if(IRQgetTicks() >= lastAlarmTicks) NVIC_SetPendingIRQ(TIMER_IRQ_0_IRQn);
@@ -142,7 +142,7 @@ void IRQosTimerSetTime(long long ns) noexcept
     timer_hw->timelw = (uint32_t)newTicks;
     timer_hw->timehw = (uint32_t)(newTicks >> 32);
     //Check if the time is advancing past the last alarm deadline set
-    if ((timer_hw->armed & 1) && lastAlarmTicks >= newTicks)
+    if ((timer_hw->armed & 1) && newTicks >= lastAlarmTicks)
     {
         timer_hw->armed = 0;
         NVIC_SetPendingIRQ(TIMER_IRQ_0_IRQn);
