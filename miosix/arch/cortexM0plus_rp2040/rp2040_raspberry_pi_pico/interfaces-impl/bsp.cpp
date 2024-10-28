@@ -86,10 +86,10 @@ void IRQbspInit()
 #if defined(STDOUT_REDIRECTED_TO_DCC)
         new ARMDCC()
 #elif DEFAULT_SERIAL_ID == 0
-        new RP2040PL011Serial0(defaultSerialSpeed,
+        new RP2040PL011Serial(0,defaultSerialSpeed,
         defaultSerialFlowctrl, defaultSerialFlowctrl)
 #elif DEFAULT_SERIAL_ID == 1
-        new RP2040PL011Serial1(defaultSerialSpeed,
+        new RP2040PL011Serial(1,defaultSerialSpeed,
         defaultSerialFlowctrl, defaultSerialFlowctrl)
 #else
 #error "No default serial port selected"

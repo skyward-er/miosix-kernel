@@ -27,46 +27,49 @@
 
 #include <termios.h>
 #include <errno.h>
-#include "kernel/scheduler/scheduler.h"
 #include "filesystem/ioctl.h"
 #include "rp2040_serial.h"
 
-miosix::RP2040PL011Serial0 *miosix::internal::uart0Handler;
-miosix::RP2040PL011Serial1 *miosix::internal::uart1Handler;
-
-void __attribute__((naked)) UART0_IRQ_Handler()
-{
-    saveContext();
-    asm volatile("bl %a0"::"i"(miosix::internal::uart0IrqImpl):);
-    restoreContext();
-}
-
-void __attribute__((naked)) UART1_IRQ_Handler()
-{
-    saveContext();
-    asm volatile("bl %a0"::"i"(miosix::internal::uart1IrqImpl):);
-    restoreContext();
-}
-
 namespace miosix {
 
-namespace internal {
-
-void uart0IrqImpl()
+RP2040PL011Serial::RP2040PL011Serial(int number, int baudrate, bool rts,
+    bool cts) : Device(Device::TTY), txLowWaterFlag(1), rxQueue(32+baudrate/500)
 {
-    if (miosix::internal::uart0Handler)
-        miosix::internal::uart0Handler->IRQhandleInterrupt();
+    switch(number)
+    {
+        case 0:
+            unreset_block_wait(RESETS_RESET_UART0_BITS);
+            uart=uart0_hw;
+            irqn=UART0_IRQ_IRQn;
+            break;
+        case 1:
+            unreset_block_wait(RESETS_RESET_UART1_BITS);
+            uart=uart1_hw;
+            irqn=UART1_IRQ_IRQn;
+        default:
+            errorHandler(UNEXPECTED);
+    }
+    // UART IRQ saves context: its priority must be 3 (see portability.cpp)
+    if(IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this))
+        errorHandler(UNEXPECTED);
+    NVIC_SetPriority(irqn, 3);
+    NVIC_EnableIRQ(irqn);
+    uart->ifls = (2<<UART_UARTIFLS_RXIFLSEL_LSB) | (2<<UART_UARTIFLS_TXIFLSEL_LSB);
+    enableAllInterrupts();
+    //Setup baud rate
+    int rate = 16 * baudrate;
+    int div = CLK_SYS_FREQ / rate;
+    int frac = ((rate * 128) / (CLK_SYS_FREQ % rate) + 1) / 2;
+    uart->ibrd = div;
+    uart->fbrd = frac;
+    //Line configuration and UART enable
+    uart->lcr_h = (3 << UART_UARTLCR_H_WLEN_LSB) | UART_UARTLCR_H_FEN_BITS;
+    uart->cr = UART_UARTCR_UARTEN_BITS | UART_UARTCR_TXE_BITS |
+            UART_UARTCR_RXE_BITS | (rts ? UART_UARTCR_RTSEN_BITS : 0) |
+            (cts ? UART_UARTCR_CTSEN_BITS : 0);
 }
 
-void uart1IrqImpl()
-{
-    if (miosix::internal::uart1Handler)
-        miosix::internal::uart1Handler->IRQhandleInterrupt();
-}
-
-}
-
-ssize_t RP2040PL011SerialBase::readBlock(void *buffer, size_t size, off_t where)
+ssize_t RP2040PL011Serial::readBlock(void *buffer, size_t size, off_t where)
 {
     if (size == 0) return 0;
     Lock<FastMutex> lock(rxMutex);
@@ -88,7 +91,7 @@ ssize_t RP2040PL011SerialBase::readBlock(void *buffer, size_t size, off_t where)
     return i;
 }
 
-ssize_t RP2040PL011SerialBase::writeBlock(const void *buffer, size_t size, off_t where)
+ssize_t RP2040PL011Serial::writeBlock(const void *buffer, size_t size, off_t where)
 {
     if (size == 0) return 0;
     Lock<FastMutex> lock(txMutex);
@@ -122,7 +125,7 @@ ssize_t RP2040PL011SerialBase::writeBlock(const void *buffer, size_t size, off_t
     return size;
 }
 
-void RP2040PL011SerialBase::IRQwrite(const char *str)
+void RP2040PL011Serial::IRQwrite(const char *str)
 {
     // We can reach here also with only kernel paused, so make sure
     // interrupts are disabled.
@@ -142,7 +145,42 @@ void RP2040PL011SerialBase::IRQwrite(const char *str)
     if(interrupts) fastEnableInterrupts();
 }
 
-void RP2040PL011SerialBase::IRQhandleInterrupt()
+int RP2040PL011Serial::ioctl(int cmd, void *arg)
+{
+    if(reinterpret_cast<unsigned>(arg) & 0b11) return -EFAULT; //Unaligned
+    termios *t=reinterpret_cast<termios*>(arg);
+    switch(cmd)
+    {
+        case IOCTL_SYNC:
+            while (!(uart->fr & UART_UARTFR_TXFE_BITS)) {}
+            return 0;
+        case IOCTL_TCGETATTR:
+            t->c_iflag=IGNBRK | IGNPAR;
+            t->c_oflag=0;
+            t->c_cflag=CS8;
+            t->c_lflag=0;
+            return 0;
+        case IOCTL_TCSETATTR_NOW:
+        case IOCTL_TCSETATTR_DRAIN:
+        case IOCTL_TCSETATTR_FLUSH:
+            //Changing things at runtime unsupported, so do nothing, but don't
+            //return error as console_device.h implements some attribute changes
+            return 0;
+        default:
+            return -ENOTTY; //Means the operation does not apply to this descriptor
+    }
+}
+
+RP2040PL011Serial::~RP2040PL011Serial()
+{
+    //Disable UART operation
+    uart->cr = 0;
+    NVIC_DisableIRQ(irqn);
+    NVIC_ClearPendingIRQ(irqn);
+    IRQunregisterIrq(irqn);
+}
+
+void RP2040PL011Serial::IRQhandleInterrupt()
 {
     bool hppw=false;
     uint32_t flags = uart->mis;
@@ -169,33 +207,7 @@ void RP2040PL011SerialBase::IRQhandleInterrupt()
         if(rxQueue.isFull()) disableRXInterrupts();
     }
     // Reschedule if needed
-    if(hppw) Scheduler::IRQfindNextThread();
-}
-
-int RP2040PL011SerialBase::ioctl(int cmd, void *arg)
-{
-    if(reinterpret_cast<unsigned>(arg) & 0b11) return -EFAULT; //Unaligned
-    termios *t=reinterpret_cast<termios*>(arg);
-    switch(cmd)
-    {
-        case IOCTL_SYNC:
-            while (!(uart->fr & UART_UARTFR_TXFE_BITS)) {}
-            return 0;
-        case IOCTL_TCGETATTR:
-            t->c_iflag=IGNBRK | IGNPAR;
-            t->c_oflag=0;
-            t->c_cflag=CS8;
-            t->c_lflag=0;
-            return 0;
-        case IOCTL_TCSETATTR_NOW:
-        case IOCTL_TCSETATTR_DRAIN:
-        case IOCTL_TCSETATTR_FLUSH:
-            //Changing things at runtime unsupported, so do nothing, but don't
-            //return error as console_device.h implements some attribute changes
-            return 0;
-        default:
-            return -ENOTTY; //Means the operation does not apply to this descriptor
-    }
+    if(hppw) IRQinvokeScheduler();
 }
 
 } // namespace miosix
