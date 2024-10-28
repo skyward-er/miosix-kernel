@@ -1499,7 +1499,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                           \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp               \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp        \
+    arch/cpu/common/cortexMx_interrupts.cpp               \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp         \
     arch/common/os_timer/stm32_16bit_os_timer.cpp         \
     arch/common/os_timer/stm32_rtc_os_timer.cpp           \
@@ -1966,7 +1966,7 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                               \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                   \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp            \
+    arch/cpu/common/cortexMx_interrupts.cpp                   \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp             \
     arch/common/os_timer/stm32_32bit_os_timer.cpp             \
     arch/common/sleep/cortexMx_sleep.cpp                      \
@@ -2251,7 +2251,7 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -2326,7 +2326,7 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/stm32_16bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -2409,7 +2409,7 @@ else ifeq ($(ARCH),cortexM3_efm32gg)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/efm32_gpio.cpp                       \
@@ -2594,7 +2594,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -2740,7 +2740,7 @@ else ifeq ($(ARCH),cortexM7_stm32h7)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -2853,7 +2853,7 @@ else ifeq ($(ARCH),cortexM0_stm32f0)
 
     ARCH_SRC +=                                              \
     arch/cpu/armv6m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv6m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
     arch/common/drivers/serial_stm32.cpp                     \
@@ -2922,7 +2922,7 @@ else ifeq ($(ARCH),cortexM4_stm32f3)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -3023,7 +3023,7 @@ else ifeq ($(ARCH),cortexM4_stm32l4)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -3095,7 +3095,7 @@ else ifeq ($(ARCH),cortexM4_atsam4l)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/atsam4l_os_timer.cpp                \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -3167,7 +3167,7 @@ else ifeq ($(ARCH),cortexM3_efm32g)
     ## These are the files in arch/<arch name>/common
     ARCH_SRC +=                                              \
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv7m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp            \
     arch/common/os_timer/efm32_os_timer.cpp                  \
     arch/common/sleep/cortexMx_sleep.cpp                     \
@@ -3243,7 +3243,7 @@ else ifeq ($(ARCH),cortexM0plus_stm32l0)
 
     ARCH_SRC +=                                              \
     arch/cpu/armv6m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv6m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/common/os_timer/stm32_16bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
@@ -3311,7 +3311,7 @@ else ifeq ($(ARCH),cortexM0plus_rp2040)
 
     ARCH_SRC +=                                              \
     arch/cpu/armv6m/interfaces-impl/cpu.cpp                  \
-    arch/cpu/armv6m/interfaces-impl/interrupts.cpp           \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
     arch/common/os_timer/rp2040_os_timer.cpp                 \
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/rp2040_serial.cpp                    \
