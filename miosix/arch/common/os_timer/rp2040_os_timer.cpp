@@ -26,8 +26,9 @@
  ***************************************************************************/
 
 #include "kernel/kernel.h"
-#include "interfaces/delays.h"
 #include "interfaces/arch_registers.h"
+#include "interfaces/delays.h"
+#include "interfaces/interrupts.h"
 #include "interfaces_private/os_timer.h"
 
 namespace miosix {
@@ -50,6 +51,33 @@ static inline uint64_t IRQgetTicks() noexcept
 
 /**
  * \internal
+ * Handles the timer interrupt, checking if the alarm period is indeed
+ * elapsed and calling the kernel if so.
+ */
+static void IRQtimerInterruptHandler()
+{
+    //Clear the timer IRQ (register is write clear (WC)!)
+    timer_hw->intr = 1;
+    uint64_t t = IRQgetTicks();
+    //Check the full 64 bits. If the alarm deadline has passed, call the kernel.
+    //Otherwise rearm the timer and try again.
+    if (t >= lastAlarmTicks) IRQtimerInterrupt(tc.tick2ns(t));
+    else timer_hw->armed = 1;
+}
+
+long long getTime() noexcept
+{
+    FastInterruptDisableLock dLock;
+    return IRQgetTime();
+}
+
+long long IRQgetTime() noexcept
+{
+    return tc.tick2ns(IRQgetTicks());
+}
+
+/**
+ * \internal
  * Initialize and start the os timer.
  * It is used by the kernel, and should not be used by end users.
  */
@@ -60,6 +88,7 @@ void IRQosTimerInit()
     while (~resets_hw->reset_done & RESETS_RESET_TIMER_BITS) {}
     //Enable timer interrupt
     //Timer IRQ saves context: its priority must be 3 (see portability.cpp)
+    IRQregisterIrq(TIMER_IRQ_0_IRQn, &IRQtimerInterruptHandler);
     NVIC_SetPriority(TIMER_IRQ_0_IRQn, 3);
     NVIC_EnableIRQ(TIMER_IRQ_0_IRQn);
     timer_hw->inte = TIMER_INTE_ALARM_0_BITS;
@@ -90,22 +119,6 @@ void IRQosTimerSetInterrupt(long long ns) noexcept
     //Writing to the ALARM register also enables the timer
     timer_hw->alarm[0] = (uint32_t)lastAlarmTicks;
     if(IRQgetTicks() >= lastAlarmTicks) NVIC_SetPendingIRQ(TIMER_IRQ_0_IRQn);
-}
-
-/**
- * \internal
- * Handles the timer interrupt, checking if the alarm period is indeed
- * elapsed and calling the kernel if so.
- */
-void IRQtimerInterruptHandler()
-{
-    //Clear the timer IRQ (register is write clear (WC)!)
-    timer_hw->intr = 1;
-    uint64_t t = IRQgetTicks();
-    //Check the full 64 bits. If the alarm deadline has passed, call the kernel.
-    //Otherwise rearm the timer and try again.
-    if (t >= lastAlarmTicks) miosix::IRQtimerInterrupt(tc.tick2ns(t));
-    else timer_hw->armed = 1;
 }
 
 /**
@@ -150,23 +163,4 @@ unsigned int osTimerGetFrequency()
     return 48000000;
 }
 
-long long getTime() noexcept
-{
-    FastInterruptDisableLock dLock;
-    return IRQgetTime();
-}
-
-long long IRQgetTime() noexcept
-{
-    long long ticks = (long long)IRQgetTicks();
-    return tc.tick2ns(ticks);
-}
-
 } // namespace miosix
-
-void __attribute__((naked)) TIMER_IRQ_0_Handler()
-{
-    saveContext();
-    asm volatile("bl %a0"::"i"(miosix::IRQtimerInterruptHandler):);
-    restoreContext();
-}
