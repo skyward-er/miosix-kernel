@@ -37,13 +37,13 @@ uint32_t SystemCoreClock; /* System Clock Frequency (Core Clock)*/
 /*---------------------------------------------------------------------------
   System Core Clock function
  *---------------------------------------------------------------------------*/
-void SystemCoreClockUpdate (void)
-{
-}
+// void SystemCoreClockUpdate (void)
+// {
+// }
 
 /*---------------------------------------------------------------------------
   System initialization function
  *---------------------------------------------------------------------------*/
-void __attribute__((constructor)) SystemInit (void)
-{
-}
+// void __attribute__((constructor)) SystemInit (void)
+// {
+// }
