@@ -27,7 +27,6 @@
 
 #include "kernel/logging.h"
 #include "kernel/kernel.h"
-#include "kernel/error.h"
 #include "kernel/scheduler/scheduler.h"
 #include "kernel/boot.h"
 #include "config/miosix_settings.h"
@@ -35,7 +34,10 @@
 #include "interfaces_private/cpu.h"
 #include "interfaces/arch_registers.h"
 #include "interfaces/interrupts.h"
-#include "interfaces/poweroff.h"
+
+#ifndef __CORTEX_M
+#error "__CORTEX_M undefined"
+#endif //__CORTEX_M
 
 namespace miosix {
 
@@ -61,28 +63,49 @@ static void unexpectedInterrupt(void*);
 // Code to build the interrupt table in FLASH and interrupt forwarding table in RAM
 //
 
+/**
+ * \internal
+ * numInterrupts is the size of the peripheral interrupt table of the chip
+ * we are compiling for. We patch the \code enum IRQn \endcode in the CMSIS
+ * to add the MIOSIX_NUM_PERIPHERAL_IRQ constant for every MCU we support.
+ */
 const unsigned int numInterrupts=MIOSIX_NUM_PERIPHERAL_IRQ;
-#ifdef VARIANT
-void (*irqTable[numInterrupts])(void *);//={ &unexpectedInterrupt };
-void *irqArgs[numInterrupts];
-#else
+
+/**
+ * \internal
+ * To enable interrupt registration at run-time and interrupt arg pointer
+ * passing, we use one pf these structs per peripheral interrupt allocated in RAM
+ */
 struct IrqForwardingEntry
 {
+    //NOTE: a constexpr constructos can be used to perform static initialization
+    //of the table entries, but this uses a lot of Flash memory to store the
+    //initialization values. We thus opted to leave the table uninitialized
+    //and add the IRQinitIrqTable function that provides space efficient
+    //initialization by means of a loop
     // constexpr IrqForwardingEntry() : handler(&unexpectedInterrupt), arg(nullptr) {}
     void (*handler)(void *);
     void *arg;
 };
-IrqForwardingEntry irqTable[numInterrupts];
-#endif
 
-// NOTE: more compact assembly is produced if this function is not marked noexcept
+/// \internal Table of rum-time registered interrupt handlers and args
+static IrqForwardingEntry irqForwardingTable[numInterrupts];
+
+/**
+ * \internal
+ * Interrupt proxy function. One instance of this function is generated for
+ * each peripheral interrupt, and pointers to all these functions are placed in
+ * the hardware interrupt table in Flash memory.
+ * Note that even though we can move the hardware interrupt table in RAM, we
+ * don't do so, as we also need to pass args to registered interrupts, something
+ * that the hardware doesn't do, so we do need this proxy level to pass args
+ * to interrupts
+ * \tparam N which entry of the irqForwardingTable this function should refer to
+ * NOTE: more compact assembly is produced if this function is not marked noexcept
+ */
 template<int N> void irqProxy() /*noexcept*/
 {
-    #ifdef VARIANT
-    (*irqTable[N])(irqArgs[N]);
-    #else
-    (*irqTable[N].handler)(irqTable[N].arg);
-    #endif
+    (*irqForwardingTable[N].handler)(irqForwardingTable[N].arg);
 }
 
 // If all the ARM Cortex microcontrollers had the same number of interrupts, we
@@ -122,6 +145,11 @@ struct TableGenerator<0, args...>
 template<unsigned N, fnptr... args>
 const typename TableGenerator<N, args...>::type TableGenerator<N, args...>::table;
 
+/**
+ * \internal
+ * This struct is the type whose memory layout corresponds to the ARM Cortex
+ * hardware interrupt table.
+ */
 struct InterruptTable
 {
     constexpr InterruptTable(char* stackptr, fnptr i1, fnptr i2, fnptr i3,
@@ -133,6 +161,10 @@ struct InterruptTable
       i8(i8), i9(i9), i10(i10), i11(i11), i12(i12), i13(i13), i14(i14), i15(i15),
       interruptProxyTable(interruptProxyTable) {}
 
+    // The first entries of the interrupt table are the stack pointer, reset
+    // vector and "system" interrupt entries. We don't make these run-time
+    // registrable nor provide arg pointers for those, as only the kernel
+    // uses them
     char *stackptr;
     fnptr i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14, i15;
     // The rest of the interrupt table, the one for peripheral interrupts is
@@ -141,7 +173,10 @@ struct InterruptTable
     TableGenerator<numInterrupts>::type interruptProxyTable;
 };
 
-__attribute__((section(".isr_vector"))) const InterruptTable systemInterruptTable
+/// \internal The actual hardware interrupt table, placed in the .isr_vector
+/// section to make sure it is placed at the start of the Flash memory where the
+/// hardware expects it
+__attribute__((section(".isr_vector"))) extern const InterruptTable hardwareInterruptTable
 (
     #if __CORTEX_M != 0
         &_main_stack_top,    // Stack pointer
@@ -178,6 +213,9 @@ __attribute__((section(".isr_vector"))) const InterruptTable systemInterruptTabl
         PendSV_Handler,      // PendSV Handler
         nullptr,             // SysTick Handler (Miosix does not use it)
     #endif //__CORTEX_M != 0
+    // The rest of the interrupt table, the one for peripheral interrupts is
+    // generated programmatically using template metaprogramming to produce the
+    // proxy functions that allow dynamically registering interrupts.
     TableGenerator<numInterrupts>::table
 );
 
@@ -187,51 +225,33 @@ __attribute__((section(".isr_vector"))) const InterruptTable systemInterruptTabl
 
 void IRQinitIrqTable() noexcept
 {
-    //NOTE: needed by some MCUS such as ATSam4l where the SAM-BA bootloader
-    //does not relocate the vector table offset
-    SCB->VTOR = reinterpret_cast<unsigned int>(&systemInterruptTable);
-    #ifdef VARIANT
-    for(unsigned int i=0;i<numInterrupts;i++) irqTable[i]=&unexpectedInterrupt;
-    #else
-    for(unsigned int i=0;i<numInterrupts;i++) irqTable[i].handler=&unexpectedInterrupt;
-    #endif
+    //NOTE: the bootoader in some MCUs such as ATSam4l does not relocate the
+    //vector table offset to the one in the firmware, so we force it here
+    SCB->VTOR=reinterpret_cast<unsigned int>(&hardwareInterruptTable);
+    for(unsigned int i=0;i<numInterrupts;i++)
+        irqForwardingTable[i].handler=&unexpectedInterrupt;
 }
 
 bool IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexcept
 {
     if(id>=numInterrupts) return false;
-    #ifdef VARIANT
-    if(irqTable[id]!=unexpectedInterrupt) return false;
-    irqTable[id]=handler;
-    irqArgs[id]=arg;
-    #else
-    if(irqTable[id].handler!=unexpectedInterrupt) return false;
-    irqTable[id].handler=handler;
-    irqTable[id].arg=arg;
-    #endif
+    if(irqForwardingTable[id].handler!=unexpectedInterrupt) return false;
+    irqForwardingTable[id].handler=handler;
+    irqForwardingTable[id].arg=arg;
     return true;
 }
 
 void IRQunregisterIrq(unsigned int id) noexcept
 {
     if(id>=numInterrupts) return;
-    #ifdef VARIANT
-    irqTable[id]=unexpectedInterrupt;
-    irqArgs[id]=nullptr;
-    #else
-    irqTable[id].handler=unexpectedInterrupt;
-    irqTable[id].arg=nullptr;
-    #endif
+    irqForwardingTable[id].handler=unexpectedInterrupt;
+    irqForwardingTable[id].arg=nullptr;
 }
 
 bool IRQisIrqRegistered(unsigned int id) noexcept
 {
     if(id>=numInterrupts) return false;
-    #ifdef VARIANT
-    return irqTable[id]==unexpectedInterrupt;
-    #else
-    return irqTable[id].handler==unexpectedInterrupt;
-    #endif
+    return irqForwardingTable[id].handler==unexpectedInterrupt;
 }
 
 void IRQinvokeScheduler() noexcept
