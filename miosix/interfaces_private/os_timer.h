@@ -211,7 +211,7 @@ public:
         // pending flag as an extra timer bit, and accounts for the
         // impossibility to atomically read the timer counter and pending flag.
         // Note that this algorithm imposes a limit on the maximum time
-        // interrupts can be disabeld, equals to one hardware timer period minus
+        // interrupts can be disabled, equals to one hardware timer period minus
         // the time between the two timer reads in this algorithm.
         unsigned int counter=D::IRQgetTimerCounter();
         if(D::IRQgetOverflowFlag() && D::IRQgetTimerCounter()>=counter)
