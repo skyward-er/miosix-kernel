@@ -59,9 +59,9 @@ void IRQportableStartKernel()
     // as they do NOT perform context switches and are fully reentrant.
     //   However such an interrupt handler is in practice impossible for Miosix,
     // as at the moment IRQ contexts are assumed to be in mutual exclusion.
-    //   This will be fixable once we funnel all context switches to PendSV and
-    // after we introduce SMP support.
-    NVIC_SetPriority(SVCall_IRQn,3); // highest priority=0, lowest=3
+    //   This will be fixable once we introduce SMP support.
+    NVIC_SetPriority(SVCall_IRQn,3);
+    NVIC_SetPriority(PendSV_IRQn,3);
 
     //create a temporary space to save current registers. This data is useless
     //since there's no way to stop the sheduler, but we need to save it anyway.
