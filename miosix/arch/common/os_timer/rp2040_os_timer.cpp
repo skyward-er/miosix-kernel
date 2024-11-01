@@ -62,7 +62,7 @@ static void IRQtimerInterruptHandler()
     //Check the full 64 bits. If the alarm deadline has passed, call the kernel.
     //Otherwise rearm the timer and try again.
     if(t>=lastAlarmTicks) IRQtimerInterrupt(tc.tick2ns(t));
-    else timer_hw->armed=1;
+    else timer_hw->alarm[0]=static_cast<unsigned int>(lastAlarmTicks & 0xffffffff);
 }
 
 long long getTime() noexcept
