@@ -43,10 +43,15 @@ static long long lastAlarmTicks=0;
  */
 static inline long long IRQgetTicks() noexcept
 {
-    //Latching reads: order matters!
-    unsigned int lo=timer_hw->timelr;
-    unsigned int hi=timer_hw->timehr;
-    return (static_cast<long long>(hi)<<32) | static_cast<long long>(lo);
+    //Timer has latching registers that however break when multiple cores read
+    //at the same time, so don't use them
+    unsigned int h1=timer_hw->timerawh;
+    unsigned int l1=timer_hw->timerawl;
+    unsigned int h2=timer_hw->timerawh;
+    if(h1==h2)
+        return static_cast<long long>(h1)<<32 | static_cast<long long>(l1);
+    else
+        return static_cast<long long>(h2)<<32 | static_cast<long long>(timer_hw->timerawl);
 }
 
 /**
@@ -56,11 +61,14 @@ static inline long long IRQgetTicks() noexcept
  */
 static void IRQtimerInterruptHandler()
 {
-    //Clear the timer IRQ (register is write clear (WC)!)
-    timer_hw->intr=1;
+    timer_hw->intr=TIMER_INTR_ALARM_0_BITS; //Bit is write-clear
     auto t=IRQgetTicks();
     //Check the full 64 bits. If the alarm deadline has passed, call the kernel.
-    //Otherwise rearm the timer and try again.
+    //Otherwise rearm the timer. Rearming the timer is also important to prevent
+    //a race condition that occurs when IRQosTimerSetInterrupt is called right
+    //as the previously set alarm is about to trigger. In this case the previous
+    //timer interrupt clears the armed flag thus the next interrupt set with
+    //IRQosTimerSetInterrupt would not occur unless rearmed.
     if(t>=lastAlarmTicks) IRQtimerInterrupt(tc.tick2ns(t));
     else timer_hw->alarm[0]=static_cast<unsigned int>(lastAlarmTicks & 0xffffffff);
 }
@@ -68,7 +76,7 @@ static void IRQtimerInterruptHandler()
 long long getTime() noexcept
 {
     FastInterruptDisableLock dLock;
-    return IRQgetTime();
+    return tc.tick2ns(IRQgetTicks());
 }
 
 long long IRQgetTime() noexcept
@@ -84,8 +92,8 @@ long long IRQgetTime() noexcept
 void IRQosTimerInit()
 {
     //Bring timer out of reset
-    resets_hw->reset=resets_hw->reset & ~RESETS_RESET_TIMER_BITS;
-    while(~resets_hw->reset_done & RESETS_RESET_TIMER_BITS) {}
+    resets_hw->reset&= ~RESETS_RESET_TIMER_BITS;
+    while((resets_hw->reset_done & RESETS_RESET_TIMER_BITS)==0) ;
     //Enable timer interrupt
     //Timer IRQ saves context: its priority must be 3 (see portability.cpp)
     IRQregisterIrq(TIMER_IRQ_0_IRQn, &IRQtimerInterruptHandler);
@@ -142,9 +150,9 @@ void IRQosTimerSetTime(long long ns) noexcept
     timer_hw->timelw=static_cast<unsigned int>(newTicks & 0xffffffff);
     timer_hw->timehw=static_cast<unsigned int>(newTicks>>32);
     //Check if the time is advancing past the last alarm deadline set
-    if((timer_hw->armed & 1) && newTicks>=lastAlarmTicks)
+    if((timer_hw->armed & 0b0001) && newTicks>=lastAlarmTicks)
     {
-        timer_hw->armed=0;
+        timer_hw->armed=0b0001; //Bit is write-clear
         NVIC_SetPendingIRQ(TIMER_IRQ_0_IRQn);
     }
     timer_hw->pause=0;
