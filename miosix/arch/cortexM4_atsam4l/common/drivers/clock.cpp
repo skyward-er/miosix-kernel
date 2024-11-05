@@ -29,12 +29,11 @@
 #include "interfaces/arch_registers.h"
 #include "board_settings.h"
 
-#ifdef __cplusplus
 extern "C" {
-#endif //__cplusplus
-
-
 unsigned int SystemCoreClock = miosix::bootClock;
+}
+
+namespace miosix {
 
 static void configureRcfast(int frange)
 {
@@ -48,9 +47,41 @@ static void configureRcfast(int frange)
     PM->PM_MCCTRL=PM_MCCTRL_MCSEL_RCFAST;
 }
 
-void SystemInit()
+/**
+ * This function is the first function called during boot to initialize the
+ * platform memory and clock subsystems.
+ *
+ * Code in this function has several important restrictions:
+ * - When this function is called, part of the memory address space may not be
+ *   available. This occurs when the board includes an external memory, and
+ *   indeed it is the purpose of this very function to enable the external
+ *   (if present) and map it into the address space!
+ * - This function is called before global and static variables in .data/.bss
+ *   are initialized. As a consequence, this function and all function it calls
+ *   are forbidden from referencing global and static variables
+ * - This function is called with the stack pointer pointing to the interrupt
+ *   stack. This is in general a small stack, but is the only stack that is
+ *   guaranteed to be in the internal memory. The allocation of stack-local
+ *   variables and the ensting of function calls should be kept to a minimum
+ * - This function is called with interrupts disabled, before the kernel is
+ *   started and before the I/O subsystem is enabled. There is thus no way
+ *   of printing any debug message.
+ *
+ * This function should perform the following operations:
+ * - Configure the internal memory wait states to support the desired target
+ *   operating frequency
+ * - Configure the CPU clock (e.g: PLL) to run at the desired target frequency
+ * - Enable and configure the external memory (if available)
+ *
+ * As a postcondition of running this function, the entire memory map as
+ * specified in the linker script should be accessible, so the rest of the
+ * kernel can use the memory to complete the boot sequence, and the CPU clock
+ * should be configured at the desired target frequency so the boot can proceed
+ * quickly.
+ */
+void IRQmemoryAndClockInit()
 {
-    //TODO: support more clock options in SystemInit() and getSelectedOscillator()
+    //TODO: support more clock options here and in getSelectedOscillator()
     switch(miosix::bootClock)
     {
         case 4000000:
@@ -63,13 +94,9 @@ void SystemInit()
             configureRcfast(2);  
             break;
     }
+    //This function is empty in this microcontroller family
+    //SystemInit();
 }
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
-
-namespace miosix {
 
 int getSelectedOscillator()
 {
