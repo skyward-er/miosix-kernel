@@ -55,8 +55,7 @@ public:
         DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM2_STOP; //Stop while debugging
     }
 };
-#define IRQ_HANDLER_NAME TIM2_IRQHandler
-#define TIMER_HW_CLASS STM32Timer2HW
+using STM32TimerHW = STM32Timer2HW;
 
 #else
 
@@ -98,8 +97,7 @@ public:
         #endif
     }
 };
-#define IRQ_HANDLER_NAME TIM5_IRQHandler
-#define TIMER_HW_CLASS STM32Timer5HW
+using STM32TimerHW = STM32Timer5HW;
 
 #endif
 
@@ -129,7 +127,7 @@ public:
         // The global variable SystemCoreClock from ARM's CMSIS allows to know
         // the CPU frequency.
         // However, the timer frequency may be a submultiple of the CPU frequency,
-        // due to the bus at whch the periheral is connected being slower. The
+        // due to the bus at which the peripheral is connected being slower. The
         // RCC configuration registers tells us how slower the APB1 bus is running.
         // This formula takes into account that if the APB1 clock is divided by a
         // factor of two or greater, the timer is clocked at twice the bus
@@ -141,7 +139,7 @@ public:
         return T::IRQgetClock();
     }
     
-    static void IRQinitTimer()
+    void IRQinitTimer()
     {
         T::IRQenable();
         // Setup TIM5 base configuration
@@ -149,6 +147,8 @@ public:
         // Interrupts: counter overflow, Compare/Capture on channel 1
         T::get()->CR1=TIM_CR1_URS;
         T::get()->DIER=TIM_DIER_UIE | TIM_DIER_CC1IE;
+        IRQregisterIrq(T::getIRQn(),&TimerAdapter<STM32Timer<T>, 32>::IRQhandler,
+                       static_cast<TimerAdapter<STM32Timer<T>, 32>*>(this));
         NVIC_SetPriority(T::getIRQn(),3); //High priority for TIM5 (Max=0, min=15)
         NVIC_EnableIRQ(T::getIRQn());
         // Configure channel 1 as:
@@ -164,18 +164,7 @@ public:
     }
 };
 
-static STM32Timer<TIMER_HW_CLASS> timer;
+static STM32Timer<STM32TimerHW> timer;
 DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+
 } //namespace miosix
-
-void __attribute__((naked)) IRQ_HANDLER_NAME()
-{
-    saveContext();
-    asm volatile ("bl _Z11osTimerImplv");
-    restoreContext();
-}
-
-void __attribute__((used)) osTimerImpl()
-{
-    miosix::timer.IRQhandler();
-}
