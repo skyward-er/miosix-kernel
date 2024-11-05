@@ -196,7 +196,41 @@ static void clockTreeSetup()
     clockInit(clk_peri, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, 1);
 }
 
-extern "C" void SystemInit()
+namespace miosix {
+
+/**
+ * This function is the first function called during boot to initialize the
+ * platform memory and clock subsystems.
+ *
+ * Code in this function has several important restrictions:
+ * - When this function is called, part of the memory address space may not be
+ *   available. This occurs when the board includes an external memory, and
+ *   indeed it is the purpose of this very function to enable the external
+ *   (if present) and map it into the address space!
+ * - This function is called before global and static variables in .data/.bss
+ *   are initialized. As a consequence, this function and all function it calls
+ *   are forbidden from referencing global and static variables
+ * - This function is called with the stack pointer pointing to the interrupt
+ *   stack. This is in general a small stack, but is the only stack that is
+ *   guaranteed to be in the internal memory. The allocation of stack-local
+ *   variables and the ensting of function calls should be kept to a minimum
+ * - This function is called with interrupts disabled, before the kernel is
+ *   started and before the I/O subsystem is enabled. There is thus no way
+ *   of printing any debug message.
+ *
+ * This function should perform the following operations:
+ * - Configure the internal memory wait states to support the desired target
+ *   operating frequency
+ * - Configure the CPU clock (e.g: PLL) to run at the desired target frequency
+ * - Enable and configure the external memory (if available)
+ *
+ * As a postcondition of running this function, the entire memory map as
+ * specified in the linker script should be accessible, so the rest of the
+ * kernel can use the memory to complete the boot sequence, and the CPU clock
+ * should be configured at the desired target frequency so the boot can proceed
+ * quickly.
+ */
+void IRQmemoryAndClockInit()
 {
     /*
      * Check if we are core 0. If it's not the case, go back to the bootrom.
@@ -216,18 +250,6 @@ extern "C" void SystemInit()
         "   bx r0                       \n" // Jump to _wait_for_vector. Does not return
         "1:                             \n"
         :::"r0","cc");
-
-    //Initialize the system *before* initializing .data and zeroing .bss.
-    //Usually the opposite is done, as there is no guarantee C code works
-    //properly if those memory areas are not properly initialized.
-    //However, there are three good reasons to do so:
-    //First, the CMSIS specifications say that SystemInit() must not access
-    //global variables, so it is actually possible to call it before
-    //Second, when running Miosix with the xram linker scripts .data and .bss
-    //are placed in the external RAM, so we *must* call SystemInit(), which
-    //enables xram, before touching .data and .bss
-    //Third, this is a performance improvement since the loops that initialize
-    //.data and zeros .bss now run with the CPU at full speed
 
     //On RP2040 this function is empty, as they do not really support CMSIS
     //properly. We do everyting ourselves.
@@ -257,3 +279,5 @@ extern "C" void SystemInit()
     // Update SystemCoreClock
     SystemCoreClock = CLK_SYS_FREQ;
 }
+
+} //namespace miosix

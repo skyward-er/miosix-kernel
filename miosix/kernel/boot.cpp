@@ -69,7 +69,7 @@ static void callConstructors(unsigned long *start, unsigned long *end)
     }
 }
 
-void kernelBootEntryPoint()
+void IRQkernelBootEntryPoint()
 {
     #ifndef __NO_EXCEPTIONS
     try {

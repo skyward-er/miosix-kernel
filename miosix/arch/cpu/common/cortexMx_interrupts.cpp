@@ -332,7 +332,8 @@ void __attribute__((naked)) Reset_Handler()
      * The Cortex CPU comes out of reset using the MSP stack which points to
      * a small stack (it's meant to be used only for interrupts, after all)
      * that is always located in internal RAM. We take advantage of this stack
-     * to call a board-specific function that usually does only the following:
+     * to call a board-specific function miosix::memoryAndClockInit() that
+     * usually does only the following:
      * - Enable PLL and configure FLASH wait states
      * - Enable the external memory if available
      * This board-specific function shall not access global variables, as they
@@ -355,16 +356,17 @@ void __attribute__((naked)) Reset_Handler()
      * something that's best done in assembly, as the compiler may use the stack
      * implicitly. That's why we don't write this part in C++.
      *
-     * After switching stack we continue boot by calling kernelBootEntryPoint()
+     * After switching stack we continue boot by calling
+     * miosix::IRQkernelBootEntryPoint()
      */
-    asm volatile("cpsid i                  \n\t" //Disable interrupts
-                 "bl  SystemInit           \n\t" //Initialize PLL,FLASH,XRAM
-                 "ldr r0,  =_heap_end      \n\t" //Get pointer to heap end
-                 "msr psp, r0              \n\t" //and use it as PSP
-                 "movs r0, #2              \n\n" //Privileged, process stack
-                 "msr control, r0          \n\t" //Activate PSP
-                 "isb                      \n\t" //Required when switching stack
-                 "bl  _ZN6miosix20kernelBootEntryPointEv"); //Continue boot
+    asm volatile("cpsid i                                 \n\t" //Disable interrupts
+                 "bl  _ZN6miosix21IRQmemoryAndClockInitEv \n\t" //Initialize PLL,FLASH,XRAM
+                 "ldr r0,  =_heap_end                     \n\t" //Get pointer to heap end
+                 "msr psp, r0                             \n\t" //and use it as PSP
+                 "movs r0, #2                             \n\n" //Privileged, process stack
+                 "msr control, r0                         \n\t" //Activate PSP
+                 "isb                                     \n\t" //Required when switching stack
+                 "bl  _ZN6miosix23IRQkernelBootEntryPointEv");  //Continue boot
 }
 
 void NMI_Handler()
