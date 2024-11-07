@@ -244,7 +244,8 @@ int main()
  */
 static void test_name(const char *name)
 {
-    iprintf("Testing %s...\n",name);
+    iprintf("Testing %s... ",name);
+    fflush(stdout);
 }
 
 /**
@@ -518,7 +519,7 @@ static void test_3()
         delayUs(MAX_TIME_IRQ_DISABLED);
         delta=IRQgetTime()-start;
     }
-    iprintf("%lld\n",delta);
+    iprintf("%lld ",delta);
     //10% tolerance
     auto m=MAX_TIME_IRQ_DISABLED*1000;
     if(delta<(m-m/10) || delta>(m+m/10)) fail("getTime and delayUs don't agree");
@@ -1740,7 +1741,7 @@ void test_13()
 {
     test_name("stderr");
     //Test stderr, as it used to fail
-    int res=fiprintf(stderr,"This string is printed through stderr. %d\n",0);
+    int res=fiprintf(stderr,"This string is printed through stderr. %d ",0);
     if(res<=0) fail("stderr");
     pass();
 }
