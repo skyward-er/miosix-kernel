@@ -48,20 +48,19 @@ namespace miosix {
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
+const unsigned int defaultSerial=0;
 const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
-// Uncomment to use UART 0
-#define DEFAULT_SERIAL_ID 0
-using uart_tx = Gpio<GPIOA_BASE, 0>;
-using uart_rx = Gpio<GPIOA_BASE, 1>;
-using uart_cts = Gpio<GPIOA_BASE, 2>; // Used only with flow control active
-using uart_rts = Gpio<GPIOA_BASE, 3>; // Used only with flow control active
-// Uncomment to use UART 1
-//#define DEFAULT_SERIAL_ID 1
-//using uart_tx = Gpio<GPIOA_BASE, 4>;
-//using uart_rx = Gpio<GPIOA_BASE, 5>;
-//using uart_cts = Gpio<GPIOA_BASE, 6>; // Used only with flow control active
-//using uart_rts = Gpio<GPIOA_BASE, 7>; // Used only with flow control active
+// Pin mapping for usart0, uncomment if defaultSerial==0
+using defaultSerialTxPin = Gpio<GPIOA_BASE, 0>;
+using defaultSerialRxPin = Gpio<GPIOA_BASE, 1>;
+using defaultSerialRtsPin = Gpio<GPIOA_BASE, 3>;
+using defaultSerialCtsPin = Gpio<GPIOA_BASE, 2>;
+// Pin mapping for usart1, uncomment if defaultSerial==1
+//using defaultSerialTxPin = Gpio<GPIOA_BASE, 4>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE, 5>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE, 7>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE, 6>;
 
 /**
  * \}

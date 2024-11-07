@@ -41,11 +41,26 @@ public:
      * Constructor, initializes the serial port.
      * Calls errorHandler(UNEXPECTED) if the port is already being used by
      * another instance of this driver.
+     * \param number usart number
      * \param baudrate serial port baudrate
-     * \param rts true to enable the RTS flow control signal
-     * \param rts true to enable the CTS flow control signal
+     * \param tx GPIO to configure as usart tx, see datasheet for restrictions
+     * \param rx GPIO to configure as usart rx, see datasheet for restrictions
      */
-    RP2040PL011Serial(int number, int baudrate, bool rts=false, bool cts=false);
+    RP2040PL011Serial(int number, int baudrate, GpioPin tx, GpioPin rx);
+
+    /**
+     * Constructor, initializes the serial port.
+     * Calls errorHandler(UNEXPECTED) if the port is already being used by
+     * another instance of this driver.
+     * \param number usart number
+     * \param baudrate serial port baudrate
+     * \param tx GPIO to configure as usart tx, see datasheet for restrictions
+     * \param rx GPIO to configure as usart rx, see datasheet for restrictions
+     * \param rts GPIO to configure as usart rts, see datasheet for restrictions
+     * \param cts GPIO to configure as usart cts, see datasheet for restrictions
+     */
+    RP2040PL011Serial(int number, int baudrate, GpioPin tx, GpioPin rx,
+                      GpioPin rts, GpioPin cts);
     
     /**
      * Read a block of data
@@ -93,6 +108,9 @@ public:
     ~RP2040PL011Serial();
     
 private:
+
+    void commonInit(int number, int baudrate);
+
     /**
      * \internal the serial port interrupts call this member function.
      * Never call this from user code.

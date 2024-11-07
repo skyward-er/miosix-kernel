@@ -32,44 +32,30 @@
 
 namespace miosix {
 
-RP2040PL011Serial::RP2040PL011Serial(int number, int baudrate, bool rts,
-    bool cts) : Device(Device::TTY), txLowWaterFlag(1), rxQueue(32+baudrate/500)
+RP2040PL011Serial::RP2040PL011Serial(int number, int baudrate, GpioPin tx, GpioPin rx)
+    : Device(Device::TTY), txLowWaterFlag(1), rxQueue(32+baudrate/500)
 {
-    switch(number)
-    {
-        case 0:
-            unreset_block_wait(RESETS_RESET_UART0_BITS);
-            uart=uart0_hw;
-            irqn=UART0_IRQ_IRQn;
-            break;
-        case 1:
-            unreset_block_wait(RESETS_RESET_UART1_BITS);
-            uart=uart1_hw;
-            irqn=UART1_IRQ_IRQn;
-            break;
-        default:
-            errorHandler(UNEXPECTED);
-    }
-    // UART IRQ saves context: its priority must be 3 (see portability.cpp)
-    if(IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this)==false)
-        errorHandler(UNEXPECTED);
-    NVIC_SetPriority(irqn, 3);
-    NVIC_EnableIRQ(irqn);
-    uart->ifls = (2<<UART_UARTIFLS_RXIFLSEL_LSB) | (2<<UART_UARTIFLS_TXIFLSEL_LSB);
-    enableAllInterrupts();
-    //Setup baud rate
-    int rate = 16 * baudrate;
-    int div = CLK_SYS_FREQ / rate;
-    int frac = ((rate * 128) / (CLK_SYS_FREQ % rate) + 1) / 2;
-    uart->ibrd = div;
-    uart->fbrd = frac;
-    //Line configuration and UART enable
-    uart->lcr_h = (3 << UART_UARTLCR_H_WLEN_LSB) | UART_UARTLCR_H_FEN_BITS;
+    tx.function(Function::UART); tx.mode(Mode::OUTPUT);
+    rx.function(Function::UART); rx.mode(Mode::INPUT);
+    commonInit(number,baudrate);
+    uart->cr = UART_UARTCR_UARTEN_BITS
+             | UART_UARTCR_TXE_BITS
+             | UART_UARTCR_RXE_BITS;
+}
+
+RP2040PL011Serial::RP2040PL011Serial(int number, int baudrate, GpioPin tx, GpioPin rx,
+    GpioPin rts, GpioPin cts) : Device(Device::TTY), txLowWaterFlag(1), rxQueue(32+baudrate/500)
+{
+    tx.function(Function::UART); tx.mode(Mode::OUTPUT);
+    rx.function(Function::UART); rx.mode(Mode::INPUT);
+    rts.function(Function::UART); rts.mode(Mode::OUTPUT);
+    cts.function(Function::UART); cts.mode(Mode::INPUT);
+    commonInit(number,baudrate);
     uart->cr = UART_UARTCR_UARTEN_BITS
              | UART_UARTCR_TXE_BITS
              | UART_UARTCR_RXE_BITS
-             | (rts ? UART_UARTCR_RTSEN_BITS : 0)
-             | (cts ? UART_UARTCR_CTSEN_BITS : 0);
+             | UART_UARTCR_RTSEN_BITS
+             | UART_UARTCR_CTSEN_BITS;
 }
 
 ssize_t RP2040PL011Serial::readBlock(void *buffer, size_t size, off_t where)
@@ -180,6 +166,40 @@ RP2040PL011Serial::~RP2040PL011Serial()
     NVIC_DisableIRQ(irqn);
     NVIC_ClearPendingIRQ(irqn);
     IRQunregisterIrq(irqn);
+}
+
+void RP2040PL011Serial::commonInit(int number, int baudrate)
+{
+    switch(number)
+    {
+        case 0:
+            unreset_block_wait(RESETS_RESET_UART0_BITS);
+            uart=uart0_hw;
+            irqn=UART0_IRQ_IRQn;
+            break;
+        case 1:
+            unreset_block_wait(RESETS_RESET_UART1_BITS);
+            uart=uart1_hw;
+            irqn=UART1_IRQ_IRQn;
+            break;
+        default:
+            errorHandler(UNEXPECTED);
+    }
+    // UART IRQ saves context: its priority must be 3 (see portability.cpp)
+    if(IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this)==false)
+        errorHandler(UNEXPECTED);
+    NVIC_SetPriority(irqn, 3);
+    NVIC_EnableIRQ(irqn);
+    uart->ifls = (2<<UART_UARTIFLS_RXIFLSEL_LSB) | (2<<UART_UARTIFLS_TXIFLSEL_LSB);
+    enableAllInterrupts();
+    //Setup baud rate
+    int rate = 16 * baudrate;
+    int div = CLK_SYS_FREQ / rate;
+    int frac = ((rate * 128) / (CLK_SYS_FREQ % rate) + 1) / 2;
+    uart->ibrd = div;
+    uart->fbrd = frac;
+    //Line configuration and UART enable
+    uart->lcr_h = (3 << UART_UARTLCR_H_WLEN_LSB) | UART_UARTLCR_H_FEN_BITS;
 }
 
 void RP2040PL011Serial::IRQhandleInterrupt()
