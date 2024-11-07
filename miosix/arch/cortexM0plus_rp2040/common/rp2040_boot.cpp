@@ -47,22 +47,6 @@
 //Boot2 is also responsible for pointing VTOR to our interrupt table.
 #include <rp2040/pre_boot/boot2.h>
 
-/**
- * ELF entry point. Goes back through bootrom + boot2 to properly initialise
- * flash from scratch.
- */
-extern "C" __attribute__((naked, noreturn)) void entryPoint()
-{
-    asm volatile(
-        "movs r0, #0           \n"
-        "ldr r1, =0xe000ed08   \n"
-        "str r0, [r1]          \n" // Reinitialize VTOR to 0 (ROM vector table)
-        "ldmia r0!, {r1, r2}   \n" // Load initial entry point and SP in R1,R2
-        "msr msp, r1           \n" // Reset stack pointer
-        "bx r2                 \n" // Jump to ROM
-        :::"r0","r1","r2","cc");
-}
-
 /// Configure the XOSC peripheral
 static void xoscInit()
 {

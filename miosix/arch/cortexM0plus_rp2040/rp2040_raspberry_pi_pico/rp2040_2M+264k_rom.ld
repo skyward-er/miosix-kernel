@@ -31,30 +31,25 @@
  * - In case of main stack overflow the cpu will fault because access to memory
  *   before the beginning of the ram faults. Instead with the default stack
  *   placement the main stack will silently collide with the heap.
- * Note: if increasing the main stack size also increase the ORIGIN value in
- * the MEMORY definitions below accordingly.
  */
 _main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
 _main_stack_top  = 0x20000000 + _main_stack_size;
-ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
+ASSERT(_main_stack_size % 8 == 0, "MAIN stack size error");
 
 /* end of the heap on 264KB microcontrollers */
 _heap_end = 0x20042000;                            /* end of available ram  */
 
-/* Entry point. This is effectively used only by the "run" command of a
- * debugger. We do not use the same symbol as the reset handler because we
- * want to go back to the bootrom to re-do the whole boot process cleanly. */
-ENTRY(entryPoint)
+ENTRY(_ZN6miosix13Reset_HandlerEv)
 
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)       : ORIGIN = 0x10000000, LENGTH = 2048k
+    flash(rx) : ORIGIN = 0x10000000, LENGTH = 2048k
     /*
      * Note, the ram starts at 0x20000000 but it is necessary to add the size
      * of the main stack, so it is 0x20000200.
      */
-    ram(rwx)        : ORIGIN = 0x20000200, LENGTH = 264k-_main_stack_size
+    ram(rwx)  : ORIGIN = 0x20000000+_main_stack_size, LENGTH = 264k-_main_stack_size
 }
 
 /* now define the output sections  */
