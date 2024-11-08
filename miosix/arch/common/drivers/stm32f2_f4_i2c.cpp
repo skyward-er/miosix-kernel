@@ -35,19 +35,9 @@ static volatile bool error;     ///< Set to true by IRQ on error
 static Thread *waiting=nullptr; ///< Thread waiting for an operation to complete
 
 /**
- * DMA I2C rx end of transfer
- */
-void __attribute__((naked)) DMA1_Stream0_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z20I2C1rxDmaHandlerImplv");
-    restoreContext();
-}
-
-/**
  * DMA I2C rx end of transfer actual implementation
  */
-void __attribute__((used)) I2C1rxDmaHandlerImpl()
+void I2C1rxDmaHandlerImpl()
 {
     DMA1->LIFCR=DMA_LIFCR_CTCIF0
               | DMA_LIFCR_CTEIF0
@@ -56,14 +46,14 @@ void __attribute__((used)) I2C1rxDmaHandlerImpl()
     if(waiting==nullptr) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
+        IRQinvokeScheduler();
     waiting=nullptr;
 }
 
 /**
  * DMA I2C tx end of transfer
  */
-void DMA1_Stream7_IRQHandler()
+void I2C1txDmaHandlerImpl()
 {
     DMA1->HIFCR=DMA_HIFCR_CTCIF7
               | DMA_HIFCR_CTEIF7
@@ -82,19 +72,9 @@ void DMA1_Stream7_IRQHandler()
 }
 
 /**
- * I2C address sent interrupt
- */
-void __attribute__((naked)) I2C1_EV_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z15I2C1HandlerImplv");
-    restoreContext();
-}
-
-/**
  * I2C address sent interrupt actual implementation
  */
-void __attribute__((used)) I2C1HandlerImpl()
+void I2C1HandlerImpl()
 {
     //When called to resolve the last byte not sent issue, clearing
     //I2C_CR2_ITBUFEN prevents this interrupt being re-entered forever, as
@@ -107,31 +87,21 @@ void __attribute__((used)) I2C1HandlerImpl()
     if(waiting==nullptr) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
+        IRQinvokeScheduler();
     waiting=nullptr;
-}
-
-/**
- * I2C error interrupt
- */
-void __attribute__((naked)) I2C1_ER_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z18I2C1errHandlerImplv");
-    restoreContext();
 }
 
 /**
  * I2C error interrupt actual implementation
  */
-void __attribute__((used)) I2C1errHandlerImpl()
+void I2C1errHandlerImpl()
 {
     I2C1->SR1=0; //Clear error flags
     error=true;
     if(waiting==nullptr) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
+        IRQinvokeScheduler();
     waiting=nullptr;
 }
 
@@ -167,18 +137,22 @@ I2C1Master::I2C1Master(GpioPin sda, GpioPin scl, int frequency)
         RCC_SYNC();
     }
     
+    IRQregisterIrq(DMA1_Stream7_IRQn,I2C1txDmaHandlerImpl);
     NVIC_SetPriority(DMA1_Stream7_IRQn,10);//Low priority for DMA
     NVIC_ClearPendingIRQ(DMA1_Stream7_IRQn);//DMA1 stream 7 channel 1 = I2C1 TX 
     NVIC_EnableIRQ(DMA1_Stream7_IRQn);
     
+    IRQregisterIrq(DMA1_Stream0_IRQn,I2C1rxDmaHandlerImpl);
     NVIC_SetPriority(DMA1_Stream0_IRQn,10);//Low priority for DMA
     NVIC_ClearPendingIRQ(DMA1_Stream0_IRQn);//DMA1 stream 0 channel 1 = I2C1 RX 
     NVIC_EnableIRQ(DMA1_Stream0_IRQn);
     
+    IRQregisterIrq(I2C1_EV_IRQn,I2C1HandlerImpl);
     NVIC_SetPriority(I2C1_EV_IRQn,10);//Low priority for I2C
     NVIC_ClearPendingIRQ(I2C1_EV_IRQn);
     NVIC_EnableIRQ(I2C1_EV_IRQn);
     
+    IRQregisterIrq(I2C1_ER_IRQn,I2C1errHandlerImpl);
     NVIC_SetPriority(I2C1_ER_IRQn,10);
     NVIC_ClearPendingIRQ(I2C1_ER_IRQn);
     NVIC_EnableIRQ(I2C1_ER_IRQn);
