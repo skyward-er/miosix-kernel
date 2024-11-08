@@ -114,38 +114,6 @@ constexpr int ICR_FLAGS_CLR=0x7ff;
 #define DMA_Stream           DMA2_Stream3
 #endif
 
-/**
- * \internal
- * DMA2 Stream interrupt handler
- */
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
-void __attribute__((naked)) DMA2_Stream0_IRQHandler()
-#else
-void __attribute__((naked)) DMA2_Stream3_IRQHandler()
-#endif
-{
-    saveContext();
-    asm volatile("bl _ZN6miosix12SDDMAirqImplEv");
-    restoreContext();
-}
-
-/**
- * \internal
- * SDIO interrupt handler
- */
-#if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==1
-void __attribute__((naked)) SDMMC1_IRQHandler()
-#elif (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
-void __attribute__((naked)) SDMMC2_IRQHandler()
-#else //stm32f2 and stm32f4
-void __attribute__((naked)) SDIO_IRQHandler()
-#endif
-{
-    saveContext();
-    asm volatile("bl _ZN6miosix9SDirqImplEv");
-    restoreContext();
-}
-
 namespace miosix {
 
 static volatile bool transferError; ///< \internal DMA or SDIO transfer error
@@ -157,7 +125,7 @@ static unsigned int sdioFlags;      ///< \internal SDIO status flags
  * \internal
  * DMA2 Stream3 interrupt handler actual implementation
  */
-void __attribute__((used)) SDDMAirqImpl()
+void SDDMAirqImpl()
 {
     dmaFlags=DMA2->LISR;
     #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
@@ -181,15 +149,15 @@ void __attribute__((used)) SDDMAirqImpl()
     if(!waiting) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
+        IRQinvokeScheduler();
     waiting=0;
 }
 
 /**
  * \internal
- * DMA2 Stream3 interrupt handler actual implementation
+ * SDIO device interrupt handler actual implementation
  */
-void __attribute__((used)) SDirqImpl()
+void SDirqImpl()
 {
     sdioFlags=SDIO->STA;
 
@@ -208,7 +176,7 @@ void __attribute__((used)) SDirqImpl()
     if(!waiting) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
+        IRQinvokeScheduler();
     waiting=0;
 }
 
@@ -1296,12 +1264,15 @@ static void initSDIOPeripheral()
     }
 
     #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
+    IRQregisterIrq(DMA2_Stream0_IRQn,SDDMAirqImpl);
     NVIC_SetPriority(DMA2_Stream0_IRQn,15);//Low priority for DMA
     NVIC_EnableIRQ(DMA2_Stream0_IRQn);
     #else
+    IRQregisterIrq(DMA2_Stream3_IRQn,SDDMAirqImpl);
     NVIC_SetPriority(DMA2_Stream3_IRQn,15);//Low priority for DMA
     NVIC_EnableIRQ(DMA2_Stream3_IRQn);
     #endif
+    IRQregisterIrq(SDIO_IRQn,SDirqImpl);
     NVIC_SetPriority(SDIO_IRQn,15);//Low priority for SDIO
     NVIC_EnableIRQ(SDIO_IRQn);
     

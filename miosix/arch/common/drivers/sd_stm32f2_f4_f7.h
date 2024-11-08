@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef SD_STM32F2_F4_H
-#define	SD_STM32F2_F4_H
+#pragma once
 
 #include "kernel/sync.h"
 #include "filesystem/devfs/devfs.h"
@@ -60,5 +59,3 @@ private:
 };
 
 } //namespace miosix
-
-#endif //SD_STM32F2_F4_H
