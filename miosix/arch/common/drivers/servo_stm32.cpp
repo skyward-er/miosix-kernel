@@ -43,24 +43,14 @@ static Thread *waiting=0;
 /**
  * Timer 4 interrupt handler actual implementation
  */
-void __attribute__((used)) tim4impl()
+void tim4impl()
 {
     TIM4->SR=0; //Clear interrupt flag
     if(waiting==0) return;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
+        IRQinvokeScheduler();
     waiting=0;
-}
-
-/**
- * Timer 4 interrupt handler
- */
-void __attribute__((naked)) TIM4_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z8tim4implv");
-    restoreContext();
 }
 
 namespace miosix {
@@ -299,6 +289,7 @@ SynchronizedServo::SynchronizedServo() : status(STOPPED)
     TIM4->CCR4=0;
     // Configure interrupt on timer overflow
     TIM4->DIER=TIM_DIER_UIE;
+    IRQregisterIrq(TIM4_IRQn,tim4impl);
     NVIC_SetPriority(TIM4_IRQn,13); //Low priority for timer IRQ
     NVIC_EnableIRQ(TIM4_IRQn);
     // Set default parameters
