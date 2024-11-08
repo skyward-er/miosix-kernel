@@ -66,6 +66,7 @@ public:
     
     inline USART_TypeDef *get() const { return port; }
     inline IRQn_Type getIRQn() const { return irq; }
+    inline unsigned char getAltFunc() const { return altFunc; }
     inline unsigned int IRQgetClock() const
     {
         unsigned int freq=SystemCoreClock;
@@ -100,15 +101,19 @@ public:
 
     USART_TypeDef *port;
     IRQn_Type irq;
+    unsigned char altFunc;
     STM32SerialHW::Bus bus;
     unsigned long clkEnMask;
 };
 
-constexpr int numPorts = 3;
+constexpr int numPorts = 6;
 static const STM32SerialHW ports[numPorts] = {
-    { USART1, USART1_IRQn, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN },
-    { USART2, USART2_IRQn, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN },
-    { USART3, USART3_IRQn, STM32SerialHW::APB1, RCC_APB1ENR_USART3EN },
+    { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN },
+    { USART2, USART2_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN },
+    { USART3, USART3_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART3EN },
+    { UART4 , UART4_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART4EN  },
+    { UART5 , UART5_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART5EN  },
+    { USART6, USART6_IRQn, 8, STM32SerialHW::APB2, RCC_APB2ENR_USART6EN },
 };
 
 //
@@ -144,17 +149,16 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     IRQregisterIrq(portHw->getIRQn(),&STM32Serial::IRQhandleInterrupt,this);
     NVIC_SetPriority(portHw->getIRQn(),15);//Lowest priority for serial
     NVIC_EnableIRQ(portHw->getIRQn());
-    const int altFunc=7;
     tx.mode(Mode::ALTERNATE);
-    tx.alternateFunction(altFunc);
+    tx.alternateFunction(portHw->getAltFunc());
     rx.mode(Mode::ALTERNATE);
-    rx.alternateFunction(altFunc);
+    rx.alternateFunction(portHw->getAltFunc());
     if(flowControl)
     {
         rts.mode(Mode::ALTERNATE);
-        rts.alternateFunction(altFunc);
+        rts.alternateFunction(portHw->getAltFunc());
         cts.mode(Mode::ALTERNATE);
-        rts.alternateFunction(altFunc);
+        rts.alternateFunction(portHw->getAltFunc());
     }
     unsigned int freq=portHw->IRQgetClock();
     unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
