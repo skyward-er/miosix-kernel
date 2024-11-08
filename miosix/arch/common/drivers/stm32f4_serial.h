@@ -36,12 +36,10 @@
 
 namespace miosix {
 
+class STM32SerialHW;
+
 /**
  * Serial port class for stm32 microcontrollers.
- * Only supports USART1, USART2 and USART3
- * Additionally, USARTx can use DMA if SERIAL_x_DMA is defined in
- * board_settings.h, while the other serial use polling for transmission,
- * and interrupt for reception.
  * 
  * Classes of this type are reference counted, must be allocated on the heap
  * and managed through intrusive_ref_ptr<FileBase>
@@ -173,8 +171,9 @@ private:
     DynUnsyncQueue<char> rxQueue;     ///< Receiving queue
     static const unsigned int rxQueueMin=16; ///< Minimum queue size
     Thread *rxWaiting=0;              ///< Thread waiting for rx, or 0
-    
+
     USART_TypeDef *port;              ///< Pointer to USART peripheral
+    const STM32SerialHW *portHw;      ///< Pointer to USART port object
     bool idle=true;                   ///< Receiver idle
     const bool flowControl;           ///< True if flow control GPIOs enabled
     const unsigned char portId;       ///< 1 for USART1, 2 for USART2, ...

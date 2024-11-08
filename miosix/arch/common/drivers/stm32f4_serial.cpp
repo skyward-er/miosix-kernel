@@ -37,7 +37,6 @@
 #include "interfaces/gpio.h"
 
 using namespace std;
-using namespace miosix;
 
 //Work around ST renaming register fields for some STM32L4
 #if defined(USART_CR1_RXNEIE_RXFNEIE) && !defined(USART_CR1_RXNEIE)
@@ -51,6 +50,66 @@ using namespace miosix;
 #endif
 
 namespace miosix {
+
+/*
+ * Auxiliary class that encapsulates all parts of code that differ between
+ * between each instance of this peripheral.
+ */
+class STM32SerialHW
+{
+public:
+    enum Bus
+    {
+        APB1,
+        APB2
+    };
+    
+    inline USART_TypeDef *get() const { return port; }
+    inline IRQn_Type getIRQn() const { return irq; }
+    inline unsigned int IRQgetClock() const
+    {
+        unsigned int freq=SystemCoreClock;
+        switch(bus) {
+            case APB1:
+                if(RCC->CFGR & RCC_CFGR_PPRE1_2)
+                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
+                break;
+            case APB2:
+                if(RCC->CFGR & RCC_CFGR_PPRE2_2)
+                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
+                break;
+        }
+        return freq;
+    }
+    inline void IRQenable() const
+    {
+        switch(bus) {
+            case APB1: RCC->APB1ENR |= clkEnMask; break;
+            case APB2: RCC->APB2ENR |= clkEnMask; break;
+        }
+        RCC_SYNC();
+    }
+    inline void IRQdisable() const
+    {
+        switch(bus) {
+            case APB1: RCC->APB1ENR &= ~clkEnMask; break;
+            case APB2: RCC->APB2ENR &= ~clkEnMask; break;
+        }
+        RCC_SYNC();
+    }
+
+    USART_TypeDef *port;
+    IRQn_Type irq;
+    STM32SerialHW::Bus bus;
+    unsigned long clkEnMask;
+};
+
+constexpr int numPorts = 3;
+static const STM32SerialHW ports[numPorts] = {
+    { USART1, USART1_IRQn, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN },
+    { USART2, USART2_IRQn, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN },
+    { USART3, USART3_IRQn, STM32SerialHW::APB1, RCC_APB1ENR_USART3EN },
+};
 
 //
 // class STM32Serial
@@ -77,39 +136,15 @@ STM32Serial::STM32Serial(int id, int baudrate, GpioPin tx, GpioPin rx,
 void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                              GpioPin rts, GpioPin cts)
 {
+    if(id<1 || id>numPorts) errorHandler(UNEXPECTED);
     InterruptDisableLock dLock;
-    unsigned int freq=SystemCoreClock;
-    switch(id)
-    {
-        case 1:
-            port=USART1;
-            RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-            RCC_SYNC();
-            IRQregisterIrq(USART1_IRQn,&STM32Serial::IRQhandleInterrupt,this);
-            NVIC_SetPriority(USART1_IRQn,15);//Lowest priority for serial
-            NVIC_EnableIRQ(USART1_IRQn);
-            if(RCC->CFGR & RCC_CFGR_PPRE2_2) freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
-            break;
-        case 2:
-            port=USART2;
-            RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
-            RCC_SYNC();
-            IRQregisterIrq(USART2_IRQn,&STM32Serial::IRQhandleInterrupt,this);
-            NVIC_SetPriority(USART2_IRQn,15);//Lowest priority for serial
-            NVIC_EnableIRQ(USART2_IRQn);
-            if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
-            break;
-        case 3:
-            port=USART3;
-            RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
-            RCC_SYNC();
-            IRQregisterIrq(USART3_IRQn,&STM32Serial::IRQhandleInterrupt,this);
-            NVIC_SetPriority(USART3_IRQn,15);//Lowest priority for serial
-            NVIC_EnableIRQ(USART3_IRQn);
-            if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
-            break;
-    }
-    const int altFunc = 7;
+    portHw=&ports[id-1];
+    port=portHw->get();
+    portHw->IRQenable();
+    IRQregisterIrq(portHw->getIRQn(),&STM32Serial::IRQhandleInterrupt,this);
+    NVIC_SetPriority(portHw->getIRQn(),15);//Lowest priority for serial
+    NVIC_EnableIRQ(portHw->getIRQn());
+    const int altFunc=7;
     tx.mode(Mode::ALTERNATE);
     tx.alternateFunction(altFunc);
     rx.mode(Mode::ALTERNATE);
@@ -121,7 +156,8 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
         cts.mode(Mode::ALTERNATE);
         rts.alternateFunction(altFunc);
     }
-    const unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
+    unsigned int freq=portHw->IRQgetClock();
+    unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
     port->BRR=quot/2 + (quot & 1);           //Round to nearest
     if(flowControl==false) port->CR3 |= USART_CR3_ONEBIT;
     else port->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
@@ -252,28 +288,10 @@ STM32Serial::~STM32Serial()
     {
         InterruptDisableLock dLock;
         port->CR1=0;
-        int id=getId();
-        switch(id)
-        {
-            case 1:
-                NVIC_DisableIRQ(USART1_IRQn);
-                NVIC_ClearPendingIRQ(USART1_IRQn);
-                IRQunregisterIrq(USART1_IRQn);
-                RCC->APB2ENR &= ~RCC_APB2ENR_USART1EN;
-                break;
-            case 2:
-                NVIC_DisableIRQ(USART2_IRQn);
-                NVIC_ClearPendingIRQ(USART2_IRQn);
-                IRQunregisterIrq(USART2_IRQn);
-                RCC->APB1ENR &= ~RCC_APB1ENR_USART2EN;
-                break;
-            case 3:
-                NVIC_DisableIRQ(USART3_IRQn);
-                NVIC_ClearPendingIRQ(USART3_IRQn);
-                IRQunregisterIrq(USART3_IRQn);
-                RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN;
-                break;
-        }
+        NVIC_DisableIRQ(portHw->getIRQn());
+        NVIC_ClearPendingIRQ(portHw->getIRQn());
+        IRQunregisterIrq(portHw->getIRQn());
+        portHw->IRQdisable();
     }
 }
 
