@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include "interfaces/gpio.h"
+
 /**
  * \internal
  * Versioning for board_settings.h for out of git tree projects
@@ -45,15 +47,52 @@ namespace miosix {
 /// STM32F407VG only has 192KB of RAM so there is room for a big 4K stack.
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
-/// Serial port (USART3 PB10=TX, PB11=RX)
+/// Serial port
 const unsigned int defaultSerial=3;
 const unsigned int defaultSerialSpeed=19200;
 const bool defaultSerialFlowctrl=false;
-// Aux serial port (hardcoded USART2 PA2=TX, PA3=RX).
+// Default serial 1 pins (uncomment when using serial 1)
+// Note: on this board, pins PA9-12 are in use by the user USB port, and PB6 is
+// connected to the Cirrus audio chip
+//using defaultSerialTxPin = Gpio<GPIOB_BASE,6>;
+//using defaultSerialRxPin = Gpio<GPIOB_BASE,7>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
+// Default serial 2 pins (uncomment when using serial 2)
+//using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
+// Default serial 3 pins (uncomment when using serial 3)
+using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
+using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
+using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
+using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
+
+// Aux serial port
 // Uncomment AUX_SERIAL to enable. The device will appear as /dev/auxtty.
 //#define AUX_SERIAL "auxtty"
+const unsigned int auxSerial=2;
 const unsigned int auxSerialSpeed=9600;
 const bool auxSerialFlowctrl=false;
+// Default aux serial 1 pins (uncomment when using serial 1)
+// Note: on this board, pins PA9-12 are in use by the user USB port, and PB6 is
+// connected to the Cirrus audio chip
+//using auxSerialTxPin = Gpio<GPIOB_BASE,6>;
+//using auxSerialRxPin = Gpio<GPIOB_BASE,7>;
+//using auxSerialRtsPin = Gpio<GPIOA_BASE,12>;
+//using auxSerialCtsPin = Gpio<GPIOA_BASE,11>;
+// Default aux serial 2 pins (uncomment when using serial 2)
+using auxSerialTxPin = Gpio<GPIOA_BASE,2>;
+using auxSerialRxPin = Gpio<GPIOA_BASE,3>;
+using auxSerialRtsPin = Gpio<GPIOA_BASE,1>;
+using auxSerialCtsPin = Gpio<GPIOA_BASE,0>;
+// Default aux serial 3 pins (uncomment when using serial 3)
+//using auxSerialTxPin = Gpio<GPIOB_BASE,10>;
+//using auxSerialRxPin = Gpio<GPIOB_BASE,11>;
+//using auxSerialRtsPin = Gpio<GPIOB_BASE,14>;
+//using auxSerialCtsPin = Gpio<GPIOB_BASE,13>;
+
 //#define SERIAL_1_DMA //Serial 1 is not used, so not enabling DMA
 //#define SERIAL_2_DMA //Serial 2 DMA conflicts with I2S driver in the examples
 #define SERIAL_3_DMA

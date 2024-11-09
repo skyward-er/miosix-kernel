@@ -46,6 +46,7 @@
 #include "filesystem/console/console_device.h"
 #include "drivers/serial.h"
 #include "drivers/sd_stm32f2_f4_f7.h"
+#include "interfaces/bsp.h"
 #include "board_settings.h"
 
 namespace miosix {
@@ -77,9 +78,18 @@ void IRQbspInit()
     // audio output chip, so keep it permanently reset to avoid issues
     cs43l22reset::mode(Mode::OUTPUT);
     cs43l22reset::low();
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+    // Initialize default serial
+    if (defaultSerialFlowctrl)
+    {
+        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+            new STM32Serial(defaultSerial,defaultSerialSpeed,
+            defaultSerialTxPin::getPin(),defaultSerialRxPin::getPin(),
+            defaultSerialRtsPin::getPin(),defaultSerialCtsPin::getPin())));
+    } else {
+        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+            new STM32Serial(defaultSerial,defaultSerialSpeed,
+            defaultSerialTxPin::getPin(),defaultSerialRxPin::getPin())));
+    }
 }
 
 void bspInit2()
@@ -87,9 +97,17 @@ void bspInit2()
     #ifdef WITH_FILESYSTEM
     #ifdef AUX_SERIAL
     intrusive_ref_ptr<DevFs> devFs=basicFilesystemSetup(SDIODriver::instance());
-    devFs->addDevice(AUX_SERIAL,
-        intrusive_ref_ptr<Device>(new STM32Serial(2,auxSerialSpeed,
-        auxSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+    if (auxSerialFlowctrl)
+    {
+        devFs->addDevice(AUX_SERIAL,
+            intrusive_ref_ptr<Device>(new STM32Serial(auxSerial,auxSerialSpeed,
+            auxSerialTxPin::getPin(),auxSerialRxPin::getPin(),
+            auxSerialRtsPin::getPin(),auxSerialCtsPin::getPin())));
+    } else {
+        devFs->addDevice(AUX_SERIAL,
+            intrusive_ref_ptr<Device>(new STM32Serial(auxSerial,auxSerialSpeed,
+            auxSerialTxPin::getPin(),auxSerialRxPin::getPin())));
+    }
     #else //AUX_SERIAL
     basicFilesystemSetup(SDIODriver::instance());
     #endif //AUX_SERIAL

@@ -31,6 +31,7 @@
 #include <kernel/scheduler/scheduler.h>
 #include <kernel/kernel.h>
 #include <kernel/logging.h>
+#include "interfaces/bsp.h"
 
 using namespace miosix;
 

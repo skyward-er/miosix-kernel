@@ -10,4 +10,7 @@
 
 #define RCC_SYNC() //Workaround for a bug in stm32f42x
 
+// Peripheral interrupt start from 0 and the last one is 81, so there are 82
+#define MIOSIX_NUM_PERIPHERAL_IRQ 82
+
 #endif	//ARCH_REGISTERS_IMPL_H

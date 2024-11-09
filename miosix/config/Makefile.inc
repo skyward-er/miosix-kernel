@@ -1526,7 +1526,6 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
         arch/common/drivers/stm32f2_f4_i2c.cpp       \
         arch/common/drivers/stm32_hardware_rng.cpp   \
         arch/common/drivers/servo_stm32.cpp          \
@@ -1963,10 +1962,11 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
     arch/cpu/armv7m/interfaces-impl/cpu.cpp                   \
     arch/cpu/common/cortexMx_interrupts.cpp                   \
     arch/cpu/armv7m/interfaces-impl/userspace.cpp             \
+    $(ARCH_INC)/boot.cpp                                      \
     arch/common/os_timer/stm32_32bit_os_timer.cpp             \
     arch/common/sleep/cortexMx_sleep.cpp                      \
     arch/common/drivers/stm32_gpio.cpp                        \
-    arch/common/drivers/serial_stm32.cpp                      \
+    arch/common/drivers/stm32f4_serial.cpp                    \
     arch/common/drivers/dcc.cpp                               \
     arch/common/drivers/sd_stm32f2_f4_f7.cpp                  \
     $(ARCH_INC)/interfaces-impl/delays.cpp                    \
