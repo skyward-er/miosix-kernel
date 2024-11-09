@@ -47,12 +47,6 @@ class STM32SerialHW;
 class STM32Serial : public Device
 {
 public:
-    enum FlowCtrl
-    {
-        NOFLOWCTRL, ///< No hardware flow control
-        RTSCTS      ///< RTS/CTS hardware flow control
-    };
-    
     /**
      * Constructor, initializes the serial port using remapped pins and disables
      * flow control.
