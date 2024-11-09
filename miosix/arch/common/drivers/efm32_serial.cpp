@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2015-2023 by Terraneo Federico                          *
+ *   Copyright (C) 2015-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,76 +25,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <limits>
 #include <cstring>
 #include <errno.h>
 #include <termios.h>
 #include "efm32_serial.h"
 #include "kernel/sync.h"
-#include "kernel/scheduler/scheduler.h"
-#include "interfaces/gpio.h"
+#include "interfaces/interrupts.h"
 #include "filesystem/ioctl.h"
-
-using namespace std;
-using namespace miosix;
-
-// NOTE: In the efm32 USART peripherals are either used as serial port or SPI
-// and there are no dedicated SPI peripherals. If a port is used somewhere
-// else as SPI with interrupts, the declaration of the interrupt routine here
-// would conflict. So we add the option to disable unused ports.
-#ifndef DISABLE_USART0_DRIVER
-
-using u0tx=Gpio<GPIOE_BASE,10>; //Hardcoding location 0 for now
-using u0rx=Gpio<GPIOE_BASE,11>;
-/// Pointer to serial port class to let interrupts access the class
-static EFM32Serial *port0=nullptr;
-
-/**
- * \internal interrupt routine for usart0 rx actual implementation
- */
-void __attribute__((noinline)) usart0rxIrqImpl()
-{
-   if(port0) port0->IRQhandleInterrupt();
-}
-
-/**
- * \internal interrupt routine for usart0 rx
- */
-void __attribute__((naked)) USART0_RX_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z15usart0rxIrqImplv");
-    restoreContext();
-}
-
-#endif //DISABLE_USART0_DRIVER
-
-#ifndef DISABLE_USART1_DRIVER
-
-using u1tx=Gpio<GPIOC_BASE,0>; //Hardcoding location 0 for now
-using u1rx=Gpio<GPIOC_BASE,1>;
-/// Pointer to serial port class to let interrupts access the class
-static EFM32Serial *port1=nullptr;
-
-/**
- * \internal interrupt routine for usart1 rx actual implementation
- */
-void __attribute__((noinline)) usart1rxIrqImpl()
-{
-   if(port1) port1->IRQhandleInterrupt();
-}
-
-/**
- * \internal interrupt routine for usart1 rx
- */
-void __attribute__((naked)) USART1_RX_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z15usart1rxIrqImplv");
-    restoreContext();
-}
-
-#endif //DISABLE_USART0_DRIVER
 
 namespace miosix {
 
@@ -105,42 +42,34 @@ namespace miosix {
 // A note on the baudrate/500: the buffer is selected so as to withstand
 // 20ms of full data rate. In the 8N1 format one char is made of 10 bits.
 // So (baudrate/10)*0.02=baudrate/500
-EFM32Serial::EFM32Serial(int id, int baudrate)
+EFM32Serial::EFM32Serial(int id, int baudrate, GpioPin tx, GpioPin rx)
         : Device(Device::TTY), rxQueue(rxQueueMin+baudrate/500), rxWaiting(0),
-        portId(id), baudrate(baudrate)
+          baudrate(baudrate)
 {
     {
         InterruptDisableLock dLock;
+        tx.mode(Mode::OUTPUT_HIGH);
+        rx.mode(Mode::INPUT_PULL_UP_FILTER);
         switch(id)
         {
-            #ifndef DISABLE_USART0_DRIVER
             case 0:
-                port0=this;
                 port=USART0;
-                u0tx::mode(Mode::OUTPUT_HIGH);
-                u0rx::mode(Mode::INPUT_PULL_UP_FILTER);
+                irqn=USART0_RX_IRQn;
                 CMU->HFPERCLKEN0|=CMU_HFPERCLKEN0_USART0;
-                NVIC_SetPriority(USART0_RX_IRQn,15);//Lowest priority for serial
-                NVIC_EnableIRQ(USART0_RX_IRQn);
-
                 port->IRCTRL=0; //USART0 also has IrDA mode
                 break;
-            #endif //DISABLE_USART0_DRIVER
-            #ifndef DISABLE_USART1_DRIVER
             case 1:
-                port1=this;
                 port=USART1;
-                u1tx::mode(Mode::OUTPUT_HIGH);
-                u1rx::mode(Mode::INPUT_PULL_UP_FILTER);
+                irqn=USART1_RX_IRQn;
                 CMU->HFPERCLKEN0|=CMU_HFPERCLKEN0_USART1;
-                NVIC_SetPriority(USART1_RX_IRQn,15);//Lowest priority for serial
-                NVIC_EnableIRQ(USART1_RX_IRQn);
                 break;
-            #endif //DISABLE_USART0_DRIVER
             default:
-                InterruptEnableLock eLock(dLock);
                 errorHandler(UNEXPECTED);
         }
+        if(IRQregisterIrq(irqn,&EFM32Serial::IRQinterruptHandler,this)==false)
+            errorHandler(UNEXPECTED);
+        NVIC_SetPriority(irqn,15);//Lowest priority for serial
+        NVIC_EnableIRQ(irqn);
     }
     
     port->IEN=USART_IEN_RXDATAV;
@@ -153,10 +82,9 @@ EFM32Serial::EFM32Serial(int id, int baudrate)
     port->INPUT=0;
     port->I2SCTRL=0;
     #endif //_ARCH_CORTEXM3_EFM32GG
-    port->ROUTE=USART_ROUTE_LOCATION_LOC0 //Default location
+    port->ROUTE=USART_ROUTE_LOCATION_LOC0 //Default location, hardcoded for now!
               | USART_ROUTE_TXPEN         //Enable TX pin
               | USART_ROUTE_RXPEN;        //Enable RX pin
-    unsigned int periphClock=SystemHFClockGet()/(1<<(CMU->HFPERCLKDIV & 0xf));
     //The number we need is periphClock/baudrate/16-1, but with two bits of
     //fractional part. We divide by 2 instead of 16 to have 3 bit of fractional
     //part. We use the additional fractional bit to add one to round towards
@@ -164,7 +92,7 @@ EFM32Serial::EFM32Serial(int id, int baudrate)
     //which is one with three fractional bits. Then we shift to fit the integer
     //part in bits 20:8 and the fractional part in bits 7:6, masking away the
     //third fractional bit. Easy, isn't it? Not quite.
-    port->CLKDIV=((((periphClock/baudrate/2)+1)-8)<<5) & 0x1fffc0;
+    port->CLKDIV=((((peripheralFrequency/baudrate/2)+1)-8)<<5) & 0x1fffc0;
     port->CMD=USART_CMD_CLEARRX
             | USART_CMD_CLEARTX
             | USART_CMD_TXTRIDIS
@@ -258,7 +186,35 @@ int EFM32Serial::ioctl(int cmd, void* arg)
     }
 }
 
-void EFM32Serial::IRQhandleInterrupt()
+EFM32Serial::~EFM32Serial()
+{
+    waitSerialTxFifoEmpty();
+    
+    InterruptDisableLock dLock;
+    port->CMD=USART_CMD_TXDIS
+            | USART_CMD_RXDIS;
+    port->ROUTE=0;
+    IRQunregisterIrq(irqn);
+    NVIC_DisableIRQ(irqn);
+    NVIC_ClearPendingIRQ(irqn);
+    if(port==USART0) CMU->HFPERCLKEN0 &= ~CMU_HFPERCLKEN0_USART0;
+    else             CMU->HFPERCLKEN0 &= ~CMU_HFPERCLKEN0_USART1;
+}
+
+void EFM32Serial::waitSerialTxFifoEmpty()
+{
+    //The documentation states that the TXC bit goes to one as soon as a
+    //transmission is complete. However, this bit is initially zero, so if we
+    //call this function before transmitting, the loop will wait forever. As a
+    //solution, add a timeout having as value the time needed to send three
+    //bytes (the current one in the shift register plus the two in the buffer).
+    //The +1 is to produce rounding on the safe side, the 30 is the time to send
+    //three char through the port, including start and stop bits.
+    int timeout=(cpuFrequency/baudrate+1)*30;
+    while(timeout-->0 && (port->STATUS & USART_STATUS_TXC)==0) ;
+}
+
+void EFM32Serial::IRQinterruptHandler()
 {
     bool atLeastOne=false;
     while(port->STATUS & USART_STATUS_RXDATAV)
@@ -274,57 +230,9 @@ void EFM32Serial::IRQhandleInterrupt()
     {
         rxWaiting->IRQwakeup();
         if(rxWaiting->IRQgetPriority()>
-            Thread::IRQgetCurrentThread()->IRQgetPriority())
-                Scheduler::IRQfindNextThread();
+            Thread::IRQgetCurrentThread()->IRQgetPriority()) IRQinvokeScheduler();
         rxWaiting=0;
     }
-    
-}
-
-EFM32Serial::~EFM32Serial()
-{
-    waitSerialTxFifoEmpty();
-    
-    InterruptDisableLock dLock;
-    port->CMD=USART_CMD_TXDIS
-            | USART_CMD_RXDIS;
-    port->ROUTE=0;
-    switch(portId)
-    {
-        #ifndef DISABLE_USART0_DRIVER
-        case 0:
-            port0=nullptr;
-            NVIC_DisableIRQ(USART0_RX_IRQn);
-            NVIC_ClearPendingIRQ(USART0_RX_IRQn);
-            u0tx::mode(Mode::DISABLED);
-            u0rx::mode(Mode::DISABLED);
-            CMU->HFPERCLKEN0 &= ~CMU_HFPERCLKEN0_USART0;
-            break;
-        #endif //DISABLE_USART0_DRIVER
-        #ifndef DISABLE_USART1_DRIVER
-        case 1:
-            port1=nullptr;
-            NVIC_DisableIRQ(USART1_RX_IRQn);
-            NVIC_ClearPendingIRQ(USART1_RX_IRQn);
-            u1tx::mode(Mode::DISABLED);
-            u1rx::mode(Mode::DISABLED);
-            CMU->HFPERCLKEN0 &= ~CMU_HFPERCLKEN0_USART1;
-            break;
-        #endif //DISABLE_USART0_DRIVER
-    }
-}
-
-void EFM32Serial::waitSerialTxFifoEmpty()
-{
-    //The documentation states that the TXC bit goes to one as soon as a
-    //transmission is complete. However, this bit is initially zero, so if we
-    //call this function before transmitting, the loop will wait forever. As a
-    //solution, add a timeout having as value the time needed to send three
-    //bytes (the current one in the shift register plus the two in the buffer).
-    //The +1 is to produce rounding on the safe side, the 30 is the time to send
-    //three char through the port, including start and stop bits.
-    int timeout=(SystemCoreClock/baudrate+1)*30;
-    while(timeout-->0 && (port->STATUS & USART_STATUS_TXC)==0) ;
 }
 
 } //namespace miosix

@@ -2352,7 +2352,6 @@ else ifeq ($(ARCH),cortexM3_efm32gg)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                                 \
-        $(BOARD_INC)/core/stage_1_boot.cpp                          \
         $(BOARD_INC)/interfaces-impl/bsp.cpp                        \
         $(BOARD_INC)/interfaces-impl/spi.cpp                        \
         $(BOARD_INC)/interfaces-impl/power_manager.cpp              \
@@ -2369,11 +2368,8 @@ else ifeq ($(ARCH),cortexM3_efm32gg)
         $(BOARD_INC)/interfaces-impl/virtual_clock.cpp
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -DEFM32GG332F1024 -D_BOARD_WANDSTEM
-        CXXFLAGS_BASE += -DEFM32GG332F1024 -D_BOARD_WANDSTEM
-
-        ## Clock frequency
-        CLOCK_FREQ := -DEFM32_HFXO_FREQ=48000000 -DEFM32_LFXO_FREQ=32768
+        CFLAGS_BASE   += -D_BOARD_WANDSTEM
+        CXXFLAGS_BASE += -D_BOARD_WANDSTEM
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -2397,10 +2393,9 @@ else ifeq ($(ARCH),cortexM3_efm32gg)
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     CPU := -mcpu=cortex-m3 -mthumb
     AFLAGS_BASE   := $(CPU)
-    CFLAGS_BASE   += -D_ARCH_CORTEXM3_EFM32GG $(CLOCK_FREQ) $(CPU) \
-                     $(OPT_OPTIMIZATION) -c
-    CXXFLAGS_BASE += -D_ARCH_CORTEXM3_EFM32GG $(CLOCK_FREQ) $(CPU) \
-                     $(OPT_OPTIMIZATION) $(OPT_EXCEPT) -c
+    CFLAGS_BASE   += -D_ARCH_CORTEXM3_EFM32GG $(CPU) $(OPT_OPTIMIZATION) -c
+    CXXFLAGS_BASE += -D_ARCH_CORTEXM3_EFM32GG $(CPU) $(OPT_OPTIMIZATION) \
+                     $(OPT_EXCEPT) -c
     LFLAGS_BASE   := $(CPU) -Wl,--gc-sections,-Map,main.map        \
                      -Wl,-T$(KPATH)/$(LINKER_SCRIPT) $(OPT_EXCEPT) \
                      $(OPT_OPTIMIZATION) -nostdlib
@@ -2415,8 +2410,7 @@ else ifeq ($(ARCH),cortexM3_efm32gg)
     arch/common/drivers/efm32_gpio.cpp                       \
     arch/common/drivers/efm32_serial.cpp                     \
     arch/common/drivers/efm32_adc.cpp                        \
-    $(ARCH_INC)/interfaces-impl/delays.cpp                   \
-    arch/common/CMSIS/Device/SiliconLabs/EFM32GG/Source/system_efm32gg.c
+    $(ARCH_INC)/interfaces-impl/delays.cpp
 
 ##-----------------------------------------------------------------------------
 ## ARCHITECTURE: cortexM7_stm32f7
@@ -3123,15 +3117,7 @@ else ifeq ($(ARCH),cortexM3_efm32g)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                                 \
-        $(BOARD_INC)/core/stage_1_boot.cpp                          \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
-
-        ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -DEFM32G222F128
-        CXXFLAGS_BASE += -DEFM32G222F128
-
-        ## Clock frequency
-        CLOCK_FREQ := -DEFM32_HFRCO_FREQ=28000000
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -3155,10 +3141,9 @@ else ifeq ($(ARCH),cortexM3_efm32g)
     ## Select appropriate compiler flags for both ASM/C/C++/linker
     CPU := -mcpu=cortex-m3 -mthumb
     AFLAGS_BASE   := $(CPU)
-    CFLAGS_BASE   += -D_ARCH_CORTEXM3_EFM32G $(CLOCK_FREQ) $(CPU) \
-                     $(OPT_OPTIMIZATION) -c
-    CXXFLAGS_BASE += -D_ARCH_CORTEXM3_EFM32G $(CLOCK_FREQ) $(CPU) \
-                     $(OPT_OPTIMIZATION) $(OPT_EXCEPT) -c
+    CFLAGS_BASE   += -D_ARCH_CORTEXM3_EFM32G $(CPU) $(OPT_OPTIMIZATION) -c
+    CXXFLAGS_BASE += -D_ARCH_CORTEXM3_EFM32G $(CPU) $(OPT_OPTIMIZATION) \
+                     $(OPT_EXCEPT) -c
     LFLAGS_BASE   := $(CPU) -Wl,--gc-sections,-Map,main.map        \
                      -Wl,-T$(KPATH)/$(LINKER_SCRIPT) $(OPT_EXCEPT) \
                      $(OPT_OPTIMIZATION) -nostdlib
@@ -3174,8 +3159,7 @@ else ifeq ($(ARCH),cortexM3_efm32g)
     arch/common/drivers/efm32_gpio.cpp                       \
     arch/common/drivers/efm32_serial.cpp                     \
     arch/common/drivers/efm32_adc.cpp                        \
-    $(ARCH_INC)/interfaces-impl/delays.cpp                   \
-    arch/common/CMSIS/Device/SiliconLabs/EFM32G/Source/system_efm32g.c
+    $(ARCH_INC)/interfaces-impl/delays.cpp
 
 ##-----------------------------------------------------------------------------
 ## ARCHITECTURE: cortexM0plus_stm32l0

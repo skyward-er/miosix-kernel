@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2015-2023 by Terraneo Federico                          *
+ *   Copyright (C) 2015-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -42,6 +42,13 @@ namespace miosix {
 
 /// Size of stack for main().
 const unsigned int MAIN_STACK_SIZE=2048;
+
+/// Clock options
+enum class OscillatorType { HFRCO, HFXO };
+constexpr auto oscillatorType=OscillatorType::HFRCO;
+constexpr unsigned int oscillatorFrequency=28000000;
+constexpr unsigned int cpuFrequency=oscillatorFrequency;
+constexpr unsigned int peripheralFrequency=oscillatorFrequency;
 
 /// Serial port
 const unsigned int defaultSerial=0;

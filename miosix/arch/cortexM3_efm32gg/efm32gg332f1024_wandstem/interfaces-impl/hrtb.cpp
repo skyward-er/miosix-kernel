@@ -26,6 +26,7 @@
  ***************************************************************************/
 
 #include "kernel/kernel.h"
+#include "interfaces/interrupts.h"
 #include "kernel/scheduler/timer_interrupt.h"
 #include "hrtb.h"
 #include "kernel/timeconversion.h"
@@ -115,7 +116,7 @@ inline void interruptGPIOTimerRoutine(){
     if(gpioWaiting){
         gpioWaiting->IRQwakeup();
         if(gpioWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-            Scheduler::IRQfindNextThread();
+            IRQinvokeScheduler();
         gpioWaiting=nullptr;
     }
 }
@@ -125,7 +126,7 @@ inline void interruptTransceiverTimerRoutine(){
     if(transceiverWaiting){
         transceiverWaiting->IRQwakeup();
         if(transceiverWaiting->IRQgetPriority() > Thread::IRQgetCurrentThread()->IRQgetPriority())
-            Scheduler::IRQfindNextThread();
+            IRQinvokeScheduler();
         transceiverWaiting=nullptr;
     }
 }
@@ -163,28 +164,7 @@ static void setupTimers(){
     // If the most significant 32bit aren't match wait for TIM3 to overflow!
 }
 
-void __attribute__((naked)) TIMER3_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z10cstirqhnd3v");
-    restoreContext();
-}
-
-void __attribute__((naked)) TIMER2_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z10cstirqhnd2v");
-    restoreContext();
-}
-
-void __attribute__((naked)) TIMER1_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z10cstirqhnd1v");
-    restoreContext();
-}
-
-void __attribute__((used)) cstirqhnd3(){
+void cstirqhnd3(){
     //rollover
     if (TIMER3->IF & TIMER_IF_OF){
         TIMER3->IFC = TIMER_IFC_OF;
@@ -210,7 +190,7 @@ void __attribute__((used)) cstirqhnd3(){
     } 
 }
 
-void __attribute__((used)) cstirqhnd2(){
+void cstirqhnd2(){
     //CC0 listening for received packet --> input mode
     if ((TIMER2->IEN & TIMER_IEN_CC0) && (TIMER2->IF & TIMER_IF_CC0) ){
         TIMER2->IEN &= ~ TIMER_IEN_CC0;
@@ -261,7 +241,7 @@ void __attribute__((used)) cstirqhnd2(){
                 if(transceiverWaiting){
                     transceiverWaiting->IRQwakeup();
                     if(transceiverWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    Scheduler::IRQfindNextThread();
+                    IRQinvokeScheduler();
                 }
             }
         }
@@ -295,7 +275,7 @@ void __attribute__((used)) cstirqhnd2(){
         if(VHT::softEnable){
             HRTB::flopsyncThread->IRQwakeup();
             if(HRTB::flopsyncThread->IRQgetPriority() > Thread::IRQgetCurrentThread()->IRQgetPriority()){
-                Scheduler::IRQfindNextThread();
+                IRQinvokeScheduler();
             }
         }
     }
@@ -305,7 +285,7 @@ void __attribute__((used)) cstirqhnd2(){
  * This takes about 2.5us to execute, so the Pin can't stay high for less than this value, 
  * and we can't set more interrupts in a period of 2.5us+
  */
-void __attribute__((used)) cstirqhnd1(){
+void cstirqhnd1(){
     if ((TIMER1->IEN & TIMER_IEN_CC1) && (TIMER1->IF & TIMER_IF_CC1)){
         TIMER1->IFC = TIMER_IFC_CC1;
         callScheduler();
@@ -342,7 +322,7 @@ void __attribute__((used)) cstirqhnd1(){
             if(gpioWaiting){
                 gpioWaiting->IRQwakeup();
                 if(gpioWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    Scheduler::IRQfindNextThread();
+                    IRQinvokeScheduler();
             }
         }
     }
@@ -832,6 +812,9 @@ HRTB::HRTB() {
     TIMER1->CC[1].CTRL = TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
     TIMER3->CC[1].CTRL = TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
 
+    IRQregisterIrq(TIMER1_IRQn,&cstirqhnd1);
+    IRQregisterIrq(TIMER2_IRQn,&cstirqhnd2);
+    IRQregisterIrq(TIMER3_IRQn,&cstirqhnd3);
     NVIC_SetPriority(TIMER1_IRQn,3);
     // Priority 8, this is very important, it MUST be a lower priority than RTC priority
     NVIC_SetPriority(TIMER2_IRQn,8);
@@ -884,9 +867,8 @@ HRTB::HRTB() {
         RTC->IFC=RTC_IFC_COMP1;
         TIMER2->IFC=TIMER_IFC_CC2;
         //conversion factor between RTC and HRT is 48e6/32768=1464+3623878656/2^32
-        #if EFM32_HFXO_FREQ!=48000000 || EFM32_LFXO_FREQ!=32768
-        #error "Clock frequency assumption not satisfied"
-        #endif
+        static_assert(oscillatorFrequency==48000000 && rtcOscillatorFrequency==32768,
+                      "Clock frequency assumption not satisfied");
         nowHrt=mul64x32d32(nowRtc, 1464, 3623878656);
         HRTB::clockCorrection=nowHrt-timestamp;
         HRTB::syncPointHrtExpected=nowHrt;

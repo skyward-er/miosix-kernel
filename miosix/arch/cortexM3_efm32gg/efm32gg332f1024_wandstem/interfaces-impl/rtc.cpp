@@ -30,10 +30,11 @@
 
 #include "rtc.h"
 #include <miosix.h>
-#include <kernel/scheduler/scheduler.h>
+#include "interfaces/interrupts.h"
 #include "gpioirq.h"
 #include "config/miosix_settings.h"
 #include "hrtb.h"
+#include "hwmapping.h"
 
 using namespace miosix;
 
@@ -136,65 +137,19 @@ static WaitResult waitImpl(long long value, bool eventSensitive)
 }
 
 /**
- * RTC interrupt
- */
-void __attribute__((naked)) RTC_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z14RTChandlerImplv");
-    restoreContext();
-}
-
-/**
- * RTC interrupt actual implementation
- */
-void __attribute__((used)) RTChandlerImpl()
-{
-    if(RTC->IF & RTC_IF_OF){
-        RTC->IFC=RTC_IFC_OF;
-        swCounter+=overflowIncrement;
-    }
-    
-    if(RTC->IF & RTC_IF_COMP0)
-    {
-        RTC->IFC=RTC_IFC_COMP0;
-        
-        if(rtcTriggerEnable)
-        {
-            //High time is around 120ns
-            transceiver::stxon::high();
-            rtcTriggerEnable=false;
-            transceiver::stxon::low();
-        }
-    
-        if(rtcWaiting)
-        {
-            rtcWaiting->IRQwakeup();
-            if(rtcWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-                Scheduler::IRQfindNextThread();
-            rtcWaiting=nullptr;
-        }
-    }
-    
-    if(RTC->IF & RTC_IF_COMP1){
-        RTC->IFC=RTC_IFC_COMP1;
-    }
-}
-
-/**
  * Event timestamping pin interrupt actual implementation
  */
-void GPIO8Handler()
-{   
-    timestampEvent=IRQreadRtc();
-    eventOccurred=true;
-    
-    if(!rtcWaiting) return;
-    rtcWaiting->IRQwakeup();
-    if(rtcWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
-    rtcWaiting=nullptr;
-}
+// void GPIO8Handler()
+// {
+//     timestampEvent=IRQreadRtc();
+//     eventOccurred=true;
+//
+//     if(!rtcWaiting) return;
+//     rtcWaiting->IRQwakeup();
+//     if(rtcWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+//         IRQinvokeScheduler();
+//     rtcWaiting=nullptr;
+// }
 
 namespace miosix {
 
@@ -306,6 +261,7 @@ Rtc::Rtc() : tc(frequency)
     //COMP0 -> used for wait and trigger
     //COMP1 -> reserved for VHT resync and Power manager
     //NOTE: interrupt not yet enabled as we're not setting RTC->IEN
+    IRQregisterIrq(RTC_IRQn,&Rtc::IRQinterruptHandler);
     NVIC_EnableIRQ(RTC_IRQn);
     NVIC_SetPriority(RTC_IRQn,7); // 0 is the higest priority, 15 il the lowest
     
@@ -318,6 +274,39 @@ Rtc::Rtc() : tc(frequency)
     //
     //Not more needed
     //registerGpioIrq(transceiver::excChB::getPin(),GpioIrqEdge::RISING,GPIO8Handler);
+}
+
+void Rtc::IRQinterruptHandler()
+{
+    if(RTC->IF & RTC_IF_OF){
+        RTC->IFC=RTC_IFC_OF;
+        swCounter+=overflowIncrement;
+    }
+
+    if(RTC->IF & RTC_IF_COMP0)
+    {
+        RTC->IFC=RTC_IFC_COMP0;
+
+        if(rtcTriggerEnable)
+        {
+            //High time is around 120ns
+            transceiver::stxon::high();
+            rtcTriggerEnable=false;
+            transceiver::stxon::low();
+        }
+
+        if(rtcWaiting)
+        {
+            rtcWaiting->IRQwakeup();
+            if(rtcWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+                IRQinvokeScheduler();
+            rtcWaiting=nullptr;
+        }
+    }
+
+    if(RTC->IF & RTC_IF_COMP1){
+        RTC->IFC=RTC_IFC_COMP1;
+    }
 }
 
 } //namespace miosix

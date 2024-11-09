@@ -23,18 +23,13 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
-
-/***********************************************************************
-* bsp_impl.h Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
+ ***************************************************************************/
 
 #pragma once
 
 namespace miosix {
 
-inline void ledOn()  {  }
-inline void ledOff() {  }
+inline void ledOn()  {}
+inline void ledOff() {}
 
-}
+} //namespace miosix

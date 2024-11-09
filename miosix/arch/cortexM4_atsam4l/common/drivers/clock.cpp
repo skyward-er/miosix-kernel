@@ -55,14 +55,14 @@ static void configureRcfast(int frange)
  * - When this function is called, part of the memory address space may not be
  *   available. This occurs when the board includes an external memory, and
  *   indeed it is the purpose of this very function to enable the external
- *   (if present) and map it into the address space!
+ *   memory (if present) and map it into the address space!
  * - This function is called before global and static variables in .data/.bss
  *   are initialized. As a consequence, this function and all function it calls
  *   are forbidden from referencing global and static variables
  * - This function is called with the stack pointer pointing to the interrupt
  *   stack. This is in general a small stack, but is the only stack that is
  *   guaranteed to be in the internal memory. The allocation of stack-local
- *   variables and the ensting of function calls should be kept to a minimum
+ *   variables and the nesting of function calls should be kept to a minimum
  * - This function is called with interrupts disabled, before the kernel is
  *   started and before the I/O subsystem is enabled. There is thus no way
  *   of printing any debug message.

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2015 by Terraneo Federico                               *
+ *   Copyright (C) 2024 by Terraneo Federico                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,16 +23,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
 #pragma once
 
-#include "config/miosix_settings.h"
-#include "hwmapping.h"
-
-namespace miosix {
-
-inline void ledOn()  { redLed::high(); }
-inline void ledOff() { redLed::low(); }
-
-}
+#include "CMSIS/Device/SiliconLabs/EFM32GG/Include/efm32gg332f1024.h"

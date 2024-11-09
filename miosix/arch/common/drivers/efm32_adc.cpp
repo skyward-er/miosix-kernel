@@ -26,8 +26,11 @@
  ***************************************************************************/
 
 #include "efm32_adc.h"
+#include "config/miosix_settings.h"
 #include "miosix.h"
 #include <algorithm>
+
+namespace miosix {
 
 Adc& Adc::instance()
 {
@@ -87,22 +90,18 @@ unsigned short Adc::readChannel(int channel)
 Adc::Adc()
 {
     {
-        miosix::FastInterruptDisableLock dLock;
+        FastInterruptDisableLock dLock;
         CMU->HFPERCLKEN0 |= CMU_HFPERCLKEN0_ADC0;
     }
 
-    unsigned int hfperclk=SystemCoreClock;
-    //EFM32 has separate prescalers for core and peripherals, so we start
-    //from HFCORECLK, work our way up to HFCLK and then down to HFPERCLK
-    hfperclk*=1<<(CMU->HFCORECLKDIV & _CMU_HFCORECLKDIV_HFCORECLKDIV_MASK);
-    hfperclk/=1<<(CMU->HFPERCLKDIV & _CMU_HFPERCLKDIV_HFPERCLKDIV_MASK);
-    unsigned int presc=(hfperclk+13000000-1)/13000000; //Highest freq < 13MHz
-    unsigned int timebase=(hfperclk+1000000-1)/1000000;
-    #ifdef EFM32_HFRCO_FREQ
-    // If we're running from the RC oscillator increase timebase by 12.5% and
-    // at least 1 to account for frequency errors. Maybe not needed
-    timebase+=std::max<unsigned int>(1,timebase/8);
-    #endif
+    unsigned int presc=(peripheralFrequency+13000000-1)/13000000; //Highest freq < 13MHz
+    unsigned int timebase=(peripheralFrequency+1000000-1)/1000000;
+    if(oscillatorType==OscillatorType::HFRCO)
+    {
+        // If we're running from the RC oscillator increase timebase by 12.5%
+        // and at least 1 to account for frequency errors. Maybe not needed
+        timebase+=std::max<unsigned int>(1,timebase/8);
+    }
 
     ADC0->CTRL = timebase<<16            //TIMEBASE
                | (presc-1)<<8            //PRESC
@@ -113,3 +112,5 @@ Adc::Adc()
                      | ADC_SINGLECTRL_RES_12BIT
                      | ADC_SINGLECTRL_ADJ_RIGHT;
 }
+
+} //namespace miosix

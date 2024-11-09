@@ -330,7 +330,7 @@ PowerManager::PowerManager()
       rtc(Rtc::instance()),
       vht(VHT::instance()),
       vt(VirtualClock::instance()),
-      tc(EFM32_HFXO_FREQ) {}
+      tc(oscillatorFrequency) {}
 
 void PowerManager::IRQpreDeepSleep(Transceiver& rtx)
 {

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2015-2023 by Terraneo Federico                          *
+ *   Copyright (C) 2015-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,6 +28,7 @@
 #pragma once
 
 #include "filesystem/console/console_device.h"
+#include "interfaces/gpio.h"
 #include "kernel/sync.h"
 #include "kernel/queue.h"
 
@@ -54,7 +55,7 @@ public:
      * \param id a number to select the USART
      * \param baudrate serial port baudrate
      */
-    EFM32Serial(int id, int baudrate);
+    EFM32Serial(int id, int baudrate, GpioPin tx, GpioPin rx);
     
     /**
      * Read a block of data
@@ -97,17 +98,6 @@ public:
     int ioctl(int cmd, void *arg);
     
     /**
-     * \internal the serial port interrupts call this member function.
-     * Never call this from user code.
-     */
-    void IRQhandleInterrupt();
-    
-    /**
-     * \return port id, 0 for USART0, ... 
-     */
-    int getId() const { return portId; }
-    
-    /**
      * Destructor
      */
     ~EFM32Serial();
@@ -118,16 +108,20 @@ private:
      */
     void waitSerialTxFifoEmpty();
 
+    /**
+     * Port interrupt handler
+     */
+    void IRQinterruptHandler();
+
     FastMutex txMutex;                ///< Mutex locked during transmission
     FastMutex rxMutex;                ///< Mutex locked during reception
     
     DynUnsyncQueue<char> rxQueue;     ///< Receiving queue
     static const unsigned int rxQueueMin=1; ///< Minimum queue size
-    Thread *rxWaiting;                ///< Thread waiting for rx, or 0
+    Thread *rxWaiting;                ///< Thread waiting for rx, or nullptr
     
     USART_TypeDef *port;              ///< Pointer to USART peripheral
-
-    const unsigned char portId;       ///< 0 for USART0, ...
+    IRQn_Type irqn;                   ///< Interrupt number
     int baudrate;                     ///< Baudrate
 };
 

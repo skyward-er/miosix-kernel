@@ -26,6 +26,7 @@
  ***************************************************************************/
 
 #include "kernel/kernel.h"
+#include "interfaces/interrupts.h"
 #include "interfaces/arch_registers.h"
 #include "interfaces_private/os_timer.h"
 
@@ -69,7 +70,7 @@ public:
      * and because if interrupts are disabled for an entire timer period the
      * OS loses the knowledge of time. For this reason, we set the timer clock
      * to a lower value using the prescaler.
-     * However, on't top of that these MCUs have a prescaler that can only
+     * However, on top of that these MCUs have a prescaler that can only
      * divide by powers of two. For now, we fix the prescaler value of 16
      * which seems about the right tradeoff with the clocks EFM32 use and get
      * whatever timer clock comes out.
@@ -81,15 +82,10 @@ public:
 
     static unsigned int IRQTimerFrequency()
     {
-        unsigned int result=SystemCoreClock;
-        //EFM32 has separate prescalers for core and peripherals, so we start
-        //from HFCORECLK, work our way up to HFCLK and then down to HFPERCLK
-        result*=1<<(CMU->HFCORECLKDIV & _CMU_HFCORECLKDIV_HFCORECLKDIV_MASK);
-        result/=1<<(CMU->HFPERCLKDIV & _CMU_HFPERCLKDIV_HFPERCLKDIV_MASK);
-        return result/prescaler;
+        return peripheralFrequency/prescaler;
     }
 
-    static void IRQinitTimer()
+    void IRQinitTimer()
     {
         CMU->HFPERCLKEN0 |= CMU_HFPERCLKEN0_TIMER2;
 
@@ -107,6 +103,8 @@ public:
         TIMER2->CC[0].CTRL=TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
         TIMER2->CC[0].CCV=0xffff;
 
+        IRQregisterIrq(TIMER2_IRQn,&TimerAdapter<EFM32Timer2,16>::IRQhandler,
+                       static_cast<TimerAdapter<EFM32Timer2, 16>*>(this));
         NVIC_SetPriority(TIMER2_IRQn,3); //High priority (Max=0, min=15)
         NVIC_EnableIRQ(TIMER2_IRQn);
     }
@@ -114,16 +112,5 @@ public:
 
 static EFM32Timer2 timer;
 DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+
 } //namespace miosix
-
-void __attribute__((naked)) TIMER2_IRQHandler()
-{
-    saveContext();
-    asm volatile ("bl _Z11osTimerImplv");
-    restoreContext();
-}
-
-void __attribute__((used)) osTimerImpl()
-{
-    miosix::timer.IRQhandler();
-}

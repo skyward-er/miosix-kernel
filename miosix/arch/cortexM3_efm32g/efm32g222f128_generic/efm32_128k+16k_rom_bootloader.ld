@@ -29,7 +29,7 @@ ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 _heap_end = 0x20000000+16*1024;                   /* end of available ram  */
 
 /* identify the Entry Point  */
-ENTRY(_Z13Reset_Handlerv)
+ENTRY(_ZN6miosix13Reset_HandlerEv)
 
 /* specify the memory areas  */
 MEMORY

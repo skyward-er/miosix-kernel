@@ -25,9 +25,6 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef GPIO_IMPL_H
-#define GPIO_IMPL_H
+#pragma once
 
 #include "drivers/efm32_gpio.h"
-
-#endif  //GPIO_IMPL_H

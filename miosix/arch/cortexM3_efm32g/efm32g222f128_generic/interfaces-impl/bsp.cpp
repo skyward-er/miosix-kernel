@@ -48,9 +48,99 @@
 
 namespace miosix {
 
+//Replaced by constants in board_settings.h
+// unsigned int getPeripheralClock()
+// {
+//     unsigned int result=SystemCoreClock;
+//     //EFM32 has separate prescalers for core and peripherals, so we start
+//     //from HFCORECLK, work our way up to HFCLK and then down to HFPERCLK
+//     result*=1<<(CMU->HFCORECLKDIV & _CMU_HFCORECLKDIV_HFCORECLKDIV_MASK);
+//     result/=1<<(CMU->HFPERCLKDIV & _CMU_HFPERCLKDIV_HFPERCLKDIV_MASK);
+//     return result;
+// }
+
 //
 // Initialization
 //
+
+/**
+ * This function is the first function called during boot to initialize the
+ * platform memory and clock subsystems.
+ *
+ * Code in this function has several important restrictions:
+ * - When this function is called, part of the memory address space may not be
+ *   available. This occurs when the board includes an external memory, and
+ *   indeed it is the purpose of this very function to enable the external
+ *   memory (if present) and map it into the address space!
+ * - This function is called before global and static variables in .data/.bss
+ *   are initialized. As a consequence, this function and all function it calls
+ *   are forbidden from referencing global and static variables
+ * - This function is called with the stack pointer pointing to the interrupt
+ *   stack. This is in general a small stack, but is the only stack that is
+ *   guaranteed to be in the internal memory. The allocation of stack-local
+ *   variables and the nesting of function calls should be kept to a minimum
+ * - This function is called with interrupts disabled, before the kernel is
+ *   started and before the I/O subsystem is enabled. There is thus no way
+ *   of printing any debug message.
+ *
+ * This function should perform the following operations:
+ * - Configure the internal memory wait states to support the desired target
+ *   operating frequency
+ * - Configure the CPU clock (e.g: PLL) to run at the desired target frequency
+ * - Enable and configure the external memory (if available)
+ *
+ * As a postcondition of running this function, the entire memory map as
+ * specified in the linker script should be accessible, so the rest of the
+ * kernel can use the memory to complete the boot sequence, and the CPU clock
+ * should be configured at the desired target frequency so the boot can proceed
+ * quickly.
+ */
+void IRQmemoryAndClockInit()
+{
+    //Validate frequency
+    static_assert(cpuFrequency==oscillatorFrequency, "prescaling unsupported");
+    static_assert(peripheralFrequency==oscillatorFrequency, "prescaling unsupported");
+    static_assert(oscillatorType==OscillatorType::HFXO
+               || oscillatorFrequency==1200000
+               || oscillatorFrequency==6600000
+               || oscillatorFrequency==11000000
+               || oscillatorFrequency==14000000
+               || oscillatorFrequency==21000000
+               || oscillatorFrequency==28000000, "HFRCO frequency unsupported");
+
+    //Configure flash wait states
+    if(cpuFrequency>16000000) MSC->READCTRL=MSC_READCTRL_MODE_WS1;
+    else MSC->READCTRL=MSC_READCTRL_MODE_WS0;
+
+    //Configure prescalers
+    CMU->HFCORECLKDIV=0;
+    CMU->HFPERCLKDIV=CMU_HFPERCLKDIV_HFPERCLKEN;
+    //Configure oscillator
+    if(oscillatorType==OscillatorType::HFXO)
+    {
+        //Select HFXO
+        CMU->OSCENCMD=CMU_OSCENCMD_HFXOEN;
+        //Then switch immediately to HFXO
+        CMU->CMD=CMU_CMD_HFCLKSEL_HFXO;
+        //Disable HFRCO since we don't need it anymore
+        CMU->OSCENCMD=CMU_OSCENCMD_HFRCODIS;
+    } else {
+        //Pointer to table of HFRCO calibration values in device information page
+        unsigned char *diHfrcoCalib=reinterpret_cast<unsigned char*>(0x0fe081dc);
+        if(oscillatorFrequency==1200000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_1MHZ | diHfrcoCalib[0];
+        else if(oscillatorFrequency==6600000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_7MHZ | diHfrcoCalib[1];
+        else if(oscillatorFrequency==11000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_11MHZ | diHfrcoCalib[2];
+        else if(oscillatorFrequency==14000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_14MHZ | diHfrcoCalib[3];
+        else if(oscillatorFrequency==21000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_21MHZ | diHfrcoCalib[4];
+        else if(oscillatorFrequency==28000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_28MHZ | diHfrcoCalib[5];
+    }
+}
 
 void IRQbspInit()
 {
@@ -60,57 +150,24 @@ void IRQbspInit()
     // Setup GPIOs
     //
     CMU->HFPERCLKEN0 |= CMU_HFPERCLKEN0_GPIO;
-
-    //
-    // Setup clocks, as when we get here we're still running with HFRCO
-    //
-    //Configure flash wait states and dividers
-    CMU->HFCORECLKDIV=0;
-    CMU->HFPERCLKDIV=CMU_HFPERCLKDIV_HFPERCLKEN;
-    #if EFM32_HFXO_FREQ>16000000 || EFM32_HFRCO_FREQ>16000000
-    MSC->READCTRL=MSC_READCTRL_MODE_WS1;
-    #else
-    MSC->READCTRL=MSC_READCTRL_MODE_WS0;
-    #endif
-
-    #if defined(EFM32_HFXO_FREQ)
-    //Select HFXO
-    CMU->OSCENCMD=CMU_OSCENCMD_HFXOEN;
-    //Then switch immediately to HFXO
-    CMU->CMD=CMU_CMD_HFCLKSEL_HFXO;
-    //Disable HFRCO since we don't need it anymore
-    CMU->OSCENCMD=CMU_OSCENCMD_HFRCODIS;
-    #elif defined(EFM32_HFRCO_FREQ)
-    //Pointer to table of HFRCO calibration values in device information page
-    unsigned char *diHfrcoCalib=reinterpret_cast<unsigned char*>(0x0fe081dc);
-    #if EFM32_HFRCO_FREQ==1000000
-    CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_1MHZ | diHfrcoCalib[0];
-    #elif EFM32_HFRCO_FREQ==7000000
-    CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_7MHZ | diHfrcoCalib[1];
-    #elif EFM32_HFRCO_FREQ==11000000
-    CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_11MHZ | diHfrcoCalib[2];
-    #elif EFM32_HFRCO_FREQ==14000000
-    CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_14MHZ | diHfrcoCalib[3];
-    #elif EFM32_HFRCO_FREQ==21000000
-    CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_21MHZ | diHfrcoCalib[4];
-    #elif EFM32_HFRCO_FREQ==28000000
-    CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_28MHZ | diHfrcoCalib[5];
-    #else
-    #error EFM32_HFRCO_FREQ not valid
-    #endif
-    #else
-    #error EFM32_HFXO_FREQ nor EFM32_HFRCO_FREQ defined
-    #endif
-
-    //This function initializes the SystemCoreClock variable. It is put here
-    //so as to get the right value
-    SystemCoreClockUpdate();
     
     //
     // Setup serial port
     //
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new EFM32Serial(defaultSerial,defaultSerialSpeed)));
+    if(defaultSerial==0)
+    {
+        using tx = Gpio<GPIOE_BASE,10>;
+        using rx = Gpio<GPIOE_BASE,11>;
+        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+            new EFM32Serial(defaultSerial,defaultSerialSpeed,
+                            tx::getPin(),rx::getPin())));
+    } else {
+        using tx = Gpio<GPIOC_BASE,0>;
+        using rx = Gpio<GPIOC_BASE,1>;
+        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+            new EFM32Serial(defaultSerial,defaultSerialSpeed,
+                            tx::getPin(),rx::getPin())));
+    }
 }
 
 void bspInit2()

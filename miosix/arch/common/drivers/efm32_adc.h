@@ -27,6 +27,8 @@
 
 #pragma once
 
+namespace miosix {
+
 /**
  * Efm32 ADC driver
  * 
@@ -113,3 +115,5 @@ public:
 public:
     Adc();
 };
+
+} //namespace miosix

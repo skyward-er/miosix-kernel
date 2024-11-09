@@ -30,28 +30,132 @@
  * Board support package, this file initializes hardware.
  ************************************************************************/
 
-#include <cstdlib>
-#include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
-#include "kernel/kernel.h"
-#include "kernel/sync.h"
-#include "interfaces/delays.h"
-#include "interfaces/poweroff.h"
+#include "interfaces/gpio.h"
 #include "interfaces/arch_registers.h"
+#include "interfaces/poweroff.h"
 #include "config/miosix_settings.h"
-#include "kernel/logging.h"
 #include "filesystem/file_access.h"
 #include "filesystem/console/console_device.h"
 #include "drivers/serial.h"
 #include "board_settings.h"
 #include "hrtb.h"
 #include "vht.h"
+
 namespace miosix {
 
 //
 // Initialization
 //
+
+/**
+ * This function is the first function called during boot to initialize the
+ * platform memory and clock subsystems.
+ *
+ * Code in this function has several important restrictions:
+ * - When this function is called, part of the memory address space may not be
+ *   available. This occurs when the board includes an external memory, and
+ *   indeed it is the purpose of this very function to enable the external
+ *   memory (if present) and map it into the address space!
+ * - This function is called before global and static variables in .data/.bss
+ *   are initialized. As a consequence, this function and all function it calls
+ *   are forbidden from referencing global and static variables
+ * - This function is called with the stack pointer pointing to the interrupt
+ *   stack. This is in general a small stack, but is the only stack that is
+ *   guaranteed to be in the internal memory. The allocation of stack-local
+ *   variables and the nesting of function calls should be kept to a minimum
+ * - This function is called with interrupts disabled, before the kernel is
+ *   started and before the I/O subsystem is enabled. There is thus no way
+ *   of printing any debug message.
+ *
+ * This function should perform the following operations:
+ * - Configure the internal memory wait states to support the desired target
+ *   operating frequency
+ * - Configure the CPU clock (e.g: PLL) to run at the desired target frequency
+ * - Enable and configure the external memory (if available)
+ *
+ * As a postcondition of running this function, the entire memory map as
+ * specified in the linker script should be accessible, so the rest of the
+ * kernel can use the memory to complete the boot sequence, and the CPU clock
+ * should be configured at the desired target frequency so the boot can proceed
+ * quickly.
+ */
+void IRQmemoryAndClockInit()
+{
+    //Validate frequency
+    static_assert(cpuFrequency==oscillatorFrequency, "prescaling unsupported");
+    static_assert(peripheralFrequency==oscillatorFrequency, "prescaling unsupported");
+    static_assert(oscillatorType==OscillatorType::HFXO
+               || oscillatorFrequency==1200000
+               || oscillatorFrequency==6600000
+               || oscillatorFrequency==11000000
+               || oscillatorFrequency==14000000
+               || oscillatorFrequency==21000000
+               || oscillatorFrequency==28000000, "HFRCO frequency unsupported");
+
+    //Configure flash wait states
+    if(cpuFrequency>32000000) MSC->READCTRL=MSC_READCTRL_MODE_WS2;
+    else if(cpuFrequency>16000000) MSC->READCTRL=MSC_READCTRL_MODE_WS1;
+    else MSC->READCTRL=MSC_READCTRL_MODE_WS0;
+    MSC->WRITECTRL=MSC_WRITECTRL_RWWEN;  //Enable FLASH read while write support
+
+    //Configure prescalers
+    if(cpuFrequency>32000000) CMU->HFCORECLKDIV=CMU_HFCORECLKDIV_HFCORECLKLEDIV;
+    else CMU->HFCORECLKDIV=0;
+    CMU->HFPERCLKDIV=CMU_HFPERCLKDIV_HFPERCLKEN;
+
+    //Configure oscillator
+    if(oscillatorType==OscillatorType::HFXO)
+    {
+        //HFXO startup time seems slightly dependent on supply voltage, with
+        //higher voltage resulting in longer startup time (changes by a few us at
+        //most). Also, HFXOBOOST greatly affects startup time, as shown in the
+        //following table
+        //BOOST sample#1  sample#2
+        //100%    94us     100us
+        // 80%   104us     111us
+        // 70%   117us     125us
+        // 50%   205us     223us
+        //Configure oscillator parameters for HFXO and LFXO
+        unsigned int dontChange=CMU->CTRL & CMU_CTRL_LFXOBUFCUR;
+        if(oscillatorFrequency>32000000)
+        {
+            CMU->CTRL=CMU_CTRL_HFLE                  //We run at a frequency > 32MHz
+                    | CMU_CTRL_HFXOTIMEOUT_1KCYCLES  //1K cyc timeout for HFXO startup
+                    | CMU_CTRL_HFXOBUFCUR_BOOSTABOVE32MHZ //We run at a freq > 32MHz
+                    | CMU_CTRL_HFXOBOOST_70PCENT     //We want a startup time >=100us
+                    | dontChange;                    //Don't change some of the bits
+        } else {
+            CMU->CTRL=CMU_CTRL_HFXOTIMEOUT_1KCYCLES  //1K cyc timeout for HFXO startup
+                    | CMU_CTRL_HFXOBUFCUR_BOOSTUPTO32MHZ //We run at a freq <= 32MHz
+                    | CMU_CTRL_HFXOBOOST_70PCENT     //We want a startup time >=100us
+                    | dontChange;                    //Don't change some of the bits
+        }
+        //Select HFXO
+        CMU->OSCENCMD=CMU_OSCENCMD_HFXOEN;
+        //Then switch immediately to HFXO
+        CMU->CMD=CMU_CMD_HFCLKSEL_HFXO;
+        //Disable HFRCO since we don't need it anymore
+        CMU->OSCENCMD=CMU_OSCENCMD_HFRCODIS;
+    }  else {
+        //Pointer to table of HFRCO calibration values in device information page
+        unsigned char *diHfrcoCalib=reinterpret_cast<unsigned char*>(0x0fe081dc);
+        if(oscillatorFrequency==1200000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_1MHZ | diHfrcoCalib[0];
+        else if(oscillatorFrequency==6600000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_7MHZ | diHfrcoCalib[1];
+        else if(oscillatorFrequency==11000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_11MHZ | diHfrcoCalib[2];
+        else if(oscillatorFrequency==14000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_14MHZ | diHfrcoCalib[3];
+        else if(oscillatorFrequency==21000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_21MHZ | diHfrcoCalib[4];
+        else if(oscillatorFrequency==28000000)
+            CMU->HFRCOCTRL=CMU_HFRCOCTRL_BAND_28MHZ | diHfrcoCalib[5];
+    }
+}
 
 void IRQbspInit()
 {
@@ -106,56 +210,31 @@ void IRQbspInit()
     //currentSense sense pin remains disabled as it is an analog channel
     
     //
-    // Setup clocks, as when we get here we're still running with HFRCO
+    // Setup rtc clock
     //
-
-    //HFXO startup time seems slightly dependent on supply voltage, with
-    //higher voltage resulting in longer startup time (changes by a few us at
-    //most). Also, HFXOBOOST greatly affects startup time, as shown in the
-    //following table
-    //BOOST sample#1  sample#2
-    //100%    94us     100us
-    // 80%   104us     111us
-    // 70%   117us     125us
-    // 50%   205us     223us
-
-    //Configure oscillator parameters for HFXO and LFXO
-    unsigned int dontChange=CMU->CTRL & CMU_CTRL_LFXOBUFCUR;
-    CMU->CTRL=CMU_CTRL_HFLE                  //We run at a frequency > 32MHz
-            | CMU_CTRL_CLKOUTSEL1_LFXOQ      //Used for the 32KHz loopback
-            | CMU_CTRL_LFXOTIMEOUT_16KCYCLES //16K cyc timeout for LFXO startup
-            | CMU_CTRL_LFXOBOOST_70PCENT     //Use recomended value
-            | CMU_CTRL_HFXOTIMEOUT_1KCYCLES  //1K cyc timeout for HFXO startup
-            | CMU_CTRL_HFXOBUFCUR_BOOSTABOVE32MHZ //We run at a freq > 32MHz
-            | CMU_CTRL_HFXOBOOST_70PCENT     //We want a startup time >=100us
-            | dontChange;                    //Don't change some of the bits
-            
-    //Start HFXO and LFXO.
-    //The startup of the HFXO oscillator was measured and takes less than 125us
-    CMU->OSCENCMD=CMU_OSCENCMD_HFXOEN | CMU_OSCENCMD_LFXOEN;
-    
-    //Configure flash wait states and dividers so that it's safe to run at 48MHz
-    CMU->HFCORECLKDIV=CMU_HFCORECLKDIV_HFCORECLKLEDIV; //We run at a freq >32MHz
-    MSC->READCTRL=MSC_READCTRL_MODE_WS2; //Two wait states for f>32MHz
-    MSC->WRITECTRL=MSC_WRITECTRL_RWWEN;  //Enable FLASH read while write support
-    
-    ledOn();
-    #ifdef WITH_SLEEP
-    //Reuse the LED blink at boot to wait for the LFXO 32KHz oscillator startup
-    //SWitching temporarily the CPU to run off of the 32KHz XTAL is the easiest
-    //way to sleep while it locks, as it stalls the CPU and peripherals till the
-    //oscillator is stable, but confuses an attached debugger
-    CMU->CMD=CMU_CMD_HFCLKSEL_LFXO;
-    #else //WITH_SLEEP
-    while((CMU->STATUS & CMU_STATUS_LFXORDY)==0) ;
-    #endif //WITH_SLEEP
-    ledOff();
-    
-    //Then switch immediately to HFXO, so that we (finally) run at 48MHz
-    CMU->CMD=CMU_CMD_HFCLKSEL_HFXO;
-    
-    //Disable HFRCO since we don't need it anymore
-    CMU->OSCENCMD=CMU_OSCENCMD_HFRCODIS;
+    static_assert(rtcOscillatorType==RtcOscillatorType::LFXO
+               || rtcOscillatorFrequency==32768, "LFRCO frequency is fixed");
+    if(rtcOscillatorType==RtcOscillatorType::LFXO)
+    {
+        CMU->CTRL |= CMU_CTRL_CLKOUTSEL1_LFXOQ      //Used for the 32KHz loopback
+                   | CMU_CTRL_LFXOTIMEOUT_16KCYCLES //16K cyc timeout for LFXO startup
+                   | CMU_CTRL_LFXOBOOST_70PCENT;    //Use recomended value
+        CMU->OSCENCMD=CMU_OSCENCMD_LFXOEN;
+        ledOn();
+        #ifdef WITH_SLEEP
+        //Reuse the LED blink at boot to wait for the LFXO 32KHz oscillator startup
+        //SWitching temporarily the CPU to run off of the 32KHz XTAL is the easiest
+        //way to sleep while it locks, as it stalls the CPU and peripherals till the
+        //oscillator is stable, but confuses an attached debugger
+        CMU->CMD=CMU_CMD_HFCLKSEL_LFXO;
+        CMU->CMD=CMU_CMD_HFCLKSEL_HFXO;
+        #else //WITH_SLEEP
+        while((CMU->STATUS & CMU_STATUS_LFXORDY)==0) ;
+        #endif //WITH_SLEEP
+        ledOff();
+    } else if(rtcOscillatorType==RtcOscillatorType::LFRCO) {
+        CMU->OSCENCMD=CMU_OSCENCMD_LFRCOEN;
+    }
     
     //Put the LFXO frequency on the loopback pin
     CMU->ROUTE=CMU_ROUTE_LOCATION_LOC1 //32KHz out is on PD8
@@ -164,15 +243,23 @@ void IRQbspInit()
     //The LFA and LFB clock trees are connected to the LFXO
     CMU->LFCLKSEL=CMU_LFCLKSEL_LFB_LFXO | CMU_LFCLKSEL_LFA_LFXO;
     
-    //This function initializes the SystemCoreClock variable. It is put here
-    //so as to get the right value
-    SystemCoreClockUpdate();
-    
     //
     // Setup serial port
     //
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new EFM32Serial(defaultSerial,defaultSerialSpeed)));
+    if(defaultSerial==0)
+    {
+        using tx = Gpio<GPIOE_BASE,10>;
+        using rx = Gpio<GPIOE_BASE,11>;
+        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+            new EFM32Serial(defaultSerial,defaultSerialSpeed,
+                            tx::getPin(),rx::getPin())));
+    } else {
+        using tx = Gpio<GPIOC_BASE,0>;
+        using rx = Gpio<GPIOC_BASE,1>;
+        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
+            new EFM32Serial(defaultSerial,defaultSerialSpeed,
+                            tx::getPin(),rx::getPin())));
+    }
 }
 
 void bspInit2()

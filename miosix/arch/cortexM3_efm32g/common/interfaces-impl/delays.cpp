@@ -26,24 +26,13 @@
  ***************************************************************************/
 
 #include "interfaces/delays.h"
-
-#if defined(EFM32_HFXO_FREQ)
-#define FREQ EFM32_HFXO_FREQ
-#elif defined(EFM32_HFRCO_FREQ)
-#define FREQ EFM32_HFRCO_FREQ
-#endif
+#include "config/miosix_settings.h"
 
 namespace miosix {
 
-//TODO: in theory the core clock can be prescaled so EFM32_HFXO_FREQ could not
-//reflect the actual CPU speed, but no use case for doing it was found. Should
-//prescaling be implemented, this code needs to be modified, but trying to put
-//SystemCoreClock instead of EFM32_HFXO_FREQ results in the inner loop taking
-//one more asm instruction, skewing delays.
-
 void delayMs(unsigned int mseconds)
 {
-    register const unsigned int count=FREQ/4000;
+    register const unsigned int count=cpuFrequency/4000;
 
     for(unsigned int i=0;i<mseconds;i++)
     {
@@ -60,16 +49,12 @@ void delayUs(unsigned int useconds)
 {
     // This delay has been calibrated to take x microseconds
     // It is written in assembler to be independent on compiler optimizations
-    #if FREQ==28000000
+    static_assert(cpuFrequency==28000000, "delays uncalibrated for this freq");
     asm volatile("    movs  r1, #7     \n"
                  "    mul   r1, r1, %0 \n"
                  "    .align 2         \n" //4-byte aligned inner loop
                  "1:  subs  r1, r1, #1 \n" //Loop takes 4 cycles
                  "    bpl   1b         \n"::"r"(useconds):"r1","cc");
-    #else
-    #error "Delays are uncalibrated for this clock frequency"
-    #endif
 }
 
 } //namespace miosix
-

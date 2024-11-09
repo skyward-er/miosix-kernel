@@ -156,6 +156,11 @@ private:
     Rtc();
     Rtc(const Rtc&)=delete;
     Rtc& operator=(const Rtc&)=delete;
+
+    /**
+     * RTC interrupt
+     */
+    static void IRQinterruptHandler();
     
     TimeConversion tc; ///< Class for converting from nanoseconds to ticks
 };

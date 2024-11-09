@@ -34,29 +34,9 @@ using namespace std;
 static function<void ()> callbacks[16]; ///< Registered callbacks
 
 /**
- * Gpio interrupt for even pin numbers
- */
-void __attribute__((naked)) GPIO_EVEN_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z19GPIOEvenHandlerImplv");
-    restoreContext();
-}
-
-/**
- * Gpio interrupt for odd pin numbers
- */
-void __attribute__((naked)) GPIO_ODD_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z18GPIOOddHandlerImplv");
-    restoreContext();
-}
-
-/**
  * Gpio interrupt for even pin numbers actual implementation
  */
-void __attribute__((used)) GPIOEvenHandlerImpl()
+void IRQGpioEvenInterruptHandler()
 {
     for(int i=0;i<16;i+=2)
     {
@@ -69,7 +49,7 @@ void __attribute__((used)) GPIOEvenHandlerImpl()
 /**
  * Gpio interrupt for odd pin numbers actual implementation
  */
-void __attribute__((used)) GPIOOddHandlerImpl()
+void IRQGpioOddInterruptHandler()
 {
     for(int i=1;i<16;i+=2)
     {
@@ -96,8 +76,10 @@ void registerGpioIrq(GpioPin pin, GpioIrqEdge edge, function<void ()> callback)
         {
             first=true;
             GPIO->INSENSE |= GPIO_INSENSE_INT | GPIO_INSENSE_PRS;
+            IRQregisterIrq(GPIO_EVEN_IRQn,&IRQGpioEvenInterruptHandler);
             NVIC_EnableIRQ(GPIO_EVEN_IRQn);
             NVIC_SetPriority(GPIO_EVEN_IRQn,10); //Low priority
+            IRQregisterIrq(GPIO_ODD_IRQn,&IRQGpioOddInterruptHandler);
             NVIC_EnableIRQ(GPIO_ODD_IRQn);
             NVIC_SetPriority(GPIO_ODD_IRQn,10); //Low priority
         }

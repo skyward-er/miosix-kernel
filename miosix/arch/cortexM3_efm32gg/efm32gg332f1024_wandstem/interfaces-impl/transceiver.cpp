@@ -33,7 +33,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <cassert>
-#include <kernel/scheduler/scheduler.h>
+#include "interfaces/interrupts.h"
 
 using namespace std;
 
@@ -426,7 +426,7 @@ Transceiver::Transceiver()
         if(!waiting) return;
         waiting->IRQwakeup();
         if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-            Scheduler::IRQfindNextThread();
+            IRQinvokeScheduler();
         waiting=nullptr;
     });
 }
