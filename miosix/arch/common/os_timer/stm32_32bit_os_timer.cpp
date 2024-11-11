@@ -142,14 +142,14 @@ public:
     void IRQinitTimer()
     {
         T::IRQenable();
-        // Setup TIM5 base configuration
+        // Setup base configuration
         // Mode: Up-counter
         // Interrupts: counter overflow, Compare/Capture on channel 1
         T::get()->CR1=TIM_CR1_URS;
         T::get()->DIER=TIM_DIER_UIE | TIM_DIER_CC1IE;
         IRQregisterIrq(T::getIRQn(),&TimerAdapter<STM32Timer<T>, 32>::IRQhandler,
                        static_cast<TimerAdapter<STM32Timer<T>, 32>*>(this));
-        NVIC_SetPriority(T::getIRQn(),3); //High priority for TIM5 (Max=0, min=15)
+        NVIC_SetPriority(T::getIRQn(),3); //High priority (Max=0, min=15)
         NVIC_EnableIRQ(T::getIRQn());
         // Configure channel 1 as:
         // Output channel (CC1S=0)
@@ -157,7 +157,7 @@ public:
         // No effect on the output signal on match (OC1M = 0)
         T::get()->CCMR1 = 0;
         T::get()->CCR1 = 0;
-        // TIM5 Operation Frequency Configuration: Max Freq. and longest period
+        // Operation Frequency Configuration: Max Freq. and longest period
         T::get()->PSC = 0;
         T::get()->ARR = 0xFFFFFFFF;
         T::get()->EGR = TIM_EGR_UG; //To enforce the timer to apply PSC
