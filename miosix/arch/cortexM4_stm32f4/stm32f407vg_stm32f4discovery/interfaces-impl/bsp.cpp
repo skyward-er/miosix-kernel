@@ -141,18 +141,6 @@ void shutdown()
 
     disableInterrupts();
 
-    /*
-    Removed because low power mode causes issues with SWD programming
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN; //Fuckin' clock gating...  
-    RCC_SYNC();
-    PWR->CR |= PWR_CR_PDDS; //Select standby mode
-    PWR->CR |= PWR_CR_CWUF;
-    PWR->CSR |= PWR_CSR_EWUP; //Enable PA.0 as wakeup source
-    
-    SCB->SCR |= SCB_SCR_SLEEPDEEP;
-    __WFE();
-    NVIC_SystemReset();
-    */
     for(;;) ;
 }
 
