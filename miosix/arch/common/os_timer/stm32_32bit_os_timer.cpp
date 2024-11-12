@@ -153,7 +153,7 @@ public:
         NVIC_EnableIRQ(T::getIRQn());
         // Configure channel 1 as:
         // Output channel (CC1S=0)
-        // No preload(OC1PE=0), hence TIM5_CCR1 can be written at anytime
+        // No preload(OC1PE=0), hence CCR1 can be written at any time
         // No effect on the output signal on match (OC1M = 0)
         T::get()->CCMR1 = 0;
         T::get()->CCR1 = 0;
