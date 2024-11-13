@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "interfaces/delays.h"
 #include "drivers/serial.h"

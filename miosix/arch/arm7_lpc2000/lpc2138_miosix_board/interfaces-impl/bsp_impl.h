@@ -25,15 +25,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
 
-/***********************************************************************
-* bsp_impl.h Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
+#pragma once
 
-#ifndef BSP_IMPL_H
-#define BSP_IMPL_H
-
-#include "LPC213x.h"
+#include "interfaces/arch_registers.h"
 #include "config/miosix_settings.h"
 
 /**
@@ -382,5 +376,3 @@ inline APBValues get_apb_ratio()
 */
 
 } //namespace miosix
-
-#endif //BSP_IMPL_H

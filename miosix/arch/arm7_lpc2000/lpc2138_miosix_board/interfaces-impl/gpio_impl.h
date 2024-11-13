@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009, 2010, 2011, 2012 by Terraneo Federico             *
+ *   Copyright (C) 2009-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,42 +25,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/*
- * Versions:
- * 1.0 First release
- * 1.1 Made Mode, Gpio and GpioBase constructor private to explicitly disallow
- *     creating instances of these classes.
- * 1.2 Fixed a bug
- * 1.3 Applied patch by Lee Richmond (http://pastebin.com/f7ae1a65f). Now
- *     mode() is inlined too.
- * 1.4 Backported this abstraction library on NXP LPC2138 microcontrollers
- */
+#pragma once
 
-#ifndef GPIO_IMPL_H
-#define	GPIO_IMPL_H
-
-#include "LPC213x.h"
+#include "interfaces/arch_registers.h"
 
 namespace miosix {
 
 /**
- * This class just encapsulates the Mode_ enum so that the enum names don't
- * clobber the global namespace.
+ * GPIO mode (INPUT, OUTPUT, ...)
+ * \code pin::mode(Mode::INPUT); \endcode
  */
-class Mode
+enum class Mode
 {
-public:
-    /**
-     * GPIO mode (INPUT, OUTPUT, ...)
-     * \code pin::mode(Mode::INPUT); \endcode
-     */
-    enum Mode_
-    {
-        INPUT              = 0x0, ///Floating  Input
-        OUTPUT             = 0x1, ///Push Pull Output
-    };
-private:
-    Mode(); //Just a wrapper class, disallow creating instances
+    INPUT              = 0x0, ///Floating  Input
+    OUTPUT             = 0x1, ///Push Pull Output
 };
 
 /**
@@ -97,16 +75,11 @@ public:
         
     /**
      * Set the GPIO to the desired mode (INPUT, OUTPUT)
-     * \param m enum Mode_
+     * \param m enum Mode
      */
-    void mode(Mode::Mode_ m)
+    void mode(Mode m)
     {
-        if(m==Mode::INPUT)
-        {
-            p->IODIR &= ~(1<<n);
-        } else {
-            p->IODIR |= (1<<n);
-        }
+        if(m==Mode::INPUT) p->IODIR &= ~(1<<n); else p->IODIR |= (1<<n);
     }
 
     /**
@@ -166,9 +139,9 @@ class Gpio
 public:
     /**
      * Set the GPIO to the desired mode (INPUT, OUTPUT)
-     * \param m enum Mode_
+     * \param m enum Mode
      */
-    static void mode(Mode::Mode_ m)
+    static void mode(Mode m)
     {
         if(m==Mode::INPUT)
         {
@@ -226,5 +199,3 @@ private:
 };
 
 } //namespace miosix
-
-#endif	//GPIO_IMPL_H
