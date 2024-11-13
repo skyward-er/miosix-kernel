@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef EFM32_GPIO_H
-#define EFM32_GPIO_H
+#pragma once
 
 #include "interfaces/arch_registers.h"
 
@@ -45,66 +44,46 @@ const unsigned int GPIOF_BASE=5;
 namespace miosix {
 
 /**
- * This class just encapsulates the Mode_ enum so that the enum names don't
- * clobber the global namespace.
+ * GPIO mode (INPUT, OUTPUT, ...)
+ * \code pin::mode(Mode::INPUT);\endcode
  */
-class Mode
+enum class Mode
 {
-public:
-    /**
-     * GPIO mode (INPUT, OUTPUT, ...)
-     * \code pin::mode(Mode::INPUT);\endcode
-     */
-    enum Mode_
-    {
-        DISABLED                     = 0x10, ///<Disabled digital input, analog input on selected pins
-        DISABLED_PULL_UP             = 0x20, ///<Disabled input with pullup
-        INPUT                        = 0x11, ///<Floating input
-        INPUT_FILTER                 = 0x21, ///<Floating input with glitch filter
-        INPUT_PULL_DOWN              = 0x12, ///<Pulldown input
-        INPUT_PULL_UP                = 0x22, ///<Pullup   input
-        INPUT_PULL_DOWN_FILTER       = 0x13, ///<Pulldown input with glitch filter
-        INPUT_PULL_UP_FILTER         = 0x23, ///<Pullup   input with glitch filter
-        OUTPUT                       =  0x4, ///<Push pull   output
-        OUTPUT_LOW                   = 0x14, ///<Combined operation: set pin to output and start with a low value
-        OUTPUT_HIGH                  = 0x24, ///<Combined operation: set pin to output and start with a high value
-        OUTPUT_ALT                   =  0x5, ///<Push pull   output with alternate drive strength
-        OUTPUT_ALT_LOW               = 0x15, ///<Combined operation: set pin to output with alternate drive strength and start with a low value
-        OUTPUT_ALT_HIGH              = 0x25, ///<Combined operation: set pin to output with alternate drive strength and start with a high value
-        OUTPUT_OS                    =  0x6, ///<Open source output
-        OUTPUS_OS_PULL_DOWN          =  0x7, ///<Open source output with pulldown
-        OUTPUT_OD                    =  0x8, ///<Open drain  output
-        OUTPUT_OD_FILTER             =  0x9, ///<Open drain  output with glitch filter
-        OUTPUT_OD_PULL_UP            =  0xa, ///<Open drain  output with pullup
-        OUTPUT_OD_PULL_UP_FILTER     =  0xb, ///<Open drain  output with pullup and glitch filter
-        OUTPUT_OD_ALT                =  0xc, ///<Open drain  output with alternate drive strength
-        OUTPUT_OD_ALT_FILTER         =  0xd, ///<Open drain  output with alternate drive strength and glitch filter
-        OUTPUT_OD_ALT_PULL_UP        =  0xe, ///<Open drain  output with alternate drive strength and pullup
-        OUTPUT_OD_ALT_PULL_UP_FILTER =  0xf, ///<Open drain  output with alternate drive strength, pullup and glitch filter
-    };
-private:
-    Mode(); //Just a wrapper class, disallow creating instances
+    DISABLED                     = 0x10, ///<Disabled digital input, analog input on selected pins
+    DISABLED_PULL_UP             = 0x20, ///<Disabled input with pullup
+    INPUT                        = 0x11, ///<Floating input
+    INPUT_FILTER                 = 0x21, ///<Floating input with glitch filter
+    INPUT_PULL_DOWN              = 0x12, ///<Pulldown input
+    INPUT_PULL_UP                = 0x22, ///<Pullup   input
+    INPUT_PULL_DOWN_FILTER       = 0x13, ///<Pulldown input with glitch filter
+    INPUT_PULL_UP_FILTER         = 0x23, ///<Pullup   input with glitch filter
+    OUTPUT                       =  0x4, ///<Push pull   output
+    OUTPUT_LOW                   = 0x14, ///<Combined operation: set pin to output and start with a low value
+    OUTPUT_HIGH                  = 0x24, ///<Combined operation: set pin to output and start with a high value
+    OUTPUT_ALT                   =  0x5, ///<Push pull   output with alternate drive strength
+    OUTPUT_ALT_LOW               = 0x15, ///<Combined operation: set pin to output with alternate drive strength and start with a low value
+    OUTPUT_ALT_HIGH              = 0x25, ///<Combined operation: set pin to output with alternate drive strength and start with a high value
+    OUTPUT_OS                    =  0x6, ///<Open source output
+    OUTPUS_OS_PULL_DOWN          =  0x7, ///<Open source output with pulldown
+    OUTPUT_OD                    =  0x8, ///<Open drain  output
+    OUTPUT_OD_FILTER             =  0x9, ///<Open drain  output with glitch filter
+    OUTPUT_OD_PULL_UP            =  0xa, ///<Open drain  output with pullup
+    OUTPUT_OD_PULL_UP_FILTER     =  0xb, ///<Open drain  output with pullup and glitch filter
+    OUTPUT_OD_ALT                =  0xc, ///<Open drain  output with alternate drive strength
+    OUTPUT_OD_ALT_FILTER         =  0xd, ///<Open drain  output with alternate drive strength and glitch filter
+    OUTPUT_OD_ALT_PULL_UP        =  0xe, ///<Open drain  output with alternate drive strength and pullup
+    OUTPUT_OD_ALT_PULL_UP_FILTER =  0xf, ///<Open drain  output with alternate drive strength, pullup and glitch filter
 };
 
 /**
- * This class just encapsulates the Dst enum so that the enum names don't
- * clobber the global namespace.
+ * Drive strength for GPIO set in ALT mode
  */
-class DriveStrength
+enum class DriveStrength
 {
-public:
-    /**
-     * Drive strength for GPIO set in ALT mode
-     */
-    enum Dst
-    {
-        HIGH=2,     ///<20mA max
-        STANDARD=0, ///< 6mA max
-        LOW=3,      ///< 1mA max
-        LOWEST=1    ///< 0.1mA max
-    };
-private:
-    DriveStrength(); //Just a wrapper class, disallow creating instances
+    HIGH=2,     ///<20mA max
+    STANDARD=0, ///< 6mA max
+    LOW=3,      ///< 1mA max
+    LOWEST=1    ///< 0.1mA max
 };
 
 /**
@@ -114,9 +93,9 @@ private:
  * \param p GPIOA_BASE, GPIOB_BASE, ...
  * \param dst drive strength
  */
-inline void setPortAlternateDriveStrength(unsigned int p, DriveStrength::Dst dst)
+inline void setPortAlternateDriveStrength(unsigned int p, DriveStrength dst)
 {
-    GPIO->P[p].CTRL=dst;
+    GPIO->P[p].CTRL=static_cast<unsigned int>(dst);
 }
 
 /**
@@ -147,7 +126,7 @@ public:
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
      * \param m enum Mode_
      */
-    void mode(Mode::Mode_ m);
+    void mode(Mode m);
 
     /**
      * Set the pin to 1, if it is an output
@@ -197,7 +176,7 @@ private:
     unsigned char n;      ///<Number of the GPIO within the port
 };
 
-namespace detail {
+namespace internal {
 
 /**
  * \internal
@@ -213,7 +192,7 @@ struct ModeBase
      * \param n which pin (0 to 15)
      * \param m enum Mode_
      */
-    static void modeImplL(GPIO_P_TypeDef *port, unsigned char n, Mode::Mode_ m);
+    static void modeImplL(GPIO_P_TypeDef *port, unsigned char n, Mode m);
     
     /**
      * \internal
@@ -222,7 +201,7 @@ struct ModeBase
      * \param n which pin (0 to 15)
      * \param m enum Mode_
      */
-    static void modeImplH(GPIO_P_TypeDef *port, unsigned char n, Mode::Mode_ m);
+    static void modeImplH(GPIO_P_TypeDef *port, unsigned char n, Mode m);
 };
 
 /**
@@ -233,7 +212,7 @@ struct ModeBase
 template<unsigned int P, unsigned char N, bool= N>=8>
 struct ModeFwd : private ModeBase
 {
-    inline static void mode(Mode::Mode_ m)
+    inline static void mode(Mode m)
     {
         ModeBase::modeImplH(&GPIO->P[P],N,m);
     }
@@ -242,13 +221,13 @@ struct ModeFwd : private ModeBase
 template<unsigned int P, unsigned char N>
 struct ModeFwd<P,N,false>
 {
-    inline static void mode(Mode::Mode_ m)
+    inline static void mode(Mode m)
     {
         ModeBase::modeImplL(&GPIO->P[P],N,m);
     }
 };
 
-} //namespace detail
+} //namespace internal
 
 /**
  * Gpio template class
@@ -269,9 +248,9 @@ public:
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
      * \param m enum Mode_
      */
-    static void mode(Mode::Mode_ m)
+    static void mode(Mode m)
     {
-        detail::ModeFwd<P,N>::mode(m);
+        internal::ModeFwd<P,N>::mode(m);
     }
 
     /**
@@ -330,5 +309,3 @@ private:
 };
 
 } //namespace miosix
-
-#endif	//EFM32_GPIO_H

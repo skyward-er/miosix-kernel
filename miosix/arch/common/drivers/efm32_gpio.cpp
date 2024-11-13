@@ -29,46 +29,48 @@
 
 namespace miosix {
 
-void GpioPin::mode(Mode::Mode_ m)
+void GpioPin::mode(Mode m)
 {
     //Can't avoid the if as we've done with Gpio<P,N>, as n is not a
     //template parameter in GpioPin
-    if(n>=8) detail::ModeBase::modeImplH(port,n,m);
-    else detail::ModeBase::modeImplL(port,n,m);
+    if(n>=8) internal::ModeBase::modeImplH(port,n,m);
+    else internal::ModeBase::modeImplL(port,n,m);
 }
 
-namespace detail {
+namespace internal {
 
-void ModeBase::modeImplL(GPIO_P_TypeDef *port, unsigned char n, Mode::Mode_ m)
+void ModeBase::modeImplL(GPIO_P_TypeDef *port, unsigned char n, Mode m)
 {
     const unsigned char o=n*4;
+    const unsigned int mm=static_cast<unsigned int>(m);
     
     //First, transition to disabled state
     port->MODEL &= ~(0xf<<o);
     
     //Then, set port out bit as they have side effects in some modes
-    if(m & 0x10) port->DOUTCLR=1<<n;
-    else if(m & 0x20) port->DOUTSET=1<<n;
+    if(mm & 0x10) port->DOUTCLR=1<<n;
+    else if(mm & 0x20) port->DOUTSET=1<<n;
     
     //Last, configure port to new value
-    port->MODEL |= (m & 0xf)<<o;
+    port->MODEL |= (mm & 0xf)<<o;
 }
 
-void ModeBase::modeImplH(GPIO_P_TypeDef* port, unsigned char n, Mode::Mode_ m)
+void ModeBase::modeImplH(GPIO_P_TypeDef* port, unsigned char n, Mode m)
 {
     const unsigned char o=(n-8)*4;
+    const unsigned int mm=static_cast<unsigned int>(m);
     
     //First, transition to disabled state
     port->MODEH &= ~(0xf<<o);
     
     //Then, set port out bit as they have side effects in some modes
-    if(m & 0x10) port->DOUTCLR=1<<n;
-    else if(m & 0x20) port->DOUTSET=1<<n;
+    if(mm & 0x10) port->DOUTCLR=1<<n;
+    else if(mm & 0x20) port->DOUTSET=1<<n;
     
     //Last, configure port to new value
-    port->MODEH |= (m & 0xf)<<o;
+    port->MODEH |= (mm & 0xf)<<o;
 }
 
-} //namespace detail
+} //namespace internal
 
 } //namespace miosix

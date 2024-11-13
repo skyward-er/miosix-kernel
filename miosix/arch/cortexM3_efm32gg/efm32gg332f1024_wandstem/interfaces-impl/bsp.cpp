@@ -169,7 +169,7 @@ void IRQbspInit()
     
     redLed::mode(Mode::OUTPUT_LOW);
     greenLed::mode(Mode::OUTPUT_LOW);
-    userButton::mode(Mode::Mode::INPUT_PULL_UP_FILTER);
+    userButton::mode(Mode::INPUT_PULL_UP_FILTER);
     loopback32KHzIn::mode(Mode::INPUT);
     loopback32KHzOut::mode(Mode::OUTPUT);
     
