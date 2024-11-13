@@ -58,7 +58,7 @@
  * - a match register capable of generating interrupts
  * - an overflow interrupt
  * can simply derive the TimerAdapter providing the required functions to
- * access the hardware timer, and the DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION
+ * access the hardware timer, and the DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION
  * macro to implement the os_timer interface.
  */
 
@@ -389,7 +389,7 @@ public:
  * };
  * 
  * static MyHwTimer timer;
- * DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+ * DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer);
  * 
  * void timerInterruptRoutine()
  * {
@@ -398,7 +398,7 @@ public:
  * } //namespace miosix
  * \endcode
  */
-#define DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer) \
+#define DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer) \
 long long getTime() noexcept                       \
 {                                                  \
     FastInterruptDisableLock dLock;                \

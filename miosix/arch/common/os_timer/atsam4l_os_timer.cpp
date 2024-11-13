@@ -177,7 +177,7 @@ public:
 };
 
 static ATSAM_TC1_Timer timer;
-DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer);
 } //namespace miosix
 
 #else //WITH_RTC_AS_OS_TIMER
@@ -292,7 +292,7 @@ public:
 };
 
 static ATSAM_AST_Timer timer;
-DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer);
 
 /*
 // Test code for checking the presence of the race condition. Call from main.

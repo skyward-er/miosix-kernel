@@ -78,7 +78,7 @@ public:
 };
 
 static LPC2138Timer0 timer;
-DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer);
 
 void TIM0_Routine()
 {

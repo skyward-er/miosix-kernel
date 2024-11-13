@@ -165,6 +165,6 @@ public:
 };
 
 static STM32Timer<STM32TimerHW> timer;
-DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer);
 
 } //namespace miosix

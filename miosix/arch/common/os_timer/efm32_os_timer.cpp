@@ -111,6 +111,6 @@ public:
 };
 
 static EFM32Timer2 timer;
-DEFAULT_OS_TIMER_INTERFACE_IMPLMENTATION(timer);
+DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer);
 
 } //namespace miosix
