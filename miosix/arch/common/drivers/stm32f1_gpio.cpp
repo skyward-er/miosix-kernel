@@ -3,15 +3,15 @@
 
 namespace miosix {
 
-void GpioPin::mode(Mode::Mode_ m)
+void GpioPin::mode(Mode m)
 {
     if(n<8)
     {
         p->CRL &= ~(0xf<<(n*4));
-        p->CRL |= m<<(n*4);
+        p->CRL |= toUint(m)<<(n*4);
     } else {
         p->CRH &= ~(0xf<<((n-8)*4));
-        p->CRH |= m<<((n-8)*4);
+        p->CRH |= toUint(m)<<((n-8)*4);
     }
 }
 

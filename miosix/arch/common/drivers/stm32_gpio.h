@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009, 2010, 2011, 2012 by Terraneo Federico             *
+ *   Copyright (C) 2009-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,96 +25,66 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/*
- * Versions:
- * 1.0 First release
- * 1.1 Made Mode, Gpio and GpioBase contructor private to explicitly disallow
- *     creating instances of these classes.
- * 1.2 Fixed a bug
- * 1.3 Applied patch by Lee Richmond (http://pastebin.com/f7ae1a65f). Now
- *     mode() is inlined too.
- * 1.4 Adapted to stm32f2
- * 1.5 Added GpioPin for easily passing a Gpio as a parameter to a function
- */
-
-#ifndef STM32_GPIO_H
-#define STM32_GPIO_H
+#pragma once
 
 #include "interfaces/arch_registers.h"
 
 namespace miosix {
 
 /**
- * This class just encapsulates the Mode_ enum so that the enum names don't
- * clobber the global namespace.
+ * GPIO mode (INPUT, OUTPUT, ...)
+ * \code pin::mode(Mode::INPUT);\endcode
  */
-class Mode
+enum class Mode
 {
-public:
-    /**
-     * GPIO mode (INPUT, OUTPUT, ...)
-     * \code pin::mode(Mode::INPUT);\endcode
-     */
-    enum Mode_
-    {
-        INPUT                  = 0b00000, ///Input Floating          (MODE=00 TYPE=0 PUP=00)
-        INPUT_PULL_UP          = 0b00001, ///Input PullUp            (MODE=00 TYPE=0 PUP=01)
-        INPUT_PULL_DOWN        = 0b00010, ///Input PullDown          (MODE=00 TYPE=0 PUP=10)
-        INPUT_ANALOG           = 0b11000, ///Input Analog            (MODE=11 TYPE=0 PUP=00)
-        OUTPUT                 = 0b01000, ///Push Pull  Output       (MODE=01 TYPE=0 PUP=00)
-        OPEN_DRAIN             = 0b01100, ///Open Drain Output       (MODE=01 TYPE=1 PUP=00)
-        OPEN_DRAIN_PULL_UP     = 0b01101, ///Open Drain Output PU    (MODE=01 TYPE=1 PUP=01)
-        ALTERNATE              = 0b10000, ///Alternate function      (MODE=10 TYPE=0 PUP=00)
-        ALTERNATE_OD           = 0b10100, ///Alternate Open Drain    (MODE=10 TYPE=1 PUP=00)
-        ALTERNATE_OD_PULL_UP   = 0b10101, ///Alternate Open Drain PU (MODE=10 TYPE=1 PUP=01)
-    };
-private:
-    Mode(); //Just a wrapper class, disallow creating instances
+    INPUT                  = 0b00000, ///Input Floating          (MODE=00 TYPE=0 PUP=00)
+    INPUT_PULL_UP          = 0b00001, ///Input PullUp            (MODE=00 TYPE=0 PUP=01)
+    INPUT_PULL_DOWN        = 0b00010, ///Input PullDown          (MODE=00 TYPE=0 PUP=10)
+    INPUT_ANALOG           = 0b11000, ///Input Analog            (MODE=11 TYPE=0 PUP=00)
+    OUTPUT                 = 0b01000, ///Push Pull  Output       (MODE=01 TYPE=0 PUP=00)
+    OPEN_DRAIN             = 0b01100, ///Open Drain Output       (MODE=01 TYPE=1 PUP=00)
+    OPEN_DRAIN_PULL_UP     = 0b01101, ///Open Drain Output PU    (MODE=01 TYPE=1 PUP=01)
+    ALTERNATE              = 0b10000, ///Alternate function      (MODE=10 TYPE=0 PUP=00)
+    ALTERNATE_OD           = 0b10100, ///Alternate Open Drain    (MODE=10 TYPE=1 PUP=00)
+    ALTERNATE_OD_PULL_UP   = 0b10101, ///Alternate Open Drain PU (MODE=10 TYPE=1 PUP=01)
 };
 
 /**
- * This class just encapsulates the Speed_ enum so that the enum names don't
- * clobber the global namespace.
+ * GPIO speed
+ * \code pin::speed(Speed::_50MHz);\endcode
  */
-class Speed
+enum class Speed
 {
-public:
-    /**
-     * GPIO speed
-     * \code pin::speed(Speed::_50MHz);\endcode
-     */
-    enum Speed_
-    {
-        //Device-independent defines
-        LOW       = 0x0,
-        MEDIUM    = 0x1,
-        HIGH      = 0x2,  //Same as LOW for STM32F0/F3
-        VERY_HIGH = 0x3,
+    //Device-independent defines
+    LOW       = 0x0,
+    MEDIUM    = 0x1,
+    HIGH      = 0x2,  //Same as LOW for STM32F0/F3
+    VERY_HIGH = 0x3,
 #if defined(_ARCH_CORTEXM0PLUS_STM32L0) || defined(_ARCH_CORTEXM3_STM32L1)
-        _400KHz = 0x0,
-        _2MHz   = 0x1,
-        _10MHz  = 0x2,
-        _40MHz  = 0x3
+    _400KHz = 0x0,
+    _2MHz   = 0x1,
+    _10MHz  = 0x2,
+    _40MHz  = 0x3
 #elif defined(_ARCH_CORTEXM0_STM32F0) || defined(_ARCH_CORTEXM4_STM32F3)
-        _2MHz   = 0x0,
-        _10MHz  = 0x1,
-        _50MHz  = 0x3
+    _2MHz   = 0x0,
+    _10MHz  = 0x1,
+    _50MHz  = 0x3
 #elif defined(_ARCH_CORTEXM3_STM32F2) || defined(_ARCH_CORTEXM4_STM32F4) || \
       defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
-        _2MHz   = 0x0,
-        _25MHz  = 0x1,
-        _50MHz  = 0x2,
-        _100MHz = 0x3
+    _2MHz   = 0x0,
+    _25MHz  = 0x1,
+    _50MHz  = 0x2,
+    _100MHz = 0x3
 #elif defined(_ARCH_CORTEXM4_STM32L4)
-        _5MHz   = 0x0,
-        _25MHz  = 0x1,
-        _50MHz  = 0x2,
-        _100MHz = 0x3
+    _5MHz   = 0x0,
+    _25MHz  = 0x1,
+    _50MHz  = 0x2,
+    _100MHz = 0x3
 #endif
-    };
-private:
-    Speed(); //Just a wrapper class, disallow creating instances
 };
+
+//Convert enum classes to their bitmask representation
+inline auto toUint(Speed s) { return static_cast<unsigned int>(s); }
 
 /**
  * Base class to implement non template-dependent functions that, if inlined,
@@ -123,7 +93,7 @@ private:
 class GpioBase
 {
 protected:
-    static void modeImpl(unsigned int p, unsigned char n, Mode::Mode_ m);
+    static void modeImpl(unsigned int p, unsigned char n, Mode m);
     static void afImpl(unsigned int p, unsigned char n, unsigned char af);
 };
 
@@ -146,9 +116,9 @@ public:
     
     /**
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
-     * \param m enum Mode_
+     * \param m enum Mode
      */
-    void mode(Mode::Mode_ m)
+    void mode(Mode m)
     {
         modeImpl(reinterpret_cast<unsigned int>(p),n,m);
     }
@@ -157,10 +127,10 @@ public:
      * Set the GPIO speed
      * \param s speed value
      */
-    void speed(Speed::Speed_ s)
+    void speed(Speed s)
     {
         p->OSPEEDR &= ~(3<<(n*2));
-        p->OSPEEDR |= s<<(n*2);
+        p->OSPEEDR |= toUint(s)<<(n*2);
     }
     
     /**
@@ -230,9 +200,9 @@ class Gpio : private GpioBase
 public:
     /**
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
-     * \param m enum Mode_
+     * \param m enum Mode
      */
-    static void mode(Mode::Mode_ m)
+    static void mode(Mode m)
     {
         modeImpl(P,N,m);
     }
@@ -241,10 +211,10 @@ public:
      * Set the GPIO speed
      * \param s speed value
      */
-    static void speed(Speed::Speed_ s)
+    static void speed(Speed s)
     {
         reinterpret_cast<GPIO_TypeDef*>(P)->OSPEEDR &= ~(3<<(N*2));
-        reinterpret_cast<GPIO_TypeDef*>(P)->OSPEEDR |= s<<(N*2);
+        reinterpret_cast<GPIO_TypeDef*>(P)->OSPEEDR |= toUint(s)<<(N*2);
     }
     
     /**
@@ -305,5 +275,3 @@ private:
 };
 
 } //namespace miosix
-
-#endif  //STM32_GPIO_H

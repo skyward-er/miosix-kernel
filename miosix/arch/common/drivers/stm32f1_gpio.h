@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009, 2010, 2011, 2012 by Terraneo Federico             *
+ *   Copyright (C) 2009-2024 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,74 +25,55 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-/*
- * Versions:
- * 1.0 First release
- * 1.1 Made Mode, Gpio and GpioBase contructor private to explicitly disallow
- *     creating instances of these classes.
- * 1.2 Fixed a bug
- * 1.3 Applied patch by Lee Richmond (http://pastebin.com/f7ae1a65f). Now
- *     mode() is inlined too.
- * 1.4 Added GpioPin for easily passing a Gpio as a parameter to a function
- */
-
-#ifndef STM32F1_GPIO_H
-#define	STM32F1_GPIO_H
+#pragma once
 
 #include "interfaces/arch_registers.h"
 
 namespace miosix {
 
 /**
- * This class just encapsulates the Mode_ enum so that the enum names don't
- * clobber the global namespace.
+ * GPIO mode (INPUT, OUTPUT, ...)
+ * \code pin::mode(Mode::INPUT);\endcode
  */
-class Mode
+enum class Mode
 {
-public:
-    /**
-     * GPIO mode (INPUT, OUTPUT, ...)
-     * \code pin::mode(Mode::INPUT);\endcode
-     */
-    enum Mode_
-    {
-        INPUT              = 0x4, ///Floating Input             (CNF=01 MODE=00)
-        INPUT_PULL_UP_DOWN = 0x8, ///Pullup/Pulldown Input      (CNF=10 MODE=00)
-        INPUT_ANALOG       = 0x0, ///Analog Input               (CNF=00 MODE=00)
-        OUTPUT             = 0x3, ///Push Pull  50MHz Output    (CNF=00 MODE=11)
-        OUTPUT_10MHz       = 0x1, ///Push Pull  10MHz Output    (CNF=00 MODE=01)
-        OUTPUT_2MHz        = 0x2, ///Push Pull   2MHz Output    (CNF=00 MODE=10)
-        OPEN_DRAIN         = 0x7, ///Open Drain 50MHz Output    (CNF=01 MODE=11)
-        OPEN_DRAIN_10MHz   = 0x5, ///Open Drain 10MHz Output    (CNF=01 MODE=01)
-        OPEN_DRAIN_2MHz    = 0x6, ///Open Drain  2MHz Output    (CNF=01 MODE=10)
-        ALTERNATE          = 0xb, ///Alternate function 50MHz   (CNF=10 MODE=11)
-        ALTERNATE_10MHz    = 0x9, ///Alternate function 10MHz   (CNF=10 MODE=01)
-        ALTERNATE_2MHz     = 0xa, ///Alternate function  2MHz   (CNF=10 MODE=10)
-        ALTERNATE_OD       = 0xf, ///Alternate Open Drain 50MHz (CNF=11 MODE=11)
-        ALTERNATE_OD_10MHz = 0xd, ///Alternate Open Drain 10MHz (CNF=11 MODE=01)
-        ALTERNATE_OD_2MHz  = 0xe  ///Alternate Open Drain  2MHz (CNF=11 MODE=10)
-    };
-private:
-    Mode(); //Just a wrapper class, disallow creating instances
+    INPUT              = 0x4, ///Floating Input             (CNF=01 MODE=00)
+    INPUT_PULL_UP_DOWN = 0x8, ///Pullup/Pulldown Input      (CNF=10 MODE=00)
+    INPUT_ANALOG       = 0x0, ///Analog Input               (CNF=00 MODE=00)
+    OUTPUT             = 0x3, ///Push Pull  50MHz Output    (CNF=00 MODE=11)
+    OUTPUT_10MHz       = 0x1, ///Push Pull  10MHz Output    (CNF=00 MODE=01)
+    OUTPUT_2MHz        = 0x2, ///Push Pull   2MHz Output    (CNF=00 MODE=10)
+    OPEN_DRAIN         = 0x7, ///Open Drain 50MHz Output    (CNF=01 MODE=11)
+    OPEN_DRAIN_10MHz   = 0x5, ///Open Drain 10MHz Output    (CNF=01 MODE=01)
+    OPEN_DRAIN_2MHz    = 0x6, ///Open Drain  2MHz Output    (CNF=01 MODE=10)
+    ALTERNATE          = 0xb, ///Alternate function 50MHz   (CNF=10 MODE=11)
+    ALTERNATE_10MHz    = 0x9, ///Alternate function 10MHz   (CNF=10 MODE=01)
+    ALTERNATE_2MHz     = 0xa, ///Alternate function  2MHz   (CNF=10 MODE=10)
+    ALTERNATE_OD       = 0xf, ///Alternate Open Drain 50MHz (CNF=11 MODE=11)
+    ALTERNATE_OD_10MHz = 0xd, ///Alternate Open Drain 10MHz (CNF=11 MODE=01)
+    ALTERNATE_OD_2MHz  = 0xe  ///Alternate Open Drain  2MHz (CNF=11 MODE=10)
 };
+
+//Convert enum classes to their bitmask representation
+inline auto toUint(Mode m) { return static_cast<unsigned int>(m); }
 
 template<unsigned int P, unsigned char N, bool = N >= 8>
 struct GpioMode
 {
-    inline static void mode(Mode::Mode_ m)
+    inline static void mode(Mode m)
     {
         reinterpret_cast<GPIO_TypeDef*>(P)->CRH &= ~(0xf<<((N-8)*4));
-        reinterpret_cast<GPIO_TypeDef*>(P)->CRH |= m<<((N-8)*4);
+        reinterpret_cast<GPIO_TypeDef*>(P)->CRH |= toUint(m)<<((N-8)*4);
     }
 };
 
 template<unsigned int P, unsigned char N>
 struct GpioMode<P, N, false>
 {
-    inline static void mode(Mode::Mode_ m)
+    inline static void mode(Mode m)
     {
         reinterpret_cast<GPIO_TypeDef*>(P)->CRL &= ~(0xf<<(N*4));
-        reinterpret_cast<GPIO_TypeDef*>(P)->CRL |= m<<(N*4);
+        reinterpret_cast<GPIO_TypeDef*>(P)->CRL |= toUint(m)<<(N*4);
     }
 };
 
@@ -117,7 +98,7 @@ public:
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
      * \param m enum Mode_
      */
-    void mode(Mode::Mode_ m);
+    void mode(Mode m);
 
     /**
      * Set the pin to 1, if it is an output
@@ -194,7 +175,7 @@ public:
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
      * \param m enum Mode_
      */
-    static void mode(Mode::Mode_ m)
+    static void mode(Mode m)
     {
         GpioMode<P, N>::mode(m);
     }
@@ -263,5 +244,3 @@ private:
 };
 
 } //namespace miosix
-
-#endif	//STM32F1_GPIO_H
