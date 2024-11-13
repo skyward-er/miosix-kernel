@@ -60,7 +60,7 @@ void IRQbspInit()
     sio_hw->gpio_oe_set = SIO_GPIO_OE_SET_BITS;
     //Initialize GPIO functions
     for(unsigned int i=0; i<NUM_BANK0_GPIOS; i++)
-        iobank0_hw->io[i].ctrl=Function::GPIO;
+        iobank0_hw->io[i].ctrl=toUint(Function::GPIO);
 
     //Blink the LED, but only on standard pico (not Pico W)
     #ifdef PICO_DEFAULT_LED_PIN

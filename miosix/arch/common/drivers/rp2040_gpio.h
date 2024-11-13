@@ -30,74 +30,61 @@
 #include "interfaces/arch_registers.h"
 
 //There is just one GPIO port on RP2040, with 30 lines
-const unsigned int GPIOA_BASE=0;
+const unsigned int GPIO0_BASE=0;
 
 namespace miosix {
 
-class Mode
+/**
+ * GPIO pad mode (INPUT, OUTPUT, ...)
+ * \code pin::mode(Mode::INPUT);\endcode
+ */
+enum class Mode
 {
-public:
-    /**
-     * GPIO pad mode (INPUT, OUTPUT, ...)
-     * \code pin::mode(Mode::INPUT);\endcode
-     */
-    enum Mode_
-    {
-        DISABLED                     = 0b10000000,
-        PULL_UP                      = 0b00001000,
-        PULL_DOWN                    = 0b00000100,
-        INPUT                        = 0b11000000,
-        INPUT_PULL_UP                = 0b11001000,
-        INPUT_PULL_DOWN              = 0b11000100,
-        INPUT_SCHMITT_TRIG           = 0b11000010,
-        INPUT_SCHMITT_TRIG_PULL_UP   = 0b11001010,
-        INPUT_SCHMITT_TRIG_PULL_DOWN = 0b11000110,
-        OUTPUT                       = 0b01000000,
-    };
-private:
-    Mode(); //Just a wrapper class, disallow creating instances
+    DISABLED                     = 0b10000000,
+    PULL_UP                      = 0b00001000,
+    PULL_DOWN                    = 0b00000100,
+    INPUT                        = 0b11000000,
+    INPUT_PULL_UP                = 0b11001000,
+    INPUT_PULL_DOWN              = 0b11000100,
+    INPUT_SCHMITT_TRIG           = 0b11000010,
+    INPUT_SCHMITT_TRIG_PULL_UP   = 0b11001010,
+    INPUT_SCHMITT_TRIG_PULL_DOWN = 0b11000110,
+    OUTPUT                       = 0b01000000,
 };
 
-class DriveStrength
+/**
+ * Drive strength for GPIO pads
+ */
+enum class DriveStrength
 {
-public:
-    /**
-     * Drive strength for GPIO pads
-     */
-    enum DriveStrength_
-    {
-        HIGHER   = 3, ///< 12mA max
-        HIGH     = 2, ///<  8mA max
-        STANDARD = 1, ///<  4mA max
-        LOW      = 0  ///<  2mA max
-    };
-private:
-    DriveStrength(); //Just a wrapper class, disallow creating instances
+    HIGHER   = 3, ///< 12mA max
+    HIGH     = 2, ///<  8mA max
+    STANDARD = 1, ///<  4mA max
+    LOW      = 0  ///<  2mA max
 };
 
-class Function
+/**
+ * GPIO function
+ */
+enum class Function
 {
-public:
-    /**
-     * GPIO function
-     */
-    enum Function_
-    {
-        SPI     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_SPI0_RX,
-        UART    = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_UART0_TX,
-        I2C     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_I2C0_SDA,
-        PWM     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_PWM_A_0,
-        // SIO = Single cycle IO, a silly name for normal CPU-driven GPIOs
-        SIO     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_SIO_0,
-        GPIO    = SIO,
-        PIO0    = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_PIO0_0,
-        PIO1    = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_PIO1_0,
-        // Host USB VDD monitoring
-        USBMON  = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_USB_MUXING_OVERCURR_DETECT,
-    };
-private:
-    Function(); //Just a wrapper class, disallow creating instances
+    SPI     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_SPI0_RX,
+    UART    = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_UART0_TX,
+    I2C     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_I2C0_SDA,
+    PWM     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_PWM_A_0,
+    // SIO = Single cycle IO, a silly name for normal CPU-driven GPIOs
+    SIO     = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_SIO_0,
+    GPIO    = SIO,
+    PIO0    = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_PIO0_0,
+    PIO1    = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_PIO1_0,
+    // Host USB VDD monitoring
+    USBMON  = IO_BANK0_GPIO0_CTRL_FUNCSEL_VALUE_USB_MUXING_OVERCURR_DETECT,
 };
+
+//Convert enum classes to their bitmask representation
+inline auto toUint(Mode m)          { return static_cast<unsigned int>(m); }
+inline auto toUint(DriveStrength s) { return static_cast<unsigned int>(s); }
+inline auto toUint(Function f)      { return static_cast<unsigned int>(f); }
 
 /**
  * This class allows to easiliy pass a Gpio as a parameter to a function.
@@ -127,9 +114,9 @@ public:
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
      * \param m enum Mode_
      */
-    void mode(Mode::Mode_ m)
+    void mode(Mode m)
     {
-        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b11001110) | m;
+        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b11001110) | toUint(m);
     }
 
     /**
@@ -146,9 +133,9 @@ public:
      * Set the drive strength of the GPIO.
      * \param s Desired drive strength.
      */
-    void strength(DriveStrength::DriveStrength_ s)
+    void strength(DriveStrength s)
     {
-        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b00110000) | s;
+        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b00110000) | toUint(s);
     }
 
     /**
@@ -156,7 +143,7 @@ public:
      * \param f The desired function.
      * \note To use a GPIO pin directly, set the function to GPIO first.
      */
-    void function(Function::Function_ f) { iobank0_hw->io[N].ctrl = f; }
+    void function(Function f) { iobank0_hw->io[N].ctrl = toUint(f); }
 
     /**
      * Set the pin to 1, if it is an output
@@ -177,7 +164,7 @@ public:
      * Sets the value of the GPIO (high or low)
      * \param v The value (zero for low, non-zero for high)
      */
-    void write(int v) { if (v) high(); else low(); }
+    void write(int v) { if(v) high(); else low(); }
 
     /**
      * Allows to read the pin status
@@ -196,13 +183,13 @@ public:
     unsigned char getNumber() const { return N; }
     
 private:
-    const unsigned int P = GPIOA_BASE;
+    const unsigned int P;
     const unsigned char N;
 };
 
 /**
  * Gpio template class
- * \param P GPIOA_BASE, GPIOB_BASE, ...
+ * \param P GPIO0_BASE, GPIO1_BASE, ...
  * \param N which pin (0 to 29)
  * The intended use is to make a typedef to this class with a meaningful name.
  * \code
@@ -219,9 +206,9 @@ public:
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
      * \param m enum Mode_
      */
-    static void mode(Mode::Mode_ m)
+    static void mode(Mode m)
     {
-        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b11001110) | m;
+        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b11001110) | toUint(m);
     }
 
     /**
@@ -238,9 +225,9 @@ public:
      * Set the drive strength of the GPIO.
      * \param s Desired drive strength.
      */
-    static void strength(DriveStrength::DriveStrength_ s)
+    static void strength(DriveStrength s)
     {
-        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b00110000) | s;
+        padsbank0_hw->io[N] = (padsbank0_hw->io[N] & ~0b00110000) | toUint(s);
     }
 
     /**
@@ -248,9 +235,9 @@ public:
      * \param f The desired function.
      * \note To use a GPIO pin directly, set the function to GPIO first.
      */
-    static void function(Function::Function_ f)
+    static void function(Function f)
     {
-        iobank0_hw->io[N].ctrl = f;
+        iobank0_hw->io[N].ctrl = toUint(f);
     }
 
     /**
@@ -272,7 +259,7 @@ public:
      * Sets the value of the GPIO (high or low)
      * \param v The value (zero for low, non-zero for high)
      */
-    static void write(int v) { if (v) high(); else low(); }
+    static void write(int v) { if(v) high(); else low(); }
 
     /**
      * Allows to read the pin status
@@ -283,13 +270,10 @@ public:
     /**
      * \return this Gpio converted as a GpioPin class 
      */
-    static GpioPin getPin()
-    {
-        return GpioPin(P, N);
-    }
+    static GpioPin getPin() { return GpioPin(P, N); }
     
     /**
-     * \return the pin port. One of the constants GPIOA_BASE, GPIOB_BASE, ...
+     * \return the pin port. One of the constants GPIO0_BASE, GPIO1_BASE, ...
      */
     unsigned int getPort() const { return P; }
     
