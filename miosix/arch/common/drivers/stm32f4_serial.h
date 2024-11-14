@@ -40,26 +40,33 @@ class STM32SerialHW;
 class STM32Serial;
 class STM32DMASerial;
 
+/**
+ * \internal Common code for DMA and non-DMA implementations of the STM32 serial
+ * port class.
+ */
 class STM32SerialBase
 {
-public:
-    ssize_t readBlock(void *buffer, size_t size, off_t where);
-
     /**
      * \return port id, 1 for USART1, 2 for USART2, ... 
      */
     int getId() const { return portId; }
 
 private:
-    STM32SerialBase(int id, int baudrate, bool flowControl, GpioPin tx,
-        GpioPin rx, GpioPin rts, GpioPin cts);
+    /**
+     * Constructor, does not initialize the peripheral
+     */
+    STM32SerialBase(int id, int baudrate, bool flowControl);
 
+    /**
+     * Initialize GPIOs, baud rate and flow control
+     */
     void commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts);
     
+    /**
+     * Write to the serial port directly. Interrupts must be already disabled.
+     */
     void IRQwrite(const char *str);
-
-    int ioctl(int cmd, void* arg);
 
     /**
      * Wait until all characters have been written to the serial port.
@@ -70,42 +77,53 @@ private:
         while((port->SR & USART_SR_TC)==0) ;
     }
 
+    /**
+     * Read a block of data from rxQueue. Stops when the maximum size is reached
+     * or if the line becomes idle.
+     */
+    ssize_t readFromRxQueue(void *buffer, size_t size);
+
+    /**
+     * Update if the line is idle or not from the value of the USART
+     * status register.
+     */
     inline void rxUpdateIdle(unsigned long sr)
     {
         idle=!!(sr & USART_SR_IDLE);
     }
 
+    /**
+     * Put a value in the rxQueue.
+     */
     inline bool rxQueuePut(char c)
     {
         return rxQueue.tryPut(c);
     }
 
-    void rxWakeup()
-    {
-        if(rxWaiting)
-        {
-            rxWaiting->IRQwakeup();
-            if(rxWaiting->IRQgetPriority()>
-                Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    IRQinvokeScheduler();
-            rxWaiting=0;
-        }
-    }
+    /**
+     * Wakeup a suspended readFromRxQueue() after a state change of rxQueue or
+     * line idleness status.
+     */
+    void rxWakeup();
+
+    /**
+     * Common implementation of ioctl() for the STM32 serial
+     */
+    int ioctl(int cmd, void* arg);
 
     friend class STM32Serial;
     friend class STM32DMASerial;
 
+    USART_TypeDef *port;              ///< Pointer to USART peripheral
+    const STM32SerialHW *portHw;      ///< Pointer to USART port object
+    const bool flowControl;           ///< True if flow control GPIOs enabled
+    const unsigned char portId;       ///< 1 for USART1, 2 for USART2, ...
+
     FastMutex rxMutex;                ///< Mutex locked during reception
-    
     DynUnsyncQueue<char> rxQueue;     ///< Receiving queue
     static const unsigned int rxQueueMin=16; ///< Minimum queue size
     Thread *rxWaiting=0;              ///< Thread waiting for rx, or 0
-
-    USART_TypeDef *port;              ///< Pointer to USART peripheral
-    const STM32SerialHW *portHw;      ///< Pointer to USART port object
     bool idle=true;                   ///< Receiver idle
-    const bool flowControl;           ///< True if flow control GPIOs enabled
-    const unsigned char portId;       ///< 1 for USART1, 2 for USART2, ...
 };
 
 /**
@@ -121,15 +139,9 @@ public:
      * Constructor, initializes the serial port using remapped pins and disables
      * flow control.
      * 
-     * NOTE: for stm32f2, f4, f7 and h7 you have to set the correct alternate
-     * function to the pins in order to connect then to the USART peripheral
-     * before passing them to this class.
-     * 
-     * Calls errorHandler(UNEXPECTED) if id is not in the correct range, or when
-     * attempting to construct multiple objects with the same id. That is,
-     * it is possible to instantiate only one instance of this class for each
-     * hardware USART.
-     * \param id a number 1 to 3 to select which USART
+     * Calls errorHandler(UNEXPECTED) if id is not in the correct range.
+     * \param id a number to select which USART. The maximum id depends on the
+     *           specific microcontroller, the minimum id is always 1.
      * \param baudrate serial port baudrate
      * \param tx tx pin
      * \param rx rx pin
@@ -140,15 +152,9 @@ public:
      * Constructor, initializes the serial port using remapped pins and enables
      * flow control.
      * 
-     * NOTE: for stm32f2, f4, f7 and h7 you have to set the correct alternate
-     * function to the pins in order to connect then to the USART peripheral
-     * before passing them to this class.
-     * 
-     * Calls errorHandler(UNEXPECTED) if id is not in the correct range, or when
-     * attempting to construct multiple objects with the same id. That is,
-     * it is possible to instantiate only one instance of this class for each
-     * hardware USART.
-     * \param id a number 1 to 3 to select which USART
+     * Calls errorHandler(UNEXPECTED) if id is not in the correct range.
+     * \param id a number to select which USART. The maximum id depends on the
+     *           specific microcontroller, the minimum id is always 1.
      * \param tx tx pin
      * \param rx rx pin
      * \param rts rts pin
@@ -195,7 +201,10 @@ public:
      * \param arg optional argument that some operation require
      * \return the exact return value depends on CMD, -1 is returned on error
      */
-    int ioctl(int cmd, void *arg);
+    int ioctl(int cmd, void *arg)
+    {
+        return STM32SerialBase::ioctl(cmd, arg);
+    }
     
     /**
      * Destructor
@@ -227,6 +236,13 @@ private:
     FastMutex txMutex;                ///< Mutex locked during transmission
 };
 
+/**
+ * Serial port class for stm32 microcontrollers which uses DMA for data
+ * transfer.
+ * 
+ * Classes of this type are reference counted, must be allocated on the heap
+ * and managed through intrusive_ref_ptr<FileBase>
+ */
 class STM32DMASerial : public STM32SerialBase, public Device
 {
 public:
@@ -234,15 +250,10 @@ public:
      * Constructor, initializes the serial port using remapped pins and disables
      * flow control.
      * 
-     * NOTE: for stm32f2, f4, f7 and h7 you have to set the correct alternate
-     * function to the pins in order to connect then to the USART peripheral
-     * before passing them to this class.
-     * 
-     * Calls errorHandler(UNEXPECTED) if id is not in the correct range, or when
-     * attempting to construct multiple objects with the same id. That is,
-     * it is possible to instantiate only one instance of this class for each
-     * hardware USART.
-     * \param id a number 1 to 3 to select which USART
+     * Calls errorHandler(UNEXPECTED) if id is not in the correct range, or if
+     * there is no support for DMA operation for this port.
+     * \param id a number to select which USART. The maximum id depends on the
+     *           specific microcontroller, the minimum id is always 1.
      * \param baudrate serial port baudrate
      * \param tx tx pin
      * \param rx rx pin
@@ -253,15 +264,10 @@ public:
      * Constructor, initializes the serial port using remapped pins and enables
      * flow control.
      * 
-     * NOTE: for stm32f2, f4, f7 and h7 you have to set the correct alternate
-     * function to the pins in order to connect then to the USART peripheral
-     * before passing them to this class.
-     * 
-     * Calls errorHandler(UNEXPECTED) if id is not in the correct range, or when
-     * attempting to construct multiple objects with the same id. That is,
-     * it is possible to instantiate only one instance of this class for each
-     * hardware USART.
-     * \param id a number 1 to 3 to select which USART
+     * Calls errorHandler(UNEXPECTED) if id is not in the correct range, or if
+     * there is no support for DMA operation for this port.
+     * \param id a number to select which USART. The maximum id depends on the
+     *           specific microcontroller, the minimum id is always 1.
      * \param tx tx pin
      * \param rx rx pin
      * \param rts rts pin
@@ -308,7 +314,10 @@ public:
      * \param arg optional argument that some operation require
      * \return the exact return value depends on CMD, -1 is returned on error
      */
-    int ioctl(int cmd, void *arg);
+    int ioctl(int cmd, void *arg)
+    {
+        return STM32SerialBase::ioctl(cmd, arg);
+    }
     
     /**
      * Destructor
@@ -323,42 +332,53 @@ private:
                     GpioPin rts, GpioPin cts);
 
     /**
-     * Wait until a pending DMA TX completes, if any
-     */
-    void waitDmaTxCompletion();
-    
-    /**
-     * Write to the serial port using DMA. When the function returns, the DMA
-     * transfer is still in progress.
+     * Start a write to the serial port using DMA. The write is asynchronous
+     * (when the function returns, the transfer is still in progress)
      * \param buffer buffer to write
      * \param size size of buffer to write
      */
-    void writeDma(const char *buffer, size_t size);
-    
-    /**
-     * Read from DMA buffer and write data to queue
-     */
-    void IRQreadDma();
-    
-    /**
-     * Start DMA read
-     */
-    void IRQdmaReadStart();
-    
-    /**
-     * Stop DMA read
-     * \return the number of characters in rxBuffer
-     */
-    int IRQdmaReadStop();
+    void startDmaWrite(const char *buffer, size_t size);
 
     /**
-     * \internal the serial port interrupts call this member function.
+     * Wait until a pending DMA TX completes, if any
+     */
+    void waitDmaWriteEnd();
+    
+    /**
+     * Start asynchronously reading from the serial port using DMA into
+     * rxBuffer.
+     */
+    void IRQstartDmaRead();
+
+    /**
+     * The DMA write stream interrupt calls this member function.
+     * Never call this from user code.
+     */
+    void IRQhandleDmaTxInterrupt();
+    
+    /**
+     * Stop DMA read into rxBuffer
+     * \return the number of characters in rxBuffer
+     */
+    int IRQstopDmaRead();
+    
+    /**
+     * Moves the entire content of rxBuffer into rxQueue for reading out by
+     * the application thread.
+     */
+    void IRQflushDmaReadBuffer();
+
+    /**
+     * The DMA read stream interrupt calls this member function.
+     * Never call this from user code.
+     */
+    void IRQhandleDmaRxInterrupt();
+
+    /**
+     * The serial port interrupt calls this member function.
      * Never call this from user code.
      */
     void IRQhandleInterrupt();
-
-    void IRQhandleDMAtx();
-    void IRQhandleDMArx();
 
     /**
      * The STM3F3, STM32F4 and STM32L4 have an ugly quirk of having 64KB RAM area
@@ -375,17 +395,17 @@ private:
 
     FastMutex txMutex;                ///< Mutex locked during transmission
 
-    Thread *txWaiting;                ///< Thread waiting for tx, or 0
-    static const unsigned int txBufferSize=16; ///< Size of tx buffer, for tx speedup
+    Thread *txWaiting=nullptr;        ///< Thread waiting for tx, or 0
+    static const unsigned int txBufferSize=16; ///< Size of DMA tx buffer
     /// Tx buffer, for tx speedup. This buffer must not end up in the CCM of the
     /// STM32F4, as it is used to perform DMA operations. This is guaranteed by
     /// the fact that this class must be allocated on the heap as it derives
-    /// from Device, and the Miosix linker scripts never put the heap in CCM
+    /// from Device, and the Miosix linker scripts never puts the heap in CCM
     char txBuffer[txBufferSize];
     /// This buffer emulates the behaviour of a 16550. It is filled using DMA
     /// and an interrupt is fired as soon as it is half full
     char rxBuffer[rxQueueMin];
-    bool dmaTxInProgress;             ///< True if a DMA tx is in progress
+    bool dmaTxInProgress=false;        ///< True if a DMA tx is in progress
 };
 
 } //namespace miosix
