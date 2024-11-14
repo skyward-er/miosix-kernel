@@ -53,6 +53,24 @@ namespace miosix {
 
 typedef Gpio<GPIOD_BASE,4>  cs43l22reset;
 
+template<typename TxPin, typename RxPin, typename RtsPin, typename CtsPin>
+static intrusive_ref_ptr<Device> constructSerial(
+    unsigned int id, unsigned int speed, bool flowctrl, bool dma)
+{
+    if(!flowctrl&&!dma)
+        return intrusive_ref_ptr<Device>(new STM32Serial(id,speed,
+            TxPin::getPin(),RxPin::getPin()));
+    else if(!flowctrl&&dma)
+        return intrusive_ref_ptr<Device>(new STM32DMASerial(id,speed,
+            TxPin::getPin(),RxPin::getPin()));
+    else if(flowctrl&&!dma)
+        return intrusive_ref_ptr<Device>(new STM32Serial(id,speed,
+            TxPin::getPin(),RxPin::getPin(),RtsPin::getPin(),CtsPin::getPin()));
+    else //if(flowctrl&&dma)
+        return intrusive_ref_ptr<Device>(new STM32DMASerial(id,speed,
+            TxPin::getPin(),RxPin::getPin(),RtsPin::getPin(),CtsPin::getPin()));
+}
+
 //
 // Initialization
 //
@@ -79,17 +97,11 @@ void IRQbspInit()
     cs43l22reset::mode(Mode::OUTPUT);
     cs43l22reset::low();
     // Initialize default serial
-    if (defaultSerialFlowctrl)
-    {
-        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-            new STM32Serial(defaultSerial,defaultSerialSpeed,
-            defaultSerialTxPin::getPin(),defaultSerialRxPin::getPin(),
-            defaultSerialRtsPin::getPin(),defaultSerialCtsPin::getPin())));
-    } else {
-        DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-            new STM32Serial(defaultSerial,defaultSerialSpeed,
-            defaultSerialTxPin::getPin(),defaultSerialRxPin::getPin())));
-    }
+    DefaultConsole::instance().IRQset(
+        constructSerial<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()
@@ -97,17 +109,10 @@ void bspInit2()
     #ifdef WITH_FILESYSTEM
     #ifdef AUX_SERIAL
     intrusive_ref_ptr<DevFs> devFs=basicFilesystemSetup(SDIODriver::instance());
-    if (auxSerialFlowctrl)
-    {
-        devFs->addDevice(AUX_SERIAL,
-            intrusive_ref_ptr<Device>(new STM32Serial(auxSerial,auxSerialSpeed,
-            auxSerialTxPin::getPin(),auxSerialRxPin::getPin(),
-            auxSerialRtsPin::getPin(),auxSerialCtsPin::getPin())));
-    } else {
-        devFs->addDevice(AUX_SERIAL,
-            intrusive_ref_ptr<Device>(new STM32Serial(auxSerial,auxSerialSpeed,
-            auxSerialTxPin::getPin(),auxSerialRxPin::getPin())));
-    }
+    devFs->addDevice(AUX_SERIAL,
+        constructSerial<auxSerialTxPin,auxSerialRxPin,
+        auxSerialRtsPin,auxSerialCtsPin>(
+            auxSerial,auxSerialSpeed,auxSerialFlowctrl,auxSerialDma));
     #else //AUX_SERIAL
     basicFilesystemSetup(SDIODriver::instance());
     #endif //AUX_SERIAL

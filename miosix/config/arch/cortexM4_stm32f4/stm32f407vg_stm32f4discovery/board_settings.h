@@ -51,6 +51,7 @@ const unsigned int MAIN_STACK_SIZE=4*1024;
 const unsigned int defaultSerial=3;
 const unsigned int defaultSerialSpeed=19200;
 const bool defaultSerialFlowctrl=false;
+const bool defaultSerialDma=true;
 // Default serial 1 pins (uncomment when using serial 1)
 // Note: on this board, pins PA9-12 are in use by the user USB port, and PB6 is
 // connected to the Cirrus audio chip
@@ -75,6 +76,8 @@ using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
 const unsigned int auxSerial=2;
 const unsigned int auxSerialSpeed=9600;
 const bool auxSerialFlowctrl=false;
+//Disable DMA for serial 2 because it conflicts with I2S driver in examples
+const bool auxSerialDma=false;
 // Default aux serial 1 pins (uncomment when using serial 1)
 // Note: on this board, pins PA9-12 are in use by the user USB port, and PB6 is
 // connected to the Cirrus audio chip
@@ -92,10 +95,6 @@ using auxSerialCtsPin = Gpio<GPIOA_BASE,0>;
 //using auxSerialRxPin = Gpio<GPIOB_BASE,11>;
 //using auxSerialRtsPin = Gpio<GPIOB_BASE,14>;
 //using auxSerialCtsPin = Gpio<GPIOB_BASE,13>;
-
-//#define SERIAL_1_DMA //Serial 1 is not used, so not enabling DMA
-//#define SERIAL_2_DMA //Serial 2 DMA conflicts with I2S driver in the examples
-#define SERIAL_3_DMA
 
 //SD card driver
 static const unsigned char sdVoltage=30; //Board powered @ 3.0V
