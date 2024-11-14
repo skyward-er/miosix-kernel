@@ -91,10 +91,10 @@ inline auto toUint(Function f)      { return static_cast<unsigned int>(f); }
  * Accessing a GPIO through this class is slower than with just the Gpio,
  * but is a convenient alternative in some cases. Also, an instance of this
  * class occupies a few bytes of memory, unlike the Gpio class.
- * 
+ *
  * To instantiate classes of this type, use Gpio<P,N>::getPin()
  * \code
- * typedef Gpio<PORTA_BASE,0> led;
+ * typedef Gpio<PORT0_BASE,0> led;
  * GpioPin ledPin=led::getPin();
  * \endcode
  */
@@ -108,8 +108,8 @@ public:
      * \param port port struct
      * \param n which pin (0 to 15)
      */
-    GpioPin(unsigned int port, unsigned char n): P(port), N(n) {}
-    
+    GpioPin(unsigned int port, unsigned char n): /*P(port),*/ N(n) {}
+
     /**
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
      * \param m enum Mode_
@@ -154,7 +154,7 @@ public:
      * Set the pin to 0, if it is an output
      */
     void low() { sio_hw->gpio_clr = 1UL << N; }
-    
+
     /**
      * Toggle pin, if it is an output
      */
@@ -171,19 +171,19 @@ public:
      * \return 0 or 1
      */
     int value() { return !!(sio_hw->gpio_out & (1UL << N)); }
-    
+
     /**
-     * \return the pin port. One of the constants PORTA_BASE, PORTB_BASE, ...
+     * \return the pin port. One of the constants PORT0_BASE, ...
      */
-    unsigned int getPort() const { return P; }
-    
+    unsigned int getPort() const { /*return P;*/ return GPIO0_BASE; }
+
     /**
      * \return the pin number, from 0 to 15
      */
     unsigned char getNumber() const { return N; }
-    
+
 private:
-    const unsigned int P;
+    //const unsigned int P; optimized away because rp2040 has only one port
     const unsigned char N;
 };
 
@@ -275,12 +275,12 @@ public:
     /**
      * \return the pin port. One of the constants GPIO0_BASE, GPIO1_BASE, ...
      */
-    unsigned int getPort() const { return P; }
+    static unsigned int getPort() { return P; }
     
     /**
      * \return the pin number, from 0 to 29
      */
-    unsigned char getNumber() const { return N; }
+    static unsigned char getNumber() { return N; }
 
 private:
     Gpio();//Only static member functions, disallow creating instances
