@@ -812,11 +812,6 @@ ifeq ($(OPT_BOARD),rp2040_raspberry_pi_pico)
     #BOARD_VARIANT := BOARD_VARIANT_PICO
     BOARD_VARIANT := BOARD_VARIANT_PICO_W
 
-    # Clock frequency option. The Raspberry Pi Pico boards have a 12MHz
-    # external oscillator.
-    CLOCK_FREQ := -DXOSC_FREQ=12000000 -DCLK_SYS_FREQ=133000000
-    #CLOCK_FREQ := -DXOSC_FREQ=12000000 -DCLK_SYS_FREQ=125000000
-
 endif
 
 ##---------------------------------------------------------------------------

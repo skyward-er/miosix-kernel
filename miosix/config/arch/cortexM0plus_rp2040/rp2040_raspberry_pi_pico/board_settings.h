@@ -47,6 +47,13 @@ namespace miosix {
 /// RP2040 has 264KB of RAM so there is room for a big 4K stack.
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
+/// Clock options
+enum class OscillatorType { XOSC }; //Only one supported for now
+constexpr auto oscillatorType=OscillatorType::XOSC;
+constexpr unsigned int oscillatorFrequency=12000000;
+constexpr unsigned int cpuFrequency=133000000; //125000000;
+constexpr unsigned int peripheralFrequency=cpuFrequency;
+
 /// Serial port
 const unsigned int defaultSerial=0;
 const unsigned int defaultSerialSpeed=115200;

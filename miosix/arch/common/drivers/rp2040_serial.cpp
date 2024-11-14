@@ -27,6 +27,7 @@
 
 #include <termios.h>
 #include <errno.h>
+#include "config/miosix_settings.h"
 #include "filesystem/ioctl.h"
 #include "rp2040_serial.h"
 
@@ -194,8 +195,8 @@ void RP2040PL011Serial::commonInit(int number, int baudrate)
     enableAllInterrupts();
     //Setup baud rate
     int rate = 16 * baudrate;
-    int div = CLK_SYS_FREQ / rate;
-    int frac = ((rate * 128) / (CLK_SYS_FREQ % rate) + 1) / 2;
+    int div = peripheralFrequency / rate;
+    int frac = ((rate * 128) / (peripheralFrequency % rate) + 1) / 2;
     uart->ibrd = div;
     uart->fbrd = frac;
     //Line configuration and UART enable

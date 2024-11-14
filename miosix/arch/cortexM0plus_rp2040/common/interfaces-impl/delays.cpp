@@ -26,36 +26,38 @@
  ***************************************************************************/
 
 #include <cstdint>
+#include "config/miosix_settings.h"
 #include "interfaces/delays.h"
 
 namespace miosix {
 
 static inline __attribute__((always_inline)) void delayUsImpl(unsigned int us)
 {
-    if (us == 0) return;
-#if CLK_SYS_FREQ == 133000000
-    // 7 cycles per iteration @ 133 MHz = 1/19 us per iteration
-    uint32_t iter_count = us*19-2;
-    asm volatile(
-        ".align 2      \n"
-        "1:  nop       \n"
-        "    nop       \n"
-        "    nop       \n"
-        "    sub %0, #1\n"
-        "    cmp %0, #0\n"
-        "    bne 1b    \n":"+r"(iter_count)::"cc");
-#elif CLK_SYS_FREQ == 125000000
-    // 5 cycles per iteration @ 125 MHz = 1/25 us per iteration
-    uint32_t iter_count = us*25-2;
-    asm volatile(
-        ".align 2      \n"
-        "1:  nop       \n"
-        "    sub %0, #1\n"
-        "    cmp %0, #0\n"
-        "    bne 1b    \n":"+r"(iter_count)::"cc");
-#else
-    #error "Unsupported sys_clk"
-#endif
+    static_assert(cpuFrequency==133000000 || cpuFrequency==125000000,
+                  "Unsupported clock frequency");
+    if(us == 0) return;
+    if(cpuFrequency==133000000)
+    {
+        // 7 cycles per iteration @ 133 MHz = 1/19 us per iteration
+        uint32_t iter_count = us*19-2;
+        asm volatile(
+            ".align 2      \n"
+            "1:  nop       \n"
+            "    nop       \n"
+            "    nop       \n"
+            "    sub %0, #1\n"
+            "    cmp %0, #0\n"
+            "    bne 1b    \n":"+r"(iter_count)::"cc");
+    } else if(cpuFrequency==125000000) {
+        // 5 cycles per iteration @ 125 MHz = 1/25 us per iteration
+        uint32_t iter_count = us*25-2;
+        asm volatile(
+            ".align 2      \n"
+            "1:  nop       \n"
+            "    sub %0, #1\n"
+            "    cmp %0, #0\n"
+            "    bne 1b    \n":"+r"(iter_count)::"cc");
+    }
 }
 
 void delayUs(unsigned int us)
@@ -65,7 +67,7 @@ void delayUs(unsigned int us)
 
 void delayMs(unsigned int ms)
 {
-    for (; ms!=0; ms--) delayUsImpl(1000);
+    for(; ms!=0; ms--) delayUsImpl(1000);
 }
 
 } //namespace miosix

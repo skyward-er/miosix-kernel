@@ -40,6 +40,7 @@
  * In Miosix we consider RP2040 stage 1 and stage 2 as "Miosix preboot".
  */
 
+#include "config/miosix_settings.h"
 #include "interfaces/arch_registers.h"
 #include "interfaces/gpio.h"
 #include <string.h>
@@ -48,11 +49,13 @@
 //Boot2 is also responsible for pointing VTOR to our interrupt table.
 #include <rp2040/pre_boot/boot2.h>
 
+namespace miosix {
+
 /// Configure the XOSC peripheral
 static void xoscInit()
 {
     xosc_hw->ctrl = XOSC_CTRL_FREQ_RANGE_VALUE_1_15MHZ;
-    xosc_hw->startup = ((XOSC_FREQ / 1000) + 128) / 256; // Startup wait ~= 1ms
+    xosc_hw->startup = ((oscillatorFrequency / 1000) + 128) / 256; // Startup wait ~= 1ms
     hw_set_bits(&xosc_hw->ctrl, XOSC_CTRL_ENABLE_VALUE_ENABLE<<XOSC_CTRL_ENABLE_LSB);
     // Wait for XOSC to be stable
     while(!(xosc_hw->status & XOSC_STATUS_STABLE_BITS));
@@ -151,11 +154,11 @@ static void clockTreeSetup()
     while (clocks_hw->clk[clk_sys].selected != 0x1);
     hw_clear_bits(&clocks_hw->clk[clk_ref].ctrl, CLOCKS_CLK_REF_CTRL_SRC_BITS);
     while (clocks_hw->clk[clk_ref].selected != 0x1);
-    // Setup SYS PLL to CLK_SYS_FREQ rounded to the nearest MHz
-    // VCO frequency (fb_div * XOSC_FREQ) must be >= 750MHz
-    static_assert((CLK_SYS_FREQ / 1000000) * XOSC_FREQ >= 750, "CLK_SYS_FREQ too slow");
-    // SYS PLL = 12MHz * (CLK_SYS_FREQ/1000000) / 6 / 2 ~= CLK_SYS_FREQ
-    pllInit(pll_sys_hw, 1, CLK_SYS_FREQ/1000000, 6, 2);
+    // Setup SYS PLL to cpuFrequency rounded to the nearest MHz
+    // VCO frequency (fb_div * oscillatorFrequency) must be >= 750MHz
+    static_assert((cpuFrequency / 1000000) * oscillatorFrequency >= 750, "cpuFrequency too slow");
+    // SYS PLL = 12MHz * (cpuFrequency/1000000) / 6 / 2 ~= cpuFrequency
+    pllInit(pll_sys_hw, 1, cpuFrequency/1000000, 6, 2);
     // USB PLL = 12MHz * 64 / 4 / 4 = 48 MHz
     pllInit(pll_usb_hw, 1, 64, 4, 4);
 
@@ -180,8 +183,6 @@ static void clockTreeSetup()
     // CLK PERI = clk_sys.
     clockInit(clk_peri, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS, 1);
 }
-
-namespace miosix {
 
 /**
  * This function is the first function called during boot to initialize the
@@ -277,7 +278,7 @@ void IRQmemoryAndClockInit()
         RESETS_RESET_SYSCFG_BITS | RESETS_RESET_BUSCTRL_BITS);
 
     // Update SystemCoreClock
-    SystemCoreClock = CLK_SYS_FREQ;
+    SystemCoreClock = cpuFrequency;
 }
 
 } //namespace miosix
