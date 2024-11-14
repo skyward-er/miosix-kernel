@@ -41,6 +41,7 @@
  */
 
 #include "interfaces/arch_registers.h"
+#include "interfaces/gpio.h"
 #include <string.h>
 
 //Include the RP2040 flash stage 2 pre-built bootloader binary.
@@ -252,6 +253,21 @@ void IRQmemoryAndClockInit()
             RESETS_RESET_RTC_BITS | RESETS_RESET_SPI0_BITS |
             RESETS_RESET_SPI1_BITS | RESETS_RESET_UART0_BITS |
             RESETS_RESET_UART1_BITS | RESETS_RESET_USBCTRL_BITS));
+
+    //QUIRK: the rp2040 GPIO when reset configures pins as output by default!
+    //This was causing problems if a fault reset occurs such as a HardFault as
+    //immediately after printing the fault debug message, the chip would reboot
+    //and hit the reset_block() above that would configure the serial TX as
+    //output low, inadvertently sending a break condition that would prevent
+    //the debug message from being printed. As a positive side effect of this
+    //fix, ALL GPIOs, not just the serial ones get disabled at boot, which is
+    //desirable as pins driven externally will cause a short circuit with the
+    //default output configuration. This is still not perfect, as between the
+    //reset_block() and the loop there's still a few microsecond glitch where
+    //the GPIO pins are driven low. Sadly, that's the best we can do to fix
+    //bad hardware design.
+    for(unsigned int i=0; i<NUM_BANK0_GPIOS; i++)
+        padsbank0_hw->io[i]=toUint(Mode::DISABLED);
 
     // Setup clock generation
     clockTreeSetup();
