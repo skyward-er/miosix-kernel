@@ -960,9 +960,11 @@ endif
 ## Then, initialize C/C++ flags
 ##
 CFLAGS_BASE   := -D_MIOSIX_BOARDNAME=\"$(OPT_BOARD)\" -D_DEFAULT_SOURCE=1 \
-                 -ffunction-sections -Wall -Werror=return-type -g
+                 -ffunction-sections -fdata-sections \
+                 -Wall -Werror=return-type -g
 CXXFLAGS_BASE := -D_MIOSIX_BOARDNAME=\"$(OPT_BOARD)\" -D_DEFAULT_SOURCE=1 \
-                 -std=c++14 -ffunction-sections -Wall -Werror=return-type -g
+                 -std=c++14 -ffunction-sections -fdata-sections \
+                 -Wall -Werror=return-type -g
 
 ##
 ## Now two big switch-like constructs nested. The first lists all possible
