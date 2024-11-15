@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -70,9 +71,12 @@ void IRQbspInit()
     ledOn();
     delayMs(100);
     ledOff();
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+    // Initialize default serial
+    DefaultConsole::instance().IRQset(
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()
@@ -109,18 +113,6 @@ void shutdown()
 
     disableInterrupts();
 
-    /*
-    Removed because low power mode causes issues with SWD programming
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN; //Fuckin' clock gating...  
-    RCC_SYNC();
-    PWR->CR |= PWR_CR_PDDS; //Select standby mode
-    PWR->CR |= PWR_CR_CWUF;
-    PWR->CSR |= PWR_CSR_EWUP; //Enable PA.0 as wakeup source
-    
-    SCB->SCR |= SCB_SCR_SLEEPDEEP;
-    __WFE();
-    NVIC_SystemReset();
-    */
     for(;;) ;
 }
 

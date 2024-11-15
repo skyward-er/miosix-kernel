@@ -46,6 +46,27 @@ class STM32DMASerial;
  */
 class STM32SerialBase
 {
+public:
+    /**
+     * Utility factory method for crating an instance of the STM32 serial
+     * drivers.
+     * 
+     * Calls errorHandler(UNEXPECTED) if id is not correct range or if DMA
+     * operation is requested and the specified port is not supported.
+     * \tparam Tx Output GPIO
+     * \tparam Rx Input GPIO
+     * \tparam Rts Request to send GPIO (used only for flow control)
+     * \tparam Cts Clear to send GPIO (used only for flow control)
+     * \param id A number to select which USART. The maximum id depends on the
+     *           specific microcontroller, the minimum id is always 1
+     * \param speed Serial port baudrate
+     * \param flowctrl True to enable flow control
+     * \param dma True to enable DMA operation
+     */
+    template<typename Tx, typename Rx, typename Rts, typename Cts>
+    static inline intrusive_ref_ptr<Device> get(
+        unsigned int id, unsigned int speed, bool flowctrl, bool dma);
+    
     /**
      * \return port id, 1 for USART1, 2 for USART2, ... 
      */
@@ -394,5 +415,23 @@ private:
     char rxBuffer[rxQueueMin];
     bool dmaTxInProgress=false;        ///< True if a DMA tx is in progress
 };
+
+template<typename Tx, typename Rx, typename Rts, typename Cts>
+intrusive_ref_ptr<Device> STM32SerialBase::get(
+    unsigned int id, unsigned int speed, bool flowctrl, bool dma)
+{
+    if(!flowctrl&&!dma)
+        return intrusive_ref_ptr<Device>(new STM32Serial(id,speed,
+            Tx::getPin(),Rx::getPin()));
+    else if(!flowctrl&&dma)
+        return intrusive_ref_ptr<Device>(new STM32DMASerial(id,speed,
+            Tx::getPin(),Rx::getPin()));
+    else if(flowctrl&&!dma)
+        return intrusive_ref_ptr<Device>(new STM32Serial(id,speed,
+            Tx::getPin(),Rx::getPin(),Rts::getPin(),Cts::getPin()));
+    else //if(flowctrl&&dma)
+        return intrusive_ref_ptr<Device>(new STM32DMASerial(id,speed,
+            Tx::getPin(),Rx::getPin(),Rts::getPin(),Cts::getPin()));
+}
 
 } //namespace miosix

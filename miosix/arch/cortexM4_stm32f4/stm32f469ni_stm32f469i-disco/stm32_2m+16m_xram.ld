@@ -52,7 +52,7 @@ ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 _heap_end = 0xc1000000;                            /* end of available ram  */
 
 /* identify the Entry Point  */
-ENTRY(_Z13Reset_Handlerv)
+ENTRY(_ZN6miosix13Reset_HandlerEv)
 
 /* specify the memory areas  */
 MEMORY
@@ -133,7 +133,7 @@ SECTIONS
         KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
         KEEP (*(SORT(.ctors.*)))
         KEEP (*crtend.o(.ctors))
-       _ctor_end = .;
+        _ctor_end = .;
 
         . = ALIGN(4);
         KEEP (*crtbegin.o(.dtors))

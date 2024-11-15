@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2012-2021 by Terraneo Federico                          *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -48,6 +49,7 @@ namespace miosix {
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
+/// Serial ports 1 to 6 are available
 const unsigned int defaultSerial=3;
 const unsigned int defaultSerialSpeed=19200;
 const bool defaultSerialFlowctrl=false;

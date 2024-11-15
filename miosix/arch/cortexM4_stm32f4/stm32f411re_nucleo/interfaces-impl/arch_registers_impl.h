@@ -14,3 +14,6 @@
 //CPU level alone, the bus matrices and peripherals themselves may also reorder
 //accesses as a side-effect of how they work.
 #define RCC_SYNC()
+
+//Peripheral interrupt start from 0 and the last one is 85, so there are 86
+#define MIOSIX_NUM_PERIPHERAL_IRQ 86

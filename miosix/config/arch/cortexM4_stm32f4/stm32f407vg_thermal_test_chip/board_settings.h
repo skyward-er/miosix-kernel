@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2012-2021 by Terraneo Federico                          *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,6 +28,8 @@
 
 #pragma once
 
+#include "interfaces/gpio.h"
+
 /**
  * \internal
  * Versioning for board_settings.h for out of git tree projects
@@ -45,17 +48,49 @@ namespace miosix {
 /// Application requires more than the usual 4KB stack, increasing to 5KB.
 const unsigned int MAIN_STACK_SIZE=5*1024;
 
+/// Serial port
+/// Serial ports 1 to 6 are available
 const unsigned int defaultSerial=1;
 const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
+const bool defaultSerialDma=true;
+// Default serial 1 pins (uncomment when using serial 1)
+using defaultSerialTxPin = Gpio<GPIOA_BASE,9>;
+using defaultSerialRxPin = Gpio<GPIOA_BASE,10>;
+using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
+using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
+// Default serial 2 pins (uncomment when using serial 2)
+//using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
+// Default serial 3 pins (uncomment when using serial 3)
+//using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
+//using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
+//using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
+//using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
+
 // Uncomment AUX_SERIAL to enable. The device will appear as /dev/auxtty.
 #define AUX_SERIAL "auxtty"
 const unsigned int auxSerial=3;
 const unsigned int auxSerialSpeed=230400;
 const bool auxSerialFlowctrl=false;
-#define SERIAL_1_DMA
-//#define SERIAL_2_DMA
-#define SERIAL_3_DMA
+const bool auxSerialDma=true;
+// Default aux serial 1 pins (uncomment when using serial 1)
+//using auxSerialTxPin = Gpio<GPIOA_BASE,9>;
+//using auxSerialRxPin = Gpio<GPIOA_BASE,10>;
+//using auxSerialRtsPin = Gpio<GPIOA_BASE,12>;
+//using auxSerialCtsPin = Gpio<GPIOA_BASE,11>;
+// Default aux serial 2 pins (uncomment when using serial 2)
+//using auxSerialTxPin = Gpio<GPIOA_BASE,2>;
+//using auxSerialRxPin = Gpio<GPIOA_BASE,3>;
+//using auxSerialRtsPin = Gpio<GPIOA_BASE,1>;
+//using auxSerialCtsPin = Gpio<GPIOA_BASE,0>;
+// Default aux serial 3 pins (uncomment when using serial 3)
+using auxSerialTxPin = Gpio<GPIOB_BASE,10>;
+using auxSerialRxPin = Gpio<GPIOB_BASE,11>;
+using auxSerialRtsPin = Gpio<GPIOB_BASE,14>;
+using auxSerialCtsPin = Gpio<GPIOB_BASE,13>;
 
 //SD card driver
 static const unsigned char sdVoltage=33; //Board powered @ 3.3V

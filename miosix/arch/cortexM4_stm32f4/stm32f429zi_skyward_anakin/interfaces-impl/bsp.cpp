@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -188,7 +189,6 @@ void configureSdram()
 
 void IRQbspInit()
 {
-
     /* force Safe Guard Memory constructor call */
     SGM::instance();
     
@@ -260,9 +260,11 @@ void IRQbspInit()
     ledOn();
     delayMs(100);
     ledOff();
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+    DefaultConsole::instance().IRQset(
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()
@@ -270,23 +272,8 @@ void bspInit2()
     #ifdef WITH_FILESYSTEM
     intrusive_ref_ptr<DevFs> devFs=basicFilesystemSetup(SDIODriver::instance());
     devFs->addDevice("gps",
-        intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));
-
-    //TODO: STM32Serial configures USART2 on its default pins, which are
-    //instead connected to the lps331 interrupt pins. For now we'll
-    //manually deconfigure the old pins and reconfigure the new ones, but
-    //a better way would be desirable
-    {
-        FastInterruptDisableLock dLock;
-        // Deconfigure old pins (that the STM32Serial driver thinks it's usart
-        sensors::lps331::int1::mode(Mode::INPUT);
-        sensors::lps331::int2::mode(Mode::INPUT);
-        // Configure new pins, which is where the usart actually is
-        piksi::rx::alternateFunction(7);
-        piksi::tx::alternateFunction(7);
-        piksi::rx::mode(Mode::ALTERNATE);
-        piksi::tx::mode(Mode::ALTERNATE);
-    }
+        intrusive_ref_ptr<Device>(new STM32DMASerial(
+            2,115200,piksi::tx::getPin(),piksi::rx::getPin())));
     #endif //WITH_FILESYSTEM
 }
 

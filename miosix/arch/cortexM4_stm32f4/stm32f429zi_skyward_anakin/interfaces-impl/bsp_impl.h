@@ -30,8 +30,7 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
-#ifndef BSP_IMPL_H
-#define BSP_IMPL_H
+#pragma once
 
 #include "config/miosix_settings.h"
 #include "interfaces/gpio.h"
@@ -67,5 +66,3 @@ inline void ledOff()
 */
 
 } //namespace miosix
-
-#endif //BSP_IMPL_H

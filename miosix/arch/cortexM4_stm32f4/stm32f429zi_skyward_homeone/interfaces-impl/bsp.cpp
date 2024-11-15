@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -272,17 +273,23 @@ void IRQbspInit()
 //     ledOn();
 //     delayMs(100);
 //     ledOff();
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+    DefaultConsole::instance().IRQset(
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()
 {
     #ifdef WITH_FILESYSTEM
     intrusive_ref_ptr<DevFs> devFs = basicFilesystemSetup(SDIODriver::instance());
-    devFs->addDevice("gps", intrusive_ref_ptr<Device>(new STM32Serial(2,115200)));
-    devFs->addDevice("radio", intrusive_ref_ptr<Device>(new STM32Serial(3,115200)));
+    devFs->addDevice("gps", intrusive_ref_ptr<Device>(
+        new STM32Serial(2,115200,
+        Gpio<GPIOA_BASE,2>::getPin(),Gpio<GPIOA_BASE,3>::getPin())));
+    devFs->addDevice("radio", intrusive_ref_ptr<Device>(
+        new STM32Serial(3,115200,
+        Gpio<GPIOB_BASE,10>::getPin(),Gpio<GPIOB_BASE,11>::getPin())));
     #endif //WITH_FILESYSTEM
 }
 
@@ -291,7 +298,7 @@ void bspInit2()
 //
 
 /**
- * For safety reasons, we never want the anakin to shutdown.
+ * For safety reasons, we never want the homeone to shutdown.
  * When requested to shutdown, we reboot instead.
  */
 void shutdown()

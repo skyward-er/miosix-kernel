@@ -167,8 +167,28 @@ private:
     }
 };
 
-constexpr int numPorts = 6;
-static const STM32SerialHW ports[numPorts] = {
+#if defined(STM32F401xE) || defined(STM32F401xC) || defined(STM32F411xE)
+constexpr int maxPorts = 6;
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN,
+      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
+      DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialHW::Stream7, 4,
+      DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
+    { USART2, USART2_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN,
+      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
+      DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialHW::Stream6, 4,
+      DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
+    { 0 },
+    { 0 },
+    { 0 },
+    { USART6, USART6_IRQn, 8, STM32SerialHW::APB2, RCC_APB2ENR_USART6EN,
+      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
+      DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialHW::Stream6, 5,
+      DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialHW::Stream1, 5 },
+};
+#elif defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx)
+constexpr int maxPorts = 6;
+static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN,
       DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
       DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialHW::Stream7, 4,
@@ -194,6 +214,46 @@ static const STM32SerialHW ports[numPorts] = {
       DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialHW::Stream6, 5,
       DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialHW::Stream1, 5 },
 };
+#elif defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F469xx) \
+   || defined(STM32F479xx)
+constexpr int maxPorts = 8;
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN,
+      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
+      DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialHW::Stream7, 4,
+      DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
+    { USART2, USART2_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN,
+      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
+      DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialHW::Stream6, 4,
+      DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
+    { USART3, USART3_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART3EN,
+      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
+      DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialHW::Stream3, 4,
+      DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialHW::Stream1, 4 },
+    { UART4 , UART4_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART4EN,
+      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
+      DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialHW::Stream4, 4,
+      DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialHW::Stream2, 4 },
+    { UART5 , UART5_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART5EN,
+      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
+      DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialHW::Stream7, 4,
+      DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialHW::Stream0, 4 },
+    { USART6, USART6_IRQn, 8, STM32SerialHW::APB2, RCC_APB2ENR_USART6EN,
+      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
+      DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialHW::Stream6, 5,
+      DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialHW::Stream1, 5 },
+    { UART7 , UART7_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART7EN,
+      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
+      DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialHW::Stream1, 5,
+      DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialHW::Stream3, 5 },
+    { UART8 , UART8_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART8EN,
+      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
+      DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialHW::Stream0, 5,
+      DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialHW::Stream6, 5 },
+};
+#else
+#error Unsupported STM32 chip for this serial driver
+#endif
 
 //
 // class STM32SerialBase
@@ -205,8 +265,9 @@ static const STM32SerialHW ports[numPorts] = {
 STM32SerialBase::STM32SerialBase(int id, int baudrate, bool flowControl) : 
     flowControl(flowControl), portId(id), rxQueue(rxQueueMin+baudrate/500)
 {
-    if(id<1 || id>numPorts) errorHandler(UNEXPECTED);
+    if(id<1 || id>maxPorts) errorHandler(UNEXPECTED);
     port=&ports[id-1];
+    if(port->get()==nullptr) errorHandler(UNEXPECTED);
 }
 
 void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,

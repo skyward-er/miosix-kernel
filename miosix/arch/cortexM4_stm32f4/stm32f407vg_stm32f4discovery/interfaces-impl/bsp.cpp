@@ -46,30 +46,11 @@
 #include "filesystem/console/console_device.h"
 #include "drivers/serial.h"
 #include "drivers/sd_stm32f2_f4_f7.h"
-#include "interfaces/bsp.h"
 #include "board_settings.h"
 
 namespace miosix {
 
 typedef Gpio<GPIOD_BASE,4>  cs43l22reset;
-
-template<typename TxPin, typename RxPin, typename RtsPin, typename CtsPin>
-static intrusive_ref_ptr<Device> constructSerial(
-    unsigned int id, unsigned int speed, bool flowctrl, bool dma)
-{
-    if(!flowctrl&&!dma)
-        return intrusive_ref_ptr<Device>(new STM32Serial(id,speed,
-            TxPin::getPin(),RxPin::getPin()));
-    else if(!flowctrl&&dma)
-        return intrusive_ref_ptr<Device>(new STM32DMASerial(id,speed,
-            TxPin::getPin(),RxPin::getPin()));
-    else if(flowctrl&&!dma)
-        return intrusive_ref_ptr<Device>(new STM32Serial(id,speed,
-            TxPin::getPin(),RxPin::getPin(),RtsPin::getPin(),CtsPin::getPin()));
-    else //if(flowctrl&&dma)
-        return intrusive_ref_ptr<Device>(new STM32DMASerial(id,speed,
-            TxPin::getPin(),RxPin::getPin(),RtsPin::getPin(),CtsPin::getPin()));
-}
 
 //
 // Initialization
@@ -98,7 +79,7 @@ void IRQbspInit()
     cs43l22reset::low();
     // Initialize default serial
     DefaultConsole::instance().IRQset(
-        constructSerial<defaultSerialTxPin,defaultSerialRxPin,
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
         defaultSerialRtsPin,defaultSerialCtsPin>(
             defaultSerial,defaultSerialSpeed,
             defaultSerialFlowctrl,defaultSerialDma));
@@ -110,7 +91,7 @@ void bspInit2()
     #ifdef AUX_SERIAL
     intrusive_ref_ptr<DevFs> devFs=basicFilesystemSetup(SDIODriver::instance());
     devFs->addDevice(AUX_SERIAL,
-        constructSerial<auxSerialTxPin,auxSerialRxPin,
+        STM32SerialBase::get<auxSerialTxPin,auxSerialRxPin,
         auxSerialRtsPin,auxSerialCtsPin>(
             auxSerial,auxSerialSpeed,auxSerialFlowctrl,auxSerialDma));
     #else //AUX_SERIAL

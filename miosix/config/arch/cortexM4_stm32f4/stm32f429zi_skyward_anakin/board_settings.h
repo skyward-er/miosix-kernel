@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2016-2021 by Terraneo Federico                          *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,6 +28,8 @@
 
 #pragma once
 
+#include "interfaces/gpio.h"
+
 /**
  * \internal
  * Versioning for board_settings.h for out of git tree projects
@@ -46,12 +49,28 @@ namespace miosix {
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
+/// Serial ports 1 to 8 are available
+/// Note that serial 2 is used by the piksi GPS
 const unsigned int defaultSerial=1;
 const unsigned int defaultSerialSpeed=19200;
 const bool defaultSerialFlowctrl=false;
-//#define SERIAL_1_DMA //Serial 1 has no DMA as it would conflict with SPI6
-#define SERIAL_2_DMA   //Serial 2 is used by the piksi GPS, enable DMA
-//#define SERIAL_3_DMA //Serial 3 is not used
+// Serial 1 has no DMA as it would conflict with SPI6
+const bool defaultSerialDma=false;
+// Default serial 1 pins (uncomment when using serial 1)
+using defaultSerialTxPin = Gpio<GPIOA_BASE,9>;
+using defaultSerialRxPin = Gpio<GPIOA_BASE,10>;
+using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
+using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
+// Default serial 2 pins (uncomment when using serial 2)
+//using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
+// Default serial 3 pins (uncomment when using serial 3)
+//using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
+//using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
+//using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
+//using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
 
 //SD card driver
 static const unsigned char sdVoltage=33; //Board powered @ 3.3V

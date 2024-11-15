@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -67,9 +68,11 @@ void IRQbspInit()
     GPIOE->OSPEEDR=0xaaaaaaaa;
     GPIOH->OSPEEDR=0xaaaaaaaa;
     _led::mode(Mode::OUTPUT);
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+    DefaultConsole::instance().IRQset(
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()
@@ -78,8 +81,9 @@ void bspInit2()
     #ifdef AUX_SERIAL
     intrusive_ref_ptr<DevFs> devFs=basicFilesystemSetup(SDIODriver::instance());
     devFs->addDevice(AUX_SERIAL,
-        intrusive_ref_ptr<Device>(new STM32Serial(auxSerial,auxSerialSpeed,
-        auxSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+        STM32SerialBase::get<auxSerialTxPin,auxSerialRxPin,
+        auxSerialRtsPin,auxSerialCtsPin>(
+            auxSerial,auxSerialSpeed,auxSerialFlowctrl,auxSerialDma));
     #else //AUX_SERIAL
     basicFilesystemSetup(SDIODriver::instance());
     #endif //AUX_SERIAL

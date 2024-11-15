@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWMAPPING_H
-#define	HWMAPPING_H
+#pragma once
 
 #include "interfaces/gpio.h"
 
@@ -112,5 +111,3 @@ using cs    = Gpio<GPIOF_BASE, 9>;
 using nrst  = Gpio<GPIOF_BASE, 7>;
 } //namespace InAir9B
 } //namespace miosix
-
-#endif //HWMAPPING_H
