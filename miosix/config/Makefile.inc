@@ -183,10 +183,6 @@ ifeq ($(OPT_BOARD),stm32f407vg_stm32f4discovery)
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_ram.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_rom_processes.ld
 
-    ## This causes the interrupt vector table to be relocated in SRAM, must be
-    ## uncommented when using the ram linker script
-    #SRAM_BOOT := -DVECT_TAB_SRAM
-
     ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
     CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_168MHz=168000000
     #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000
