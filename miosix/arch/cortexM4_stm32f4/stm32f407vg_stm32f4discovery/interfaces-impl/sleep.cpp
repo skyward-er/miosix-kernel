@@ -56,10 +56,18 @@ static void IRQsetSystemClock()
     while((RCC->CFGR & RCC_CFGR_SWS ) != RCC_CFGR_SWS_HSI) ;
 
     //Configure PLL and turn it on
-    #ifdef SYSCLK_FREQ_168MHz
     const int m=HSE_VALUE/1000000;
+    #ifdef SYSCLK_FREQ_168MHz
     const int n=336;
     const int p=2;
+    const int q=7;
+    #elif defined(SYSCLK_FREQ_100MHz)
+    const int n=200;
+    const int p=2;
+    const int q=5;
+    #elif defined(SYSCLK_FREQ_84MHz)
+    const int n=336;
+    const int p=4;
     const int q=7;
     #else
     #error No PLL config for this clock frequency
