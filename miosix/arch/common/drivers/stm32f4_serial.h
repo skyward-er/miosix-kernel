@@ -72,10 +72,7 @@ private:
      * Wait until all characters have been written to the serial port.
      * Needs to be callable from interrupts disabled (it is used in IRQwrite)
      */
-    void waitSerialTxFifoEmpty()
-    {
-        while((port->SR & USART_SR_TC)==0) ;
-    }
+    void waitSerialTxFifoEmpty();
 
     /**
      * Read a block of data from rxQueue. Stops when the maximum size is reached
@@ -114,15 +111,14 @@ private:
     friend class STM32Serial;
     friend class STM32DMASerial;
 
-    USART_TypeDef *port;              ///< Pointer to USART peripheral
-    const STM32SerialHW *portHw;      ///< Pointer to USART port object
+    const STM32SerialHW *port;        ///< Pointer to USART port object
     const bool flowControl;           ///< True if flow control GPIOs enabled
     const unsigned char portId;       ///< 1 for USART1, 2 for USART2, ...
 
     FastMutex rxMutex;                ///< Mutex locked during reception
     DynUnsyncQueue<char> rxQueue;     ///< Receiving queue
     static const unsigned int rxQueueMin=16; ///< Minimum queue size
-    Thread *rxWaiting=0;              ///< Thread waiting for rx, or 0
+    Thread *rxWaiting=nullptr;        ///< Thread waiting for rx, or 0
     bool idle=true;                   ///< Receiver idle
 };
 
@@ -217,15 +213,6 @@ private:
      */
     void commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts);
-    
-    /**
-     * Wait until all characters have been written to the serial port.
-     * Needs to be callable from interrupts disabled (it is used in IRQwrite)
-     */
-    void waitSerialTxFifoEmpty()
-    {
-        while((port->SR & USART_SR_TC)==0) ;
-    }
 
     /**
      * \internal the serial port interrupts call this member function.

@@ -65,7 +65,7 @@ class STM32SerialHW
 {
 public:
     enum Bus { APB1, APB2, AHB1, AHB2 };
-    enum DMAIntRegShift
+    enum DmaIntRegShift
     {
         Stream0= 0, Stream1= 0+6, Stream2=16, Stream3=16+6,
         Stream4=32, Stream5=32+6, Stream6=48, Stream7=48+6
@@ -95,21 +95,21 @@ public:
     inline void IRQenable() const { IRQgenericEn(bus, clkEnMask); }
     inline void IRQdisable() const { IRQgenericDis(bus, clkEnMask); }
 
-    inline DMA_TypeDef *getDMA() const { return dma; }
-    inline void IRQDMAenable() const { IRQgenericEn(dmaBus, dmaClkEnMask); }
-    inline void IRQDMAdisable() const { IRQgenericDis(dmaBus, dmaClkEnMask); }
+    inline DMA_TypeDef *getDma() const { return dma; }
+    inline void IRQdmaEnable() const { IRQgenericEn(dmaBus, dmaClkEnMask); }
+    inline void IRQdmaDisable() const { IRQgenericDis(dmaBus, dmaClkEnMask); }
 
-    inline DMA_Stream_TypeDef *getDMATx() const { return dmaTx; }
-    inline IRQn_Type getDMATxIRQn() const { return dmaTxIrq; }
-    inline unsigned long getDMATxChannel() const { return dmaTxChannel; }
-    inline unsigned long getDMATxISR() const { return getDMAISR(dmaTxIRShift); }
-    inline void setDMATxIFCR(unsigned long v) const { return setDMAIFCR(dmaTxIRShift, v); }
+    inline DMA_Stream_TypeDef *getDmaTx() const { return dmaTx; }
+    inline IRQn_Type getDmaTxIRQn() const { return dmaTxIrq; }
+    inline unsigned long getDmaTxChannel() const { return dmaTxChannel; }
+    inline unsigned long getDmaTxISR() const { return getDmaISR(dmaTxIRShift); }
+    inline void setDmaTxIFCR(unsigned long v) const { return setDmaIFCR(dmaTxIRShift, v); }
 
-    inline DMA_Stream_TypeDef *getDMARx() const { return dmaRx; }
-    inline IRQn_Type getDMARxIRQn() const { return dmaRxIrq; }
-    inline unsigned long getDMARxChannel() const { return dmaRxChannel; }
-    inline unsigned long getDMARxISR() const { return getDMAISR(dmaRxIRShift); }
-    inline void setDMARxIFCR(unsigned long v) const { return setDMAIFCR(dmaRxIRShift, v); }
+    inline DMA_Stream_TypeDef *getDmaRx() const { return dmaRx; }
+    inline IRQn_Type getDmaRxIRQn() const { return dmaRxIrq; }
+    inline unsigned long getDmaRxChannel() const { return dmaRxChannel; }
+    inline unsigned long getDmaRxISR() const { return getDmaISR(dmaRxIRShift); }
+    inline void setDmaRxIFCR(unsigned long v) const { return setDmaIFCR(dmaRxIRShift, v); }
 
     USART_TypeDef *port;        ///< USART port
     IRQn_Type irq;              ///< USART IRQ number
@@ -154,12 +154,12 @@ private:
         }
         RCC_SYNC();
     }
-    inline unsigned long getDMAISR(unsigned char pos) const
+    inline unsigned long getDmaISR(unsigned char pos) const
     {
         if(pos<32) return (dma->LISR>>pos) & 0b111111;
         return (dma->HISR>>(pos-32)) & 0b111111;
     }
-    inline void setDMAIFCR(unsigned char pos, unsigned long value) const
+    inline void setDmaIFCR(unsigned char pos, unsigned long value) const
     {
         value=(value&0b111111) << (pos%32);
         if(pos<32) dma->LIFCR=value;
@@ -206,39 +206,43 @@ STM32SerialBase::STM32SerialBase(int id, int baudrate, bool flowControl) :
     flowControl(flowControl), portId(id), rxQueue(rxQueueMin+baudrate/500)
 {
     if(id<1 || id>numPorts) errorHandler(UNEXPECTED);
-    portHw=&ports[id-1];
-    port=portHw->get();
+    port=&ports[id-1];
 }
 
 void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts)
 {
     tx.mode(Mode::ALTERNATE);
-    tx.alternateFunction(portHw->getAltFunc());
+    tx.alternateFunction(port->getAltFunc());
     rx.mode(Mode::ALTERNATE);
-    rx.alternateFunction(portHw->getAltFunc());
+    rx.alternateFunction(port->getAltFunc());
     if(flowControl)
     {
         rts.mode(Mode::ALTERNATE);
-        rts.alternateFunction(portHw->getAltFunc());
+        rts.alternateFunction(port->getAltFunc());
         cts.mode(Mode::ALTERNATE);
-        rts.alternateFunction(portHw->getAltFunc());
+        rts.alternateFunction(port->getAltFunc());
     }
-    unsigned int freq=portHw->IRQgetClock();
+    unsigned int freq=port->IRQgetClock();
     unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
-    port->BRR=quot/2 + (quot & 1);           //Round to nearest
-    if(flowControl==false) port->CR3 |= USART_CR3_ONEBIT;
-    else port->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
+    port->get()->BRR=quot/2 + (quot & 1);           //Round to nearest
+    if(flowControl==false) port->get()->CR3 |= USART_CR3_ONEBIT;
+    else port->get()->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
 }
 
 void STM32SerialBase::IRQwrite(const char *str)
 {
     while(*str)
     {
-        while((port->SR & USART_SR_TXE)==0) ;
-        port->DR=*str++;
+        while((port->get()->SR & USART_SR_TXE)==0) ;
+        port->get()->DR=*str++;
     }
     waitSerialTxFifoEmpty();
+}
+
+inline void STM32SerialBase::waitSerialTxFifoEmpty()
+{
+    while((port->get()->SR & USART_SR_TC)==0) ;
 }
 
 ssize_t STM32SerialBase::readFromRxQueue(void *buffer, size_t size)
@@ -276,7 +280,7 @@ void STM32SerialBase::rxWakeup()
         if(rxWaiting->IRQgetPriority()>
             Thread::IRQgetCurrentThread()->IRQgetPriority())
                 IRQinvokeScheduler();
-        rxWaiting=0;
+        rxWaiting=nullptr;
     }
 }
 
@@ -327,17 +331,17 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                              GpioPin rts, GpioPin cts)
 {
     InterruptDisableLock dLock;
-    portHw->IRQenable();
-    IRQregisterIrq(portHw->getIRQn(),&STM32Serial::IRQhandleInterrupt,this);
-    NVIC_SetPriority(portHw->getIRQn(),15);//Lowest priority for serial
-    NVIC_EnableIRQ(portHw->getIRQn());
+    port->IRQenable();
+    IRQregisterIrq(port->getIRQn(),&STM32Serial::IRQhandleInterrupt,this);
+    NVIC_SetPriority(port->getIRQn(),15);//Lowest priority for serial
+    NVIC_EnableIRQ(port->getIRQn());
     STM32SerialBase::commonInit(id,baudrate,tx,rx,rts,cts);
     //Enabled, 8 data bit, no parity, interrupt on character rx
-    port->CR1 = USART_CR1_UE     //Enable port
-              | USART_CR1_RXNEIE //Interrupt on data received
-              | USART_CR1_IDLEIE //Interrupt on idle line
-              | USART_CR1_TE     //Transmission enbled
-              | USART_CR1_RE;    //Reception enabled
+    port->get()->CR1 = USART_CR1_UE     //Enable port
+                     | USART_CR1_RXNEIE //Interrupt on data received
+                     | USART_CR1_IDLEIE //Interrupt on idle line
+                     | USART_CR1_TE     //Transmission enbled
+                     | USART_CR1_RE;    //Reception enabled
 }
 
 ssize_t STM32Serial::readBlock(void *buffer, size_t size, off_t where)
@@ -352,28 +356,28 @@ ssize_t STM32Serial::writeBlock(const void *buffer, size_t size, off_t where)
     const char *buf=reinterpret_cast<const char*>(buffer);
     for(size_t i=0;i<size;i++)
     {
-        while((port->SR & USART_SR_TXE)==0) ;
-        port->DR=*buf++;
+        while((port->get()->SR & USART_SR_TXE)==0) ;
+        port->get()->DR=*buf++;
     }
     return size;
 }
 
 void STM32Serial::IRQhandleInterrupt()
 {
-    unsigned int status=port->SR;
+    unsigned int status=port->get()->SR;
     char c;
     rxUpdateIdle(status);
     if(status & USART_SR_RXNE)
     {
         //Always read data, since this clears interrupt flags
-        c=port->DR;
+        c=port->get()->DR;
         //If no error put data in buffer
         if((status & USART_SR_FE)==0)
             if(rxQueuePut(c)==false) /*fifo overflow*/;
     }
     if(status & USART_SR_IDLE)
     {
-        c=port->DR; //clears interrupt flags
+        c=port->get()->DR; //clears interrupt flags
     }
     if((status & USART_SR_IDLE) || rxQueue.size()>=rxQueueMin)
     {
@@ -397,11 +401,11 @@ STM32Serial::~STM32Serial()
     waitSerialTxFifoEmpty();
     {
         InterruptDisableLock dLock;
-        port->CR1=0;
-        NVIC_DisableIRQ(portHw->getIRQn());
-        NVIC_ClearPendingIRQ(portHw->getIRQn());
-        IRQunregisterIrq(portHw->getIRQn());
-        portHw->IRQdisable();
+        port->get()->CR1=0;
+        NVIC_DisableIRQ(port->getIRQn());
+        NVIC_ClearPendingIRQ(port->getIRQn());
+        IRQunregisterIrq(port->getIRQn());
+        port->IRQdisable();
     }
 }
 
@@ -426,31 +430,31 @@ void STM32DMASerial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts)
 {
     //Check if DMA is supported for this port
-    if(!portHw->dma) errorHandler(UNEXPECTED);
+    if(!port->getDma()) errorHandler(UNEXPECTED);
     InterruptDisableLock dLock;
 
-    portHw->IRQDMAenable();
-    IRQregisterIrq(portHw->getDMATxIRQn(),&STM32DMASerial::IRQhandleDmaTxInterrupt,this);
-    NVIC_SetPriority(portHw->getDMATxIRQn(),15);
-    NVIC_EnableIRQ(portHw->getDMATxIRQn());
+    port->IRQdmaEnable();
+    IRQregisterIrq(port->getDmaTxIRQn(),&STM32DMASerial::IRQhandleDmaTxInterrupt,this);
+    NVIC_SetPriority(port->getDmaTxIRQn(),15);
+    NVIC_EnableIRQ(port->getDmaTxIRQn());
     //Higher priority to ensure IRQhandleDmaRxInterrupt() is called before
     //IRQhandleInterrupt(), so that idle is set correctly
-    IRQregisterIrq(portHw->getDMARxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this);
-    NVIC_SetPriority(portHw->getDMARxIRQn(),14);
-    NVIC_EnableIRQ(portHw->getDMARxIRQn());
+    IRQregisterIrq(port->getDmaRxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this);
+    NVIC_SetPriority(port->getDmaRxIRQn(),14);
+    NVIC_EnableIRQ(port->getDmaRxIRQn());
 
-    portHw->IRQenable();
-    IRQregisterIrq(portHw->getIRQn(),&STM32DMASerial::IRQhandleInterrupt,this);
-    NVIC_SetPriority(portHw->getIRQn(),15);//Lowest priority for serial
-    NVIC_EnableIRQ(portHw->getIRQn());
+    port->IRQenable();
+    IRQregisterIrq(port->getIRQn(),&STM32DMASerial::IRQhandleInterrupt,this);
+    NVIC_SetPriority(port->getIRQn(),15);//Lowest priority for serial
+    NVIC_EnableIRQ(port->getIRQn());
 
     STM32SerialBase::commonInit(id,baudrate,tx,rx,rts,cts);
 
-    port->CR3=USART_CR3_DMAT | USART_CR3_DMAR;
-    port->CR1 = USART_CR1_UE     //Enable port
-              | USART_CR1_IDLEIE //Interrupt on idle line
-              | USART_CR1_TE     //Transmission enbled
-              | USART_CR1_RE;    //Reception enabled
+    port->get()->CR3 = USART_CR3_DMAT | USART_CR3_DMAR; //Enable USART DMA
+    port->get()->CR1 = USART_CR1_UE     //Enable port
+                       | USART_CR1_IDLEIE //Interrupt on idle line
+                       | USART_CR1_TE     //Transmission enbled
+                       | USART_CR1_RE;    //Reception enabled
     IRQstartDmaRead();
 }
 
@@ -516,19 +520,19 @@ void STM32DMASerial::startDmaWrite(const char *buffer, size_t size)
     //instruction, it reads SR. When we start the DMA, the DMA controller
     //writes to DR and completes the TC clear sequence.
     DeepSleepLock dpLock;
-    while((port->SR & USART_SR_TXE)==0) ;
+    while((port->get()->SR & USART_SR_TXE)==0) ;
     
     dmaTxInProgress=true;
-    portHw->getDMATx()->PAR=reinterpret_cast<unsigned int>(&port->DR);
-    portHw->getDMATx()->M0AR=reinterpret_cast<unsigned int>(buffer);
-    portHw->getDMATx()->NDTR=size;
+    port->getDmaTx()->PAR=reinterpret_cast<unsigned int>(&port->get()->DR);
+    port->getDmaTx()->M0AR=reinterpret_cast<unsigned int>(buffer);
+    port->getDmaTx()->NDTR=size;
     //Quirk: not enabling DMA_SxFCR_FEIE because the USART seems to
     //generate a spurious fifo error. The code was tested and the
     //transfer completes successfully even in the presence of this fifo
     //error
-    portHw->getDMATx()->FCR=DMA_SxFCR_DMDIS;//Enable fifo
-    portHw->getDMATx()->CR =
-                (portHw->getDMATxChannel() << DMA_SxCR_CHSEL_Pos) //Select channel
+    port->getDmaTx()->FCR=DMA_SxFCR_DMDIS;//Enable fifo
+    port->getDmaTx()->CR =
+                (port->getDmaTxChannel() << DMA_SxCR_CHSEL_Pos) //Select channel
               | DMA_SxCR_MINC    //Increment RAM pointer
               | DMA_SxCR_DIR_0   //Memory to peripheral
               | DMA_SxCR_TCIE    //Interrupt on completion
@@ -539,17 +543,17 @@ void STM32DMASerial::startDmaWrite(const char *buffer, size_t size)
 
 void STM32DMASerial::IRQhandleDmaTxInterrupt()
 {
-    portHw->setDMATxIFCR(
+    port->setDmaTxIFCR(
           DMA_LIFCR_CTCIF0
         | DMA_LIFCR_CTEIF0
         | DMA_LIFCR_CDMEIF0
         | DMA_LIFCR_CFEIF0);
     dmaTxInProgress=false;
-    if(txWaiting==0) return;
+    if(txWaiting==nullptr) return;
     txWaiting->IRQwakeup();
     if(txWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
         IRQinvokeScheduler();
-    txWaiting=0;
+    txWaiting=nullptr;
 }
 
 void STM32DMASerial::waitDmaWriteEnd()
@@ -576,11 +580,11 @@ ssize_t STM32DMASerial::readBlock(void *buffer, size_t size, off_t where)
 
 void STM32DMASerial::IRQstartDmaRead()
 {
-    portHw->getDMARx()->PAR=reinterpret_cast<unsigned int>(&port->DR);
-    portHw->getDMARx()->M0AR=reinterpret_cast<unsigned int>(rxBuffer);
-    portHw->getDMARx()->NDTR=rxQueueMin;
-    portHw->getDMARx()->CR = 
-                (portHw->getDMARxChannel() << DMA_SxCR_CHSEL_Pos) //Select channel
+    port->getDmaRx()->PAR=reinterpret_cast<unsigned int>(&port->get()->DR);
+    port->getDmaRx()->M0AR=reinterpret_cast<unsigned int>(rxBuffer);
+    port->getDmaRx()->NDTR=rxQueueMin;
+    port->getDmaRx()->CR = 
+                (port->getDmaRxChannel() << DMA_SxCR_CHSEL_Pos) //Select channel
               | DMA_SxCR_MINC    //Increment RAM pointer
               | 0                //Peripheral to memory
               | DMA_SxCR_HTIE    //Interrupt on half transfer
@@ -592,15 +596,15 @@ void STM32DMASerial::IRQstartDmaRead()
 int STM32DMASerial::IRQstopDmaRead()
 {
     //Stop DMA and wait for it to actually stop
-    portHw->getDMARx()->CR &= ~DMA_SxCR_EN;
-    while(portHw->getDMARx()->CR & DMA_SxCR_EN) ;
-    portHw->setDMARxIFCR(
+    port->getDmaRx()->CR &= ~DMA_SxCR_EN;
+    while(port->getDmaRx()->CR & DMA_SxCR_EN) ;
+    port->setDmaRxIFCR(
           DMA_LIFCR_CTCIF0
         | DMA_LIFCR_CHTIF0
         | DMA_LIFCR_CTEIF0
         | DMA_LIFCR_CDMEIF0
         | DMA_LIFCR_CFEIF0);
-    return rxQueueMin - portHw->getDMARx()->NDTR;
+    return rxQueueMin - port->getDmaRx()->NDTR;
 }
 
 void STM32DMASerial::IRQflushDmaReadBuffer()
@@ -615,21 +619,17 @@ void STM32DMASerial::IRQflushDmaReadBuffer()
 void STM32DMASerial::IRQhandleDmaRxInterrupt()
 {
     IRQflushDmaReadBuffer();
-    idle=false;
-    if(rxWaiting==0) return;
-    rxWaiting->IRQwakeup();
-    if(rxWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
-    rxWaiting=0;
+    rxUpdateIdle(0);
+    rxWakeup();
 }
 
 void STM32DMASerial::IRQhandleInterrupt()
 {
-    unsigned int status=port->SR;
+    unsigned int status=port->get()->SR;
     rxUpdateIdle(status);
     if(status & USART_SR_IDLE)
     {
-        (unsigned long)port->DR; //clears interrupt flags
+        (unsigned long)port->get()->DR; //clears interrupt flags
         IRQflushDmaReadBuffer();
     }
     if((status & USART_SR_IDLE) || rxQueue.size()>=rxQueueMin)
@@ -646,7 +646,7 @@ void STM32DMASerial::IRQwrite(const char *str)
     bool interrupts=areInterruptsEnabled();
     if(interrupts) fastDisableInterrupts();
     //Wait until DMA xfer ends. EN bit is cleared by hardware on transfer end
-    while(portHw->getDMATx()->CR & DMA_SxCR_EN) ;
+    while(port->getDmaTx()->CR & DMA_SxCR_EN) ;
     STM32SerialBase::IRQwrite(str);
     if(interrupts) fastEnableInterrupts();
 }
@@ -656,18 +656,18 @@ STM32DMASerial::~STM32DMASerial()
     waitSerialTxFifoEmpty();
     {
         InterruptDisableLock dLock;
-        port->CR1=0;
+        port->get()->CR1=0;
         IRQstopDmaRead();
-        NVIC_DisableIRQ(portHw->getDMATxIRQn());
-        NVIC_ClearPendingIRQ(portHw->getDMATxIRQn());
-        IRQunregisterIrq(portHw->getDMATxIRQn());
-        NVIC_DisableIRQ(portHw->getDMARxIRQn());
-        NVIC_ClearPendingIRQ(portHw->getDMARxIRQn());
-        IRQunregisterIrq(portHw->getDMARxIRQn());
-        NVIC_DisableIRQ(portHw->getIRQn());
-        NVIC_ClearPendingIRQ(portHw->getIRQn());
-        IRQunregisterIrq(portHw->getIRQn());
-        portHw->IRQdisable();
+        NVIC_DisableIRQ(port->getDmaTxIRQn());
+        NVIC_ClearPendingIRQ(port->getDmaTxIRQn());
+        IRQunregisterIrq(port->getDmaTxIRQn());
+        NVIC_DisableIRQ(port->getDmaRxIRQn());
+        NVIC_ClearPendingIRQ(port->getDmaRxIRQn());
+        IRQunregisterIrq(port->getDmaRxIRQn());
+        NVIC_DisableIRQ(port->getIRQn());
+        NVIC_ClearPendingIRQ(port->getIRQn());
+        IRQunregisterIrq(port->getIRQn());
+        port->IRQdisable();
     }
 }
 
