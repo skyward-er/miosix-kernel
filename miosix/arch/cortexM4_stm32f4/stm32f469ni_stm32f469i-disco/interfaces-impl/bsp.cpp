@@ -1,5 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2014 by Terraneo Federico                               *
+ *   Copyright (C) 2017 by Federico Amedeo Izzo                            *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -31,6 +33,7 @@
 ************************************************************************/
 
 #include <cstdlib>
+#include <cmath>
 #include <inttypes.h>
 #include <sys/ioctl.h>
 #include "interfaces/bsp.h"
@@ -54,6 +57,63 @@ namespace miosix {
 //
 // Initialization
 //
+
+template <int div, int t_rcd_ns, int t_rp_ns, int t_wr_ns,
+    int t_rc_ns, int t_ras_ns, int t_xsr_ns, int t_mrd_ns>
+static constexpr unsigned long sdramSDTR() noexcept
+{
+    #if defined(SYSCLK_FREQ_180MHz)
+    constexpr float hclk_mhz = 180;
+    #elif defined(SYSCLK_FREQ_168MHz)
+    constexpr float hclk_mhz = 168;
+    #elif defined(SYSCLK_FREQ_100MHz)
+    constexpr float hclk_mhz = 100;
+    #else
+    #error "Unknown clock frequency"
+    #endif
+    constexpr float t_ns = 1000.0f / (hclk_mhz / (float)div);
+    constexpr int sdtr_trcd = std::ceil((float)t_rcd_ns / t_ns) - 1;
+    static_assert(0 <= sdtr_trcd && sdtr_trcd <= 15);
+    constexpr int sdtr_trp  = std::ceil((float)t_rp_ns  / t_ns) - 1;
+    static_assert(0 <= sdtr_trp && sdtr_trp <= 15);
+    constexpr int sdtr_twr  = std::ceil((float)t_wr_ns  / t_ns) - 1;
+    static_assert(0 <= sdtr_twr && sdtr_twr <= 15);
+    constexpr int sdtr_trc  = std::ceil((float)t_rc_ns  / t_ns) - 1;
+    static_assert(0 <= sdtr_trc && sdtr_trc <= 15);
+    constexpr int sdtr_tras = std::ceil((float)t_ras_ns / t_ns) - 1;
+    static_assert(0 <= sdtr_tras && sdtr_tras <= 15);
+    constexpr int sdtr_txsr = std::ceil((float)t_xsr_ns / t_ns) - 1;
+    static_assert(0 <= sdtr_txsr && sdtr_txsr <= 15);
+    constexpr int sdtr_tmrd = std::ceil((float)t_mrd_ns / t_ns) - 1;
+    static_assert(0 <= sdtr_tmrd && sdtr_tmrd <= 15);
+    return sdtr_trcd << FMC_SDTR1_TRCD_Pos
+        | sdtr_trp  << FMC_SDTR1_TRP_Pos  
+        | sdtr_twr  << FMC_SDTR1_TWR_Pos  
+        | sdtr_trc  << FMC_SDTR1_TRC_Pos  
+        | sdtr_tras << FMC_SDTR1_TRAS_Pos 
+        | sdtr_txsr << FMC_SDTR1_TXSR_Pos 
+        | sdtr_tmrd << FMC_SDTR1_TMRD_Pos;
+}
+
+template <int div, int n_rows, int t_refresh_ms>
+constexpr unsigned long sdramSDRTR() noexcept
+{
+    #if defined(SYSCLK_FREQ_180MHz)
+    constexpr float hclk_mhz = 180;
+    #elif defined(SYSCLK_FREQ_168MHz)
+    constexpr float hclk_mhz = 168;
+    #elif defined(SYSCLK_FREQ_100MHz)
+    constexpr float hclk_mhz = 100;
+    #else
+    #error "Unknown clock frequency"
+    #endif
+    constexpr float t_us = 1.0f / (hclk_mhz / (float)div);
+    constexpr float t_refresh_us = (float)t_refresh_ms * 1000.0f;
+    constexpr float t_refreshPerRow_us = t_refresh_us / (float)n_rows;
+    constexpr int sdrtr_count = (std::floor(t_refreshPerRow_us / t_us)-20)-1;
+    static_assert(41 <= sdrtr_count && sdrtr_count <= 0x1FFF);
+    return sdrtr_count << FMC_SDRTR_COUNT_Pos;
+}
 
 /**
  * The example code from ST checks for the busy flag after each command.
@@ -159,27 +219,7 @@ void configureSdram()
                        | FMC_SDCR1_CAS_0  //  3 cycle CAS latency
                        | FMC_SDCR1_CAS_1;
 
-    #ifdef SYSCLK_FREQ_180MHz
-    //One SDRAM clock cycle is 11.1ns
-    FMC_Bank5_6->SDTR[0]=(6-1)<<12        // 6 cycle TRC  (66.6ns>60ns)
-                       | (2-1)<<20        // 2 cycle TRP  (22.2ns>18ns)
-                       | (2-1)<<0         // 2 cycle TMRD
-                       | (7-1)<<4         // 7 cycle TXSR (77.7ns>67ns)
-                       | (4-1)<<8         // 4 cycle TRAS (44.4ns>42ns)
-                       | (2-1)<<16        // 2 cycle TWR
-                       | (2-1)<<24;       // 2 cycle TRCD (22.2ns>18ns)
-    #elif defined(SYSCLK_FREQ_168MHz)
-    //One SDRAM clock cycle is 11.9ns
-    FMC_Bank5_6->SDTR[0]=(6-1)<<12        // 6 cycle TRC  (71.4ns>60ns)
-                       | (2-1)<<20        // 2 cycle TRP  (23.8ns>18ns)
-                       | (2-1)<<0         // 2 cycle TMRD
-                       | (6-1)<<4         // 6 cycle TXSR (71.4ns>67ns)
-                       | (4-1)<<8         // 4 cycle TRAS (47.6ns>42ns)
-                       | (2-1)<<16        // 2 cycle TWR
-                       | (2-1)<<24;       // 2 cycle TRCD (23.8ns>18ns)
-    #else
-    #error No SDRAM timings for this clock
-    #endif
+    FMC_Bank5_6->SDTR[0]=sdramSDTR<2,18,18,20,60,42,67,20>();
 
     FMC_Bank5_6->SDCMR=  FMC_SDCMR_CTB1   // Enable bank 1
                        | 1;               // MODE=001 clock enabled
@@ -203,16 +243,7 @@ void configureSdram()
                        | 4;               // MODE=100 load mode register
     sdramCommandWait();
 
-    // 64ms/4096=15.625us
-    #ifdef SYSCLK_FREQ_180MHz
-    //15.625us*90MHz=1406-20=1386
-    FMC_Bank5_6->SDRTR=1386<<1;
-    #elif defined(SYSCLK_FREQ_168MHz)
-    //15.625us*84MHz=1312-20=1292
-    FMC_Bank5_6->SDRTR=1292<<1;
-    #else
-    #error No refresh timings for this clock
-    #endif
+    FMC_Bank5_6->SDRTR=sdramSDRTR<2,4096,64>();
 }
 
 // static IRQDisplayPrint *irq_display;
