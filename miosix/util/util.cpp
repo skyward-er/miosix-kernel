@@ -134,20 +134,47 @@ unsigned int MemoryProfiling::getCurrentFreeHeap()
 
 /**
  * \internal
+ * used by memPrint
+ */
+static char *formatHex(char *out, unsigned long n, int len)
+{
+    int i=len;
+    do
+    {
+        i--;
+        unsigned long digit=n&0xF; n>>=4;
+        if(digit<10) out[i]=digit+'0';
+        else out[i]=(digit-10)+'a';
+    }
+    while(i);
+    return out+len;
+}
+
+/**
+ * \internal
  * used by memDump
  */
 static void memPrint(const char *data, char len)
 {
-    iprintf("0x%08x | ",reinterpret_cast<unsigned int>(data));
-    for(int i=0;i<len;i++) iprintf("%02x ",data[i]);
-    for(int i=0;i<(16-len);i++) iprintf("   ");
-    iprintf("| ");
+    char buffer[79+1];
+    char *p=buffer;
+    *p++='0'; *p++='x';
+    p=formatHex(p,reinterpret_cast<unsigned int>(data),8);
+    *p++=' ';
     for(int i=0;i<len;i++)
     {
-        if((data[i]>=32)&&(data[i]<127)) iprintf("%c",data[i]);
-        else iprintf(".");
+        p=formatHex(p,static_cast<unsigned char>(data[i]),2);
+        *p++=' ';
     }
-    iprintf("\n");
+    for(int i=0;i<(16-len)*3;i++) *p++=' ';
+    *p++='|'; *p++=' ';
+    for(int i=0;i<len;i++)
+    {
+        if((data[i]>=32)&&(data[i]<127)) *p++=data[i];
+        else *p++='.';
+    }
+    *p++='\0';
+    puts(buffer);
 }
 
 void memDump(const void *start, int len)
