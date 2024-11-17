@@ -1,5 +1,6 @@
  /***************************************************************************
   *   Copyright (C) 2012 by Terraneo Federico                               *
+  *   Copyright (C) 2024 by Daniele Cattaneo                                *
   *                                                                         *
   *   This program is free software; you can redistribute it and/or modify  *
   *   it under the terms of the GNU General Public License as published by  *
@@ -18,49 +19,43 @@
 // RAM testing code
 // Useful to test the external RAM of a board.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
 #include <unistd.h>
-#include "sha1.h"
 
-const unsigned int ramBase=0x60000000; //Tune this to the right value
-const unsigned int ramSize=524288;     //Tune this to the right value
+const unsigned int ramBase=0xc0000000; //Tune this to the right value
+const unsigned int ramSize=512*1024;   //Tune this to the right value
 
-bool shaCmp(unsigned int a[5], unsigned int b[5])
-{
-    if(memcmp(a,b,20)==0) return false;
-    iprintf("Mismatch\n");
-    for(int i=0;i<5;i++) iprintf("%04x",a[i]); iprintf("\n");
-    for(int i=0;i<5;i++) iprintf("%04x",b[i]); iprintf("\n");
-    return true;
-}
+unsigned int randState=0x7ad3c099;
 
 template<typename T> bool ramTest()
 {
-    SHA1 sha;
-    sha.Reset();
-    srand(0x7ad3c099*sizeof(T)); //Just to shuffle initialization between tests
+    const unsigned int loggingStep=std::min(ramSize/16,1048576U);
+    unsigned checkSeed=randState;
     for(unsigned int i=ramBase;i<ramBase+ramSize;i+=sizeof(T))
     {
-        T *p=reinterpret_cast<T*>(i);
-        T v=static_cast<T>(rand());
+        volatile T *p=reinterpret_cast<T*>(i);
+        T v=static_cast<T>(rand_r(&randState));
         *p=v;
-        sha.Input(reinterpret_cast<const unsigned char*>(&v),sizeof(T));
     }
-    unsigned int a[5];
-    sha.Result(a);
     sleep(10); //To check SDRAM retention ability
-    sha.Reset();
+    int totalFailures=0,failures=0;
     for(unsigned int i=ramBase;i<ramBase+ramSize;i+=sizeof(T))
     {
-        T *p=reinterpret_cast<T*>(i);
+        volatile T *p=reinterpret_cast<T*>(i);
+        T ck=static_cast<T>(rand_r(&checkSeed));
         T v=*p;
-        sha.Input(reinterpret_cast<const unsigned char*>(&v),sizeof(T));
+        if(v!=ck) failures++;
+        if((i+sizeof(T)-ramBase) % loggingStep == 0) {
+            unsigned int startAddr=i+sizeof(T)-loggingStep;
+            iprintf("%08x-%08x: %d mismatches\n",startAddr,i+sizeof(T)-1,failures);
+            totalFailures+=failures;
+            failures=0;
+        }
     }
-    unsigned int b[5];
-    sha.Result(b);
-    return shaCmp(a,b);
+    return totalFailures!=0;
 }
 
 int main()
