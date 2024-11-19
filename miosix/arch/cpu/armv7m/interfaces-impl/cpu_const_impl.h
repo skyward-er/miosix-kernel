@@ -30,7 +30,7 @@
 #include "interfaces/arch_registers.h"
 
 #ifndef __FPU_PRESENT
-#error "__FPU_PRESENT should be either 0 or 1"
+#define __FPU_PRESENT 0 //__FPU_PRESENT undefined means no FPU
 #endif
 
 namespace miosix {
