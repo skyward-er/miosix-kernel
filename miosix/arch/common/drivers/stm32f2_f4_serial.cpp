@@ -274,16 +274,17 @@ STM32SerialBase::STM32SerialBase(int id, int baudrate, bool flowControl) :
 void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts)
 {
-    tx.mode(Mode::ALTERNATE);
+    //First we set the AF then the mode to avoid glitches
     tx.alternateFunction(port->getAltFunc());
-    rx.mode(Mode::ALTERNATE);
+    tx.mode(Mode::ALTERNATE);
     rx.alternateFunction(port->getAltFunc());
+    rx.mode(Mode::ALTERNATE);
     if(flowControl)
     {
+        rts.alternateFunction(port->getAltFunc());
         rts.mode(Mode::ALTERNATE);
-        rts.alternateFunction(port->getAltFunc());
+        cts.alternateFunction(port->getAltFunc());
         cts.mode(Mode::ALTERNATE);
-        rts.alternateFunction(port->getAltFunc());
     }
     unsigned int freq=port->IRQgetClock();
     unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
