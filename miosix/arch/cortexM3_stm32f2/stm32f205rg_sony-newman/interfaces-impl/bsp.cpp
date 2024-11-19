@@ -31,6 +31,8 @@
 ************************************************************************/
 
 #include <cstdlib>
+#include <algorithm>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "interfaces/delays.h"
@@ -38,7 +40,6 @@
 #include "interfaces_private/os_timer.h"
 #include "interfaces/poweroff.h"
 #include "config/miosix_settings.h"
-#include <algorithm>
 
 using namespace std;
 

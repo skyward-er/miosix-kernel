@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWMAPPING_H
-#define	HWMAPPING_H
+#pragma once
 
 #include "interfaces/gpio.h"
 
@@ -125,5 +124,3 @@ typedef Gpio<GPIOB_BASE,15> SPI2_MOSI_Pin;
 }
 
 } //namespace miosix
-
-#endif //HWMAPPING_H

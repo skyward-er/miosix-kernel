@@ -1,5 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2013 by Terraneo Federico                               *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -30,8 +31,7 @@
 * Board support package, this file initializes hardware.
 ************************************************************************/
 
-#ifndef BSP_IMPL_H
-#define BSP_IMPL_H
+#pragma once
 
 #include "config/miosix_settings.h"
 #include "hwmapping.h"
@@ -344,5 +344,3 @@ private:
 };
 
 } //namespace miosix
-
-#endif //BSP_IMPL_H

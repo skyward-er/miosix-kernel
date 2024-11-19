@@ -2028,8 +2028,8 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
         arch/common/drivers/sd_stm32f2_f4_f7.cpp     \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -2103,7 +2103,7 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -2137,8 +2137,8 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
         arch/common/drivers/stm32f2_f4_i2c.cpp       \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -2173,8 +2173,8 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
         arch/common/drivers/stm32f2_f4_i2c.cpp       \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -2197,10 +2197,10 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
         arch/common/drivers/sd_stm32f2_f4_f7.cpp     \
         arch/common/drivers/stm32f2_f4_i2c.cpp       \
         arch/common/drivers/servo_stm32.cpp          \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2012 by Terraneo Federico                               *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,55 +23,17 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
-/***********************************************************************
-* bsp_impl.h Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
-
-#pragma once
-
-#include "config/miosix_settings.h"
-#include "hwmapping.h"
-#include "drivers/stm32_hardware_rng.h"
+extern "C" void SystemInit();
 
 namespace miosix {
 
-/**
-\addtogroup Hardware
-\{
-*/
-
-/**
- * \internal
- * used by the ledOn() and ledOff() implementation
- */
-
-inline void ledOn()
+void IRQmemoryAndClockInit()
 {
-    led::high();
+    // Currently we use the code provided by ST (with our modifications) to
+    // handle the memory and clock initialization process.
+    SystemInit();
 }
 
-inline void ledOff()
-{
-    led::low();
-}
-
-///\internal Pin connected to SD card detect
-typedef sdio::cd sdCardDetect;
-
-/**
- * Polls the SD card sense GPIO
- * \return true if there is an uSD card in the socket.
- */
-inline bool sdCardSense()
-{
-    return sdCardDetect::value()==0;
-}
-
-/**
-\}
-*/
-
-} //namespace miosix
+} // namespace miosix

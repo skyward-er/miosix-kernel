@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (C) 2016 by Silvano Seva for Skyward Experimental           *
  *   Rocketry                                                              *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,8 +27,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWMAPPING_H
-#define	HWMAPPING_H
+#pragma once
 
 #include "interfaces/gpio.h"
 
@@ -114,5 +114,3 @@ using tx  = Gpio<GPIOC_BASE, 6>;
 using rx  = Gpio<GPIOC_BASE, 7>;
 }
 } //namespace miosix
-
-#endif //HWMAPPING_H
