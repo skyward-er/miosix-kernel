@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2012 by Terraneo Federico                               *
- *   Copyright (C) 2023 by Daniele Cattaneo                                *
+ *   Copyright (C) 2023, 2024 by Daniele Cattaneo                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,8 +26,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef HWMAPPING_H
-#define	HWMAPPING_H
+#pragma once
 
 #include "interfaces/gpio.h"
 
@@ -194,5 +193,3 @@ typedef Gpio<GPIOH_BASE,15> ph15;
 }
 
 } //namespace miosix
-
-#endif //HWMAPPING_H

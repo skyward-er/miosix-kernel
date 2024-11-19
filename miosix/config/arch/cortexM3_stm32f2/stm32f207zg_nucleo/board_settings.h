@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2012-2022 by Terraneo Federico                          *
- *   Copyright (C) 2023 by Daniele Cattaneo                                *
+ *   Copyright (C) 2023, 2024 by Daniele Cattaneo                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "interfaces-impl/hwmapping.h"
+
 /**
  * \internal
  * Versioning for board_settings.h for out of git tree projects
@@ -47,10 +49,15 @@ namespace miosix {
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
-const unsigned int defaultSerialSpeed=19200;
-//#define SERIAL_1_DMA //Serial 1 is not used, so not enabling DMA
-//#define SERIAL_2_DMA //Serial 2 is not used, so not enabling DMA
-#define SERIAL_3_DMA
+/// The ST-Link serial adapter in Nucleo 144 boards is connected to PD8/9
+const unsigned int defaultSerial=3;
+const unsigned int defaultSerialSpeed=115200;
+const bool defaultSerialFlowctrl=false;
+const bool defaultSerialDma=true;
+using defaultSerialTxPin = serial::tx;
+using defaultSerialRxPin = serial::rx;
+using defaultSerialRtsPin = unused::pd12; //unused
+using defaultSerialCtsPin = unused::pd11; //unused
 
 ///\def STDOUT_REDIRECTED_TO_DCC
 ///If defined, stdout is redirected to the debug communication channel, and

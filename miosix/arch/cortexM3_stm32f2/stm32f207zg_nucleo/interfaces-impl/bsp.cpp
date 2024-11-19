@@ -1,6 +1,6 @@
 /***************************************************************************
  *   Copyright (C) 2012, 2013, 2014 by Terraneo Federico                   *
- *   Copyright (C) 2023 by Daniele Cattaneo                                *
+ *   Copyright (C) 2023, 2024 by Daniele Cattaneo                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -78,10 +79,11 @@ void IRQbspInit()
     ledOn();
     delayMs(100);
     ledOff();
-    auto pin_tx=serial::tx::getPin(); pin_tx.alternateFunction(7);
-    auto pin_rx=serial::rx::getPin(); pin_rx.alternateFunction(7);
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(3,defaultSerialSpeed,pin_tx,pin_rx)));
+    DefaultConsole::instance().IRQset(
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()
@@ -118,18 +120,6 @@ void shutdown()
 
     disableInterrupts();
 
-    /*
-    Removed because low power mode causes issues with SWD programming
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN; //Fuckin' clock gating...  
-    RCC_SYNC();
-    PWR->CR |= PWR_CR_PDDS; //Select standby mode
-    PWR->CR |= PWR_CR_CWUF;
-    PWR->CSR |= PWR_CSR_EWUP; //Enable PA.0 as wakeup source
-    
-    SCB->SCR |= SCB_SCR_SLEEPDEEP;
-    __WFE();
-    NVIC_SystemReset();
-    */
     for(;;) ;
 }
 
