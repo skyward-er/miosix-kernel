@@ -569,28 +569,44 @@ ssize_t STM32DMASerial::writeBlock(const void *buffer, size_t size, off_t where)
 void STM32DMASerial::startDmaWrite(const char *buffer, size_t size)
 {
     markBufferBeforeDmaWrite(buffer,size);
-    //Quirk: DMA messes up the TC bit, and causes waitSerialTxFifoEmpty() to
-    //return prematurely, causing characters to be missed when rebooting
-    //immediately a write. You can just clear the bit manually, but doing that
-    //is dangerous, as if you clear the bit but for any reason the serial
-    //write doesn't start (think an invalid buffer, or another thread crashing),
-    //then TC will never be set and waitSerialTxFifoEmpty() deadlocks!
-    //The only way to clear it safely is to first read SR and then write to
-    //DR (thus the bit is cleared at the same time a transmission is started,
-    //and the race condition is eliminated). This is the purpose of this
-    //instruction, it reads SR. When we start the DMA, the DMA controller
-    //writes to DR and completes the TC clear sequence.
     DeepSleepLock dpLock;
+    //The TC (Transfer Complete) bit in the Status Register (SR) of the serial
+    //port can be reset by writing to it directly, or by first reading it
+    //out and then writing to the Data Register (DR).
+    //  The waitSerialTxFifoEmpty() function relies on the status of TC to
+    //accurately reflect whether the serial port is pushing out bytes or not,
+    //so it is extremely important for TC to *only* be reset at the beginning of
+    //a transmission.
+    //  Since the DMA peripheral only writes to DR and never reads from SR,
+    //we must read from SR manually first to ensure TC is cleared as soon as
+    //the DMA writes to it -- and not earlier!
+    //  The alternative is to zero out TC by hand, but if we do that TC becomes
+    //unreliable as a flag. Consider the case in which we are clearing out TC
+    //in this routine before configuring the DMA. If the DMA fails to start due
+    //to an error, or the CPU is reset before the DMA transfer is started, the
+    //USART won't be pushing out bytes but TC will still be zero. As a result,
+    //waitSerialTxFifoEmpty() will loop forever waiting for the end of a
+    //transfer that is not happening.
     while((port->get()->SR & USART_SR_TXE)==0) ;
     
     dmaTxInProgress=true;
     port->getDmaTx()->PAR=reinterpret_cast<unsigned int>(&port->get()->DR);
     port->getDmaTx()->M0AR=reinterpret_cast<unsigned int>(buffer);
     port->getDmaTx()->NDTR=size;
-    //Quirk: not enabling DMA_SxFCR_FEIE because the USART seems to
-    //generate a spurious fifo error. The code was tested and the
-    //transfer completes successfully even in the presence of this fifo
-    //error
+    //Quirk: not enabling DMA_SxFCR_FEIE because at the beginning of a transfer
+    //there is always at least one spurious fifo error due to the fact that the
+    //FIFO doesn't begin to fill up until after the DMA request is triggered.
+    //  This is just a FIFO underrun error and as such it is resolved
+    //automatically by the DMA internal logic and does not stop the transfer,
+    //just like for FIFO overruns.
+    //  On the other hand, a FIFO error caused by register misconfiguration
+    //would prevent the transfer from even starting, but the conditions for
+    //FIFO misconfiguration are known in advance and we don't fall in any of
+    //those cases.
+    //  In other words, underrun, overrun and misconfiguration are the only FIFO
+    //error conditions; misconfiguration is impossible, and we don't need to do
+    //anything for overruns and underruns, so there is literally no reason to
+    //enable FIFO error interrupts in the first place.
     port->getDmaTx()->FCR=DMA_SxFCR_DMDIS;//Enable fifo
     port->getDmaTx()->CR =
                 (port->getDmaTxChannel() << DMA_SxCR_CHSEL_Pos) //Select channel
