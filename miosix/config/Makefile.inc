@@ -216,9 +216,9 @@ ifeq ($(OPT_BOARD),stm32f207ig_stm3220g-eval)
     ## Warning! enable external ram if you use a linker script that requires it
     ## (see the XRAM flag below)
     LINKER_SCRIPT_PATH := arch/cortexM3_stm32f2/stm32f207ig_stm3220g-eval/
-    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_rom.ld
+    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_rom.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram.ld
-    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_all_in_xram.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_all_in_xram.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram_processes.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram-data-bss-heap.ld
 
@@ -229,8 +229,8 @@ ifeq ($(OPT_BOARD),stm32f207ig_stm3220g-eval)
     ## in xram (with an appropriate linker script selected above)
     ## none selected : don't use xram (with an appropriate linker script
     ## selected above)
-    #XRAM := -D__ENABLE_XRAM
-    XRAM := -D__ENABLE_XRAM -D__CODE_IN_XRAM
+    XRAM := -D__ENABLE_XRAM
+    #XRAM := -D__ENABLE_XRAM -D__CODE_IN_XRAM
 
 endif
 
@@ -1990,8 +1990,8 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
         arch/common/drivers/sd_stm32f2_f4_f7.cpp     \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
