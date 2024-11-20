@@ -187,7 +187,7 @@ static const STM32SerialHW ports[maxPorts] = {
       DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialHW::Stream1, 5 },
 };
 #elif defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) \
-   || defined(STM32F205xx) || defined(STM32F207xx)
+   || defined(STM32F417xx) || defined(STM32F205xx) || defined(STM32F207xx)
 constexpr int maxPorts = 6;
 static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN,
