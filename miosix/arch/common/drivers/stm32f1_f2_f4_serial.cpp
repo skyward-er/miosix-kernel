@@ -29,7 +29,7 @@
 #include <cstring>
 #include <errno.h>
 #include <termios.h>
-#include "stm32f2_f4_serial.h"
+#include "stm32f1_f2_f4_serial.h"
 #include "kernel/sync.h"
 #include "kernel/scheduler/scheduler.h"
 #include "filesystem/ioctl.h"
@@ -38,23 +38,39 @@
 
 using namespace std;
 
-//Work around ST renaming register fields for some STM32L4
-#if defined(USART_CR1_RXNEIE_RXFNEIE) && !defined(USART_CR1_RXNEIE)
-#define USART_CR1_RXNEIE    USART_CR1_RXNEIE_RXFNEIE
-#endif
-#if defined(USART_ISR_RXNE_RXFNE) && !defined(USART_ISR_RXNE)
-#define USART_ISR_RXNE      USART_ISR_RXNE_RXFNE
-#endif
-#if defined(USART_ISR_TXE_TXFNF) && !defined(USART_ISR_TXE)
-#define USART_ISR_TXE       USART_ISR_TXE_TXFNF
+/*
+ * This serial driver supports multiple revisions of the hardware; the following
+ * defines select the hardware variant and additional quirks that need to be
+ * taken into account in the code.
+ */
+
+#if defined(STM32F100xB)
+#define BUS_HAS_AHB
+#define DMA_STM32F1
+#define ALTFUNC_STM32F1
+#else
+#define BUS_HAS_AHB12
+#define DMA_STM32F2
+#define ALTFUNC_STM32F2
 #endif
 
 namespace miosix {
 
+/*
+ * Helper class for handling enabling/disabling peripherals on a STM32 bus
+ */
+
 class STM32Bus
 {
 public:
-    enum ID { APB1, APB2, AHB1, AHB2 };
+    enum ID {
+        APB1, APB2,
+        #if defined(BUS_HAS_AHB)
+            AHB,
+        #elif defined(BUS_HAS_AHB12)
+            AHB1, AHB2
+        #endif // BUS_HAS_x
+    };
 
     static inline void IRQen(STM32Bus::ID bus, unsigned long mask)
     {
@@ -62,8 +78,12 @@ public:
         {
             case STM32Bus::APB1: RCC->APB1ENR|=mask; break;
             case STM32Bus::APB2: RCC->APB2ENR|=mask; break;
-            case STM32Bus::AHB1: RCC->AHB1ENR|=mask; break;
-            case STM32Bus::AHB2: RCC->AHB2ENR|=mask; break;
+            #if defined(BUS_HAS_AHB)
+                case STM32Bus::AHB: RCC->AHBENR|=mask; break;
+            #elif defined(BUS_HAS_AHB12)
+                case STM32Bus::AHB1: RCC->AHB1ENR|=mask; break;
+                case STM32Bus::AHB2: RCC->AHB2ENR|=mask; break;
+            #endif // BUS_HAS_x
         }
         RCC_SYNC();
     }
@@ -73,8 +93,12 @@ public:
         {
             case STM32Bus::APB1: RCC->APB1ENR&=~mask; break;
             case STM32Bus::APB2: RCC->APB2ENR&=~mask; break;
-            case STM32Bus::AHB1: RCC->AHB1ENR&=~mask; break;
-            case STM32Bus::AHB2: RCC->AHB2ENR&=~mask; break;
+            #if defined(BUS_HAS_AHB)
+                case STM32Bus::AHB: RCC->AHBENR|=mask; break;
+            #elif defined(BUS_HAS_AHB12)
+                case STM32Bus::AHB1: RCC->AHB1ENR&=~mask; break;
+                case STM32Bus::AHB2: RCC->AHB2ENR&=~mask; break;
+            #endif // BUS_HAS_x
         }
         RCC_SYNC();
     }
@@ -90,6 +114,93 @@ public:
  * data structure a bit in the future.
  * TODO: Remove redundant information in the attributes
  */
+
+#if defined(DMA_STM32F1)
+
+class STM32SerialDMAHW
+{
+public:
+    enum IntRegShift
+    {
+        Channel1=0*4, Channel2=1*4, Channel3=2*4,
+        Channel4=3*4, Channel5=4*4, Channel6=5*4, Channel7=6*4
+    };
+
+    inline DMA_TypeDef *get() const { return DMA1; }
+    inline void IRQenable() const { STM32Bus::IRQen(STM32Bus::AHB, RCC_AHBENR_DMA1EN); }
+    inline void IRQdisable() const { STM32Bus::IRQdis(STM32Bus::AHB, RCC_AHBENR_DMA1EN); }
+
+    inline IRQn_Type getTxIRQn() const { return txIrq; }
+    inline unsigned long getTxISR() const { return getISR(txIRShift); }
+    inline void setTxIFCR(unsigned long v) const { return setIFCR(txIRShift,v); }
+
+    inline IRQn_Type getRxIRQn() const { return rxIrq; }
+    inline unsigned long getRxISR() const { return getISR(rxIRShift); }
+    inline void setRxIFCR(unsigned long v) const { return setIFCR(rxIRShift,v); }
+
+    inline void startDmaWrite(volatile uint32_t *dr, const char *buffer, size_t size) const
+    {
+        tx->CPAR=reinterpret_cast<unsigned int>(dr);
+        tx->CMAR=reinterpret_cast<unsigned int>(buffer);
+        tx->CNDTR=size;
+        tx->CCR = DMA_CCR_MINC    //Increment RAM pointer
+                | DMA_CCR_DIR     //Memory to peripheral
+                | DMA_CCR_TCIE    //Interrupt on completion
+                | DMA_CCR_TEIE    //Interrupt on transfer error
+                | DMA_CCR_EN;     //Start the DMA
+    }
+
+    inline void IRQhandleDmaTxInterrupt() const
+    {
+        setTxIFCR(DMA_IFCR_CGIF1);
+        tx->CCR=0; //Disable DMA
+    }
+
+    inline void IRQwaitDmaWriteStop() const
+    {
+        while((tx->CCR & DMA_CCR_EN) && (getTxISR() & (DMA_ISR_TCIF1|DMA_ISR_TEIF1))) ;
+    }
+
+    inline void IRQstartDmaRead(volatile uint32_t *dr, const char *buffer, unsigned int size) const
+    {
+        rx->CPAR=reinterpret_cast<unsigned int>(dr);
+        rx->CMAR=reinterpret_cast<unsigned int>(buffer);
+        rx->CNDTR=size;
+        rx->CCR = DMA_CCR_MINC    //Increment RAM pointer
+                | 0               //Peripheral to memory
+                | DMA_CCR_TEIE    //Interrupt on transfer error
+                | DMA_CCR_TCIE    //Interrupt on transfer complete
+                | DMA_CCR_EN;     //Start the DMA
+    }
+
+    inline int IRQstopDmaRead() const
+    {
+        rx->CCR=0;
+        setRxIFCR(DMA_IFCR_CGIF1);
+        return rx->CNDTR;
+    }
+
+    DMA_Channel_TypeDef *tx;    ///< Pointer to DMA TX channel
+    IRQn_Type txIrq;            ///< DMA TX stream IRQ number
+    unsigned char txIRShift;    ///< Value from DMAIntRegShift for the stream
+
+    DMA_Channel_TypeDef *rx;    ///< Pointer to DMA RX channel
+    IRQn_Type rxIrq;            ///< DMA RX stream IRQ number
+    unsigned char rxIRShift;    ///< Value from DMAIntRegShift for the stream
+
+private:
+    inline unsigned long getISR(unsigned char pos) const
+    {
+        return (get()->ISR>>pos) & 0b1111;
+    }
+    inline void setIFCR(unsigned char pos, unsigned long value) const
+    {
+        get()->IFCR=(value&0b1111) << pos;
+    }
+};
+
+#elif defined(DMA_STM32F2)
+
 class STM32SerialDMAHW
 {
 public:
@@ -102,7 +213,7 @@ public:
     inline DMA_TypeDef *get() const { return dma; }
     inline void IRQenable() const { STM32Bus::IRQen(bus, clkEnMask); }
     inline void IRQdisable() const { STM32Bus::IRQdis(bus, clkEnMask); }
-    
+
     inline IRQn_Type getTxIRQn() const { return txIrq; }
     inline unsigned long getTxISR() const { return getISR(txIRShift); }
     inline void setTxIFCR(unsigned long v) const { return setIFCR(txIRShift,v); }
@@ -208,9 +319,11 @@ private:
     }
 };
 
+#endif // DMA_STM32Fx
+
 /*
  * Auxiliary class that encapsulates all parts of code that differ between
- * between each instance of this peripheral.
+ * between each instance of the USART peripheral.
  * 
  * Try not to use the attributes of this class directly even if they are public.
  */
@@ -219,7 +332,9 @@ class STM32SerialHW
 public:
     inline USART_TypeDef *get() const { return port; }
     inline IRQn_Type getIRQn() const { return irq; }
-    inline unsigned char getAltFunc() const { return altFunc; }
+    #ifdef ALTFUNC_STM32F2
+        inline unsigned char getAltFunc() const { return altFunc; }
+    #endif
     inline unsigned int IRQgetClock() const
     {
         unsigned int freq=SystemCoreClock;
@@ -244,14 +359,33 @@ public:
 
     USART_TypeDef *port;        ///< USART port
     IRQn_Type irq;              ///< USART IRQ number
-    unsigned char altFunc;      ///< Alternate function to set for GPIOs
+    #ifdef ALTFUNC_STM32F2
+        unsigned char altFunc;  ///< Alternate function to set for GPIOs
+    #endif
     STM32Bus::ID bus;           ///< Bus where the port is (APB1 or 2)
     unsigned long clkEnMask;    ///< USART clock enable
 
     STM32SerialDMAHW dma;
 };
 
-#if defined(STM32F401xE) || defined(STM32F401xC) || defined(STM32F411xE)
+/*
+ * Table of hardware configurations
+ */
+
+#if defined(STM32F100xB)
+constexpr int maxPorts = 3;
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4,
+        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5 } },
+    { USART2, USART2_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6,
+        DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7 } },
+    { USART3, USART3_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
+      { DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2,
+        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
+};
+#elif defined(STM32F401xE) || defined(STM32F401xC) || defined(STM32F411xE)
 constexpr int maxPorts = 6;
 static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
@@ -358,18 +492,30 @@ STM32SerialBase::STM32SerialBase(int id, int baudrate, bool flowControl) :
 void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts)
 {
-    //First we set the AF then the mode to avoid glitches
-    tx.alternateFunction(port->getAltFunc());
-    tx.mode(Mode::ALTERNATE);
-    rx.alternateFunction(port->getAltFunc());
-    rx.mode(Mode::ALTERNATE);
-    if(flowControl)
-    {
-        rts.alternateFunction(port->getAltFunc());
-        rts.mode(Mode::ALTERNATE);
-        cts.alternateFunction(port->getAltFunc());
-        cts.mode(Mode::ALTERNATE);
-    }
+    #if defined(ALTFUNC_STM32F1)
+        //Quirk: stm32f1 rx pin has to be in input mode, while stm32f2 and up
+        //want it in ALTERNATE mode. Go figure...
+        tx.mode(Mode::ALTERNATE);
+        rx.mode(Mode::INPUT);
+        if(flowControl)
+        {
+            rts.mode(Mode::ALTERNATE);
+            cts.mode(Mode::INPUT);
+        }
+    #elif defined(ALTFUNC_STM32F2)
+        //First we set the AF then the mode to avoid glitches
+        tx.alternateFunction(port->getAltFunc());
+        tx.mode(Mode::ALTERNATE);
+        rx.alternateFunction(port->getAltFunc());
+        rx.mode(Mode::ALTERNATE);
+        if(flowControl)
+        {
+            rts.alternateFunction(port->getAltFunc());
+            rts.mode(Mode::ALTERNATE);
+            cts.alternateFunction(port->getAltFunc());
+            cts.mode(Mode::ALTERNATE);
+        }
+    #endif
     unsigned int freq=port->IRQgetClock();
     unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
     port->get()->BRR=quot/2 + (quot & 1);           //Round to nearest

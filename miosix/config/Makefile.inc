@@ -1498,7 +1498,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
     arch/common/os_timer/stm32_rtc_os_timer.cpp           \
     arch/common/sleep/cortexMx_sleep.cpp                  \
     arch/common/drivers/stm32f1_gpio.cpp                  \
-    arch/common/drivers/serial_stm32.cpp                  \
+    arch/common/drivers/stm32f1_f2_f4_serial.cpp          \
     arch/common/drivers/dcc.cpp                           \
     $(ARCH_INC)/interfaces-impl/delays.cpp                \
     $(ARCH_INC)/interfaces-impl/sleep.cpp                 \
@@ -1964,7 +1964,7 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
     arch/common/os_timer/stm32_32bit_os_timer.cpp             \
     arch/common/sleep/cortexMx_sleep.cpp                      \
     arch/common/drivers/stm32_gpio.cpp                        \
-    arch/common/drivers/stm32f2_f4_serial.cpp                 \
+    arch/common/drivers/stm32f1_f2_f4_serial.cpp              \
     arch/common/drivers/dcc.cpp                               \
     arch/common/drivers/sd_stm32f2_f4_f7.cpp                  \
     $(ARCH_INC)/interfaces-impl/delays.cpp                    \
@@ -2249,7 +2249,7 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
     arch/common/os_timer/stm32_32bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/drivers/stm32f2_f4_serial.cpp                \
+    arch/common/drivers/stm32f1_f2_f4_serial.cpp             \
     arch/common/drivers/dcc.cpp                              \
     arch/common/drivers/stm32_hardware_rng.cpp               \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
