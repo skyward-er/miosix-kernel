@@ -123,19 +123,9 @@ bool IRQabsoluteWaitTick(long long tick, FastInterruptDisableLock& dLock)
 } //anon namespace
 
 /**
- * RTC interrupt
- */
-void __attribute__((naked)) RTC_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z10RTCIrqImplv");
-    restoreContext();
-}
-
-/**
  * RTC interrupt actual implementation
  */
-void __attribute__((used)) RTCIrqImpl()
+void RTCIrqImpl()
 {
     unsigned int crl=RTC->CRL;
     if(crl & RTC_CRL_OWF)
@@ -149,7 +139,7 @@ void __attribute__((used)) RTCIrqImpl()
             waiting->IRQwakeup();
             if(waiting->IRQgetPriority()>
                 Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    Scheduler::IRQfindNextThread();
+                    IRQinvokeScheduler();
             waiting=nullptr;
         }
     }
@@ -317,6 +307,7 @@ Rtc::Rtc() : tc(getTickFrequency())
         RTC->PRLH=0;
         RTC->PRLL=1;
     }
+    IRQregisterIrq(RTC_IRQn,&RTCIrqImpl);
     NVIC_SetPriority(RTC_IRQn,5);
     NVIC_EnableIRQ(RTC_IRQn);
 }
