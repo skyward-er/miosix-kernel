@@ -54,8 +54,7 @@ public:
         DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_TIM14_STOP; //Stop while debugging
     }
 };
-#define IRQ_HANDLER_NAME TIM14_IRQHandler
-#define TIMER_HW_CLASS STM32Timer14HW
+using STM32TimerHW = STM32Timer14HW;
 
 #elif defined(_ARCH_CORTEXM0PLUS_STM32L0)
 
@@ -77,8 +76,7 @@ public:
         DBGMCU->APB2FZ |= DBGMCU_APB2_FZ_DBG_TIM22_STOP; //Stop while debugging
     }
 };
-#define IRQ_HANDLER_NAME TIM22_IRQHandler
-#define TIMER_HW_CLASS STM32Timer22HW
+using STM32TimerHW = STM32Timer22HW;
 
 #else
 
@@ -104,8 +102,7 @@ public:
         #endif
     }
 };
-#define IRQ_HANDLER_NAME TIM4_IRQHandler
-#define TIMER_HW_CLASS STM32Timer4HW
+using STM32TimerHW = STM32Timer4HW;
 
 #endif
 
@@ -145,23 +142,25 @@ public:
         return timerFrequency;
     }
     
-    static void IRQinitTimer()
+    void IRQinitTimer()
     {
         T::IRQenable();
-        // Setup TIM4 base configuration
+        // Setup base configuration
         // Mode: Up-counter
         // Interrupts: counter overflow, Compare/Capture on channel 1
         T::get()->CR1=TIM_CR1_URS;
         T::get()->DIER=TIM_DIER_UIE | TIM_DIER_CC1IE;
-        NVIC_SetPriority(T::getIRQn(),3); //High priority for TIM4 (Max=0, min=15)
+        IRQregisterIrq(T::getIRQn(),&TimerAdapter<STM32Timer<T>,16>::IRQhandler,
+                       static_cast<TimerAdapter<STM32Timer<T>,16>*>(this));
+        NVIC_SetPriority(T::getIRQn(),3); //High priority (Max=0, min=15)
         NVIC_EnableIRQ(T::getIRQn());
         // Configure channel 1 as:
         // Output channel (CC1S=0)
-        // No preload(OC1PE=0), hence TIM4_CCR1 can be written at anytime
+        // No preload(OC1PE=0), hence CCR1 can be written at anytime
         // No effect on the output signal on match (OC1M = 0)
         T::get()->CCMR1 = 0;
         T::get()->CCR1 = 0;
-        // TIM4 Operation Frequency Configuration: Max Freq. and longest period
+        // Operation Frequency Configuration: Max Freq. and longest period
         
         // The global variable SystemCoreClock from ARM's CMSIS allows to know
         // the CPU frequency.
@@ -192,20 +191,8 @@ public:
     }
 };
 
-static STM32Timer<TIMER_HW_CLASS> timer;
+static STM32Timer<STM32TimerHW> timer;
 DEFAULT_OS_TIMER_INTERFACE_IMPLEMENTATION(timer);
 } //namespace miosix
-
-void __attribute__((naked)) IRQ_HANDLER_NAME()
-{
-    saveContext();
-    asm volatile ("bl _Z11osTimerImplv");
-    restoreContext();
-}
-
-void __attribute__((used)) osTimerImpl()
-{
-    miosix::timer.IRQhandler();
-}
 
 #endif //#ifndef WITH_RTC_AS_OS_TIMER
