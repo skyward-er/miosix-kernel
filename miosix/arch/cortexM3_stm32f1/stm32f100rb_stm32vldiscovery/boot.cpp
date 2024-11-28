@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011 by Terraneo Federico                               *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,56 +23,17 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
-/***********************************************************************
-* bsp_impl.h Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
-
-#pragma once
-
-#include "config/miosix_settings.h"
-#include "interfaces/gpio.h"
+extern "C" void SystemInit();
 
 namespace miosix {
 
-/**
-\addtogroup Hardware
-\{
-*/
-
-/**
- * \internal
- * used by the ledOn() and ledOff() implementation
- */
-typedef Gpio<GPIOC_BASE,9> _led;
-
-inline void ledOn()
+void IRQmemoryAndClockInit()
 {
-    _led::high();
+    // Currently we use the code provided by ST (with our modifications) to
+    // handle the memory and clock initialization process.
+    SystemInit();
 }
 
-inline void ledOff()
-{
-    _led::low();
-}
-
-///\internal Pin connected to SD card detect
-//TODO: no filesystem typedef Gpio<GPIOA_BASE,8> sdCardDetect;
-
-/**
- * Polls the SD card sense GPIO
- * \return true if there is an uSD card in the socket.
- */
-/*TODO: no filesystem
-inline bool sdCardSense()
-{
-    return sdCardDetect::value()==0;
-}*/
-
-/**
-\}
-*/
-
-} //namespace miosix
+} // namespace miosix

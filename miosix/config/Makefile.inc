@@ -1127,8 +1127,8 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
         $(BOARD_INC)/interfaces-impl/bsp.cpp         \
+        $(BOARD_INC)/boot.cpp                        \
         arch/common/drivers/stm32_rtc.cpp            \
         arch/common/drivers/servo_stm32.cpp
 
