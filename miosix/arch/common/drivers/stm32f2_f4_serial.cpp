@@ -51,9 +51,38 @@ using namespace std;
 
 namespace miosix {
 
+class STM32Bus
+{
+public:
+    enum ID { APB1, APB2, AHB1, AHB2 };
+
+    static inline void IRQen(STM32Bus::ID bus, unsigned long mask)
+    {
+        switch(bus)
+        {
+            case STM32Bus::APB1: RCC->APB1ENR|=mask; break;
+            case STM32Bus::APB2: RCC->APB2ENR|=mask; break;
+            case STM32Bus::AHB1: RCC->AHB1ENR|=mask; break;
+            case STM32Bus::AHB2: RCC->AHB2ENR|=mask; break;
+        }
+        RCC_SYNC();
+    }
+    static inline void IRQdis(STM32Bus::ID bus, unsigned long mask)
+    {
+        switch(bus)
+        {
+            case STM32Bus::APB1: RCC->APB1ENR&=~mask; break;
+            case STM32Bus::APB2: RCC->APB2ENR&=~mask; break;
+            case STM32Bus::AHB1: RCC->AHB1ENR&=~mask; break;
+            case STM32Bus::AHB2: RCC->AHB2ENR&=~mask; break;
+        }
+        RCC_SYNC();
+    }
+};
+
 /*
  * Auxiliary class that encapsulates all parts of code that differ between
- * between each instance of this peripheral.
+ * between each instance of the DMA interface
  * 
  * Try not to use the attributes of this class directly even if they are public,
  * in the current implementation they are not the best use of ROM space and
@@ -61,16 +90,133 @@ namespace miosix {
  * data structure a bit in the future.
  * TODO: Remove redundant information in the attributes
  */
-class STM32SerialHW
+class STM32SerialDMAHW
 {
 public:
-    enum Bus { APB1, APB2, AHB1, AHB2 };
-    enum DmaIntRegShift
+    enum IntRegShift
     {
         Stream0= 0, Stream1= 0+6, Stream2=16, Stream3=16+6,
         Stream4=32, Stream5=32+6, Stream6=48, Stream7=48+6
     };
+
+    inline DMA_TypeDef *get() const { return dma; }
+    inline void IRQenable() const { STM32Bus::IRQen(bus, clkEnMask); }
+    inline void IRQdisable() const { STM32Bus::IRQdis(bus, clkEnMask); }
     
+    inline IRQn_Type getTxIRQn() const { return txIrq; }
+    inline unsigned long getTxISR() const { return getISR(txIRShift); }
+    inline void setTxIFCR(unsigned long v) const { return setIFCR(txIRShift,v); }
+
+    inline IRQn_Type getRxIRQn() const { return rxIrq; }
+    inline unsigned long getRxISR() const { return getISR(rxIRShift); }
+    inline void setRxIFCR(unsigned long v) const { return setIFCR(rxIRShift,v); }
+
+    inline void startDmaWrite(volatile uint32_t *dr, const char *buffer, size_t size) const
+    {
+        tx->PAR=reinterpret_cast<unsigned int>(dr);
+        tx->M0AR=reinterpret_cast<unsigned int>(buffer);
+        tx->NDTR=size;
+        //Quirk: not enabling DMA_SxFCR_FEIE because at the beginning of a transfer
+        //there is always at least one spurious fifo error due to the fact that the
+        //FIFO doesn't begin to fill up until after the DMA request is triggered.
+        //  This is just a FIFO underrun error and as such it is resolved
+        //automatically by the DMA internal logic and does not stop the transfer,
+        //just like for FIFO overruns.
+        //  On the other hand, a FIFO error caused by register misconfiguration
+        //would prevent the transfer from even starting, but the conditions for
+        //FIFO misconfiguration are known in advance and we don't fall in any of
+        //those cases.
+        //  In other words, underrun, overrun and misconfiguration are the only FIFO
+        //error conditions; misconfiguration is impossible, and we don't need to do
+        //anything for overruns and underruns, so there is literally no reason to
+        //enable FIFO error interrupts in the first place.
+        tx->FCR=DMA_SxFCR_DMDIS;//Enable fifo
+        tx->CR = (txChannel << DMA_SxCR_CHSEL_Pos) //Select channel
+               | DMA_SxCR_MINC    //Increment RAM pointer
+               | DMA_SxCR_DIR_0   //Memory to peripheral
+               | DMA_SxCR_TCIE    //Interrupt on completion
+               | DMA_SxCR_TEIE    //Interrupt on transfer error
+               | DMA_SxCR_DMEIE   //Interrupt on direct mode error
+               | DMA_SxCR_EN;     //Start the DMA
+    }
+
+    inline void IRQhandleDmaTxInterrupt() const
+    {
+        setTxIFCR(DMA_LIFCR_CTCIF0
+                | DMA_LIFCR_CTEIF0
+                | DMA_LIFCR_CDMEIF0
+                | DMA_LIFCR_CFEIF0);
+    }
+
+    inline void IRQwaitDmaWriteStop() const
+    {
+        while(tx->CR & DMA_SxCR_EN) ;
+    }
+
+    inline void IRQstartDmaRead(volatile uint32_t *dr, const char *buffer, unsigned int size) const
+    {
+        rx->PAR=reinterpret_cast<unsigned int>(dr);
+        rx->M0AR=reinterpret_cast<unsigned int>(buffer);
+        rx->NDTR=size;
+        rx->CR = (rxChannel << DMA_SxCR_CHSEL_Pos) //Select channel
+               | DMA_SxCR_MINC    //Increment RAM pointer
+               | 0                //Peripheral to memory
+               | DMA_SxCR_HTIE    //Interrupt on half transfer
+               | DMA_SxCR_TEIE    //Interrupt on transfer error
+               | DMA_SxCR_DMEIE   //Interrupt on direct mode error
+               | DMA_SxCR_EN;     //Start the DMA
+    }
+
+    inline int IRQstopDmaRead() const
+    {
+        //Stop DMA and wait for it to actually stop
+        rx->CR &= ~DMA_SxCR_EN;
+        while(rx->CR & DMA_SxCR_EN) ;
+        setRxIFCR(DMA_LIFCR_CTCIF0
+            | DMA_LIFCR_CHTIF0
+            | DMA_LIFCR_CTEIF0
+            | DMA_LIFCR_CDMEIF0
+            | DMA_LIFCR_CFEIF0);
+        return rx->NDTR;
+    }
+
+    DMA_TypeDef *dma;           ///< Pointer to the DMA peripheral (DMA1/2)
+    STM32Bus::ID bus;           ///< Bus where the DMA port is (AHB1 or 2)
+    unsigned long clkEnMask;    ///< DMA clock enable bit
+
+    DMA_Stream_TypeDef *tx;     ///< Pointer to DMA TX stream
+    IRQn_Type txIrq;            ///< DMA TX stream IRQ number
+    unsigned char txIRShift;    ///< Value from DMAIntRegShift for the stream
+    unsigned char txChannel;    ///< DMA TX stream channel
+
+    DMA_Stream_TypeDef *rx;     ///< Pointer to DMA RX stream
+    IRQn_Type rxIrq;            ///< DMA RX stream IRQ number
+    unsigned char rxIRShift;    ///< Value from DMAIntRegShift for the stream
+    unsigned char rxChannel;    ///< DMA TX stream channel
+
+private:
+    inline unsigned long getISR(unsigned char pos) const
+    {
+        if(pos<32) return (dma->LISR>>pos) & 0b111111;
+        return (dma->HISR>>(pos-32)) & 0b111111;
+    }
+    inline void setIFCR(unsigned char pos, unsigned long value) const
+    {
+        value=(value&0b111111) << (pos%32);
+        if(pos<32) dma->LIFCR=value;
+        else dma->HIFCR=value;
+    }
+};
+
+/*
+ * Auxiliary class that encapsulates all parts of code that differ between
+ * between each instance of this peripheral.
+ * 
+ * Try not to use the attributes of this class directly even if they are public.
+ */
+class STM32SerialHW
+{
+public:
     inline USART_TypeDef *get() const { return port; }
     inline IRQn_Type getIRQn() const { return irq; }
     inline unsigned char getAltFunc() const { return altFunc; }
@@ -79,11 +225,11 @@ public:
         unsigned int freq=SystemCoreClock;
         switch(bus)
         {
-            case APB1:
+            case STM32Bus::APB1:
                 if(RCC->CFGR & RCC_CFGR_PPRE1_2)
                     freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
                 break;
-            case APB2:
+            case STM32Bus::APB2:
                 if(RCC->CFGR & RCC_CFGR_PPRE2_2)
                     freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
                 break;
@@ -92,165 +238,103 @@ public:
         }
         return freq;
     }
-    inline void IRQenable() const { IRQgenericEn(bus, clkEnMask); }
-    inline void IRQdisable() const { IRQgenericDis(bus, clkEnMask); }
-
-    inline DMA_TypeDef *getDma() const { return dma; }
-    inline void IRQdmaEnable() const { IRQgenericEn(dmaBus, dmaClkEnMask); }
-    inline void IRQdmaDisable() const { IRQgenericDis(dmaBus, dmaClkEnMask); }
-
-    inline DMA_Stream_TypeDef *getDmaTx() const { return dmaTx; }
-    inline IRQn_Type getDmaTxIRQn() const { return dmaTxIrq; }
-    inline unsigned long getDmaTxChannel() const { return dmaTxChannel; }
-    inline unsigned long getDmaTxISR() const { return getDmaISR(dmaTxIRShift); }
-    inline void setDmaTxIFCR(unsigned long v) const { return setDmaIFCR(dmaTxIRShift, v); }
-
-    inline DMA_Stream_TypeDef *getDmaRx() const { return dmaRx; }
-    inline IRQn_Type getDmaRxIRQn() const { return dmaRxIrq; }
-    inline unsigned long getDmaRxChannel() const { return dmaRxChannel; }
-    inline unsigned long getDmaRxISR() const { return getDmaISR(dmaRxIRShift); }
-    inline void setDmaRxIFCR(unsigned long v) const { return setDmaIFCR(dmaRxIRShift, v); }
+    inline void IRQenable() const { STM32Bus::IRQen(bus, clkEnMask); }
+    inline void IRQdisable() const { STM32Bus::IRQdis(bus, clkEnMask); }
+    inline const STM32SerialDMAHW& getDma() const { return dma; } 
 
     USART_TypeDef *port;        ///< USART port
     IRQn_Type irq;              ///< USART IRQ number
     unsigned char altFunc;      ///< Alternate function to set for GPIOs
-    STM32SerialHW::Bus bus;     ///< Bus where the port is (APB1 or 2)
+    STM32Bus::ID bus;           ///< Bus where the port is (APB1 or 2)
     unsigned long clkEnMask;    ///< USART clock enable
 
-    DMA_TypeDef *dma;           ///< Pointer to the DMA peripheral (DMA1/2)
-    STM32SerialHW::Bus dmaBus;  ///< Bus where the DMA port is (AHB1 or 2)
-    unsigned long dmaClkEnMask; ///< DMA clock enable bit
-
-    DMA_Stream_TypeDef *dmaTx;  ///< Pointer to DMA TX stream
-    IRQn_Type dmaTxIrq;         ///< DMA TX stream IRQ number
-    unsigned char dmaTxIRShift; ///< Value from DMAIntRegShift for the stream
-    unsigned char dmaTxChannel; ///< DMA TX stream channel
-
-    DMA_Stream_TypeDef *dmaRx;  ///< Pointer to DMA RX stream
-    IRQn_Type dmaRxIrq;         ///< DMA RX stream IRQ number
-    unsigned char dmaRxIRShift; ///< Value from DMAIntRegShift for the stream
-    unsigned char dmaRxChannel; ///< DMA TX stream channel
-
-private:
-    static inline void IRQgenericEn(STM32SerialHW::Bus bus, unsigned long mask)
-    {
-        switch(bus)
-        {
-            case APB1: RCC->APB1ENR|=mask; break;
-            case APB2: RCC->APB2ENR|=mask; break;
-            case AHB1: RCC->AHB1ENR|=mask; break;
-            case AHB2: RCC->AHB2ENR|=mask; break;
-        }
-        RCC_SYNC();
-    }
-    static inline void IRQgenericDis(STM32SerialHW::Bus bus, unsigned long mask)
-    {
-        switch(bus)
-        {
-            case APB1: RCC->APB1ENR&=~mask; break;
-            case APB2: RCC->APB2ENR&=~mask; break;
-            case AHB1: RCC->AHB1ENR&=~mask; break;
-            case AHB2: RCC->AHB2ENR&=~mask; break;
-        }
-        RCC_SYNC();
-    }
-    inline unsigned long getDmaISR(unsigned char pos) const
-    {
-        if(pos<32) return (dma->LISR>>pos) & 0b111111;
-        return (dma->HISR>>(pos-32)) & 0b111111;
-    }
-    inline void setDmaIFCR(unsigned char pos, unsigned long value) const
-    {
-        value=(value&0b111111) << (pos%32);
-        if(pos<32) dma->LIFCR=value;
-        else dma->HIFCR=value;
-    }
+    STM32SerialDMAHW dma;
 };
 
 #if defined(STM32F401xE) || defined(STM32F401xC) || defined(STM32F411xE)
 constexpr int maxPorts = 6;
 static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN,
-      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
-      DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialHW::Stream7, 4,
-      DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
-    { USART2, USART2_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialHW::Stream6, 4,
-      DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
+    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
+        DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
+        DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
+    { USART2, USART2_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 4,
+        DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
     { 0 },
     { 0 },
     { 0 },
-    { USART6, USART6_IRQn, 8, STM32SerialHW::APB2, RCC_APB2ENR_USART6EN,
-      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
-      DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialHW::Stream6, 5,
-      DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialHW::Stream1, 5 },
+    { USART6, USART6_IRQn, 8, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
+        DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5,
+        DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5 } },
 };
 #elif defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) \
    || defined(STM32F417xx) || defined(STM32F205xx) || defined(STM32F207xx)
 constexpr int maxPorts = 6;
 static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN,
-      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
-      DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialHW::Stream7, 4,
-      DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
-    { USART2, USART2_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialHW::Stream6, 4,
-      DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
-    { USART3, USART3_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART3EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialHW::Stream3, 4,
-      DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialHW::Stream1, 4 },
-    { UART4 , UART4_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART4EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialHW::Stream4, 4,
-      DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialHW::Stream2, 4 },
-    { UART5 , UART5_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART5EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialHW::Stream7, 4,
-      DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialHW::Stream0, 4 },
-    { USART6, USART6_IRQn, 8, STM32SerialHW::APB2, RCC_APB2ENR_USART6EN,
-      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
-      DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialHW::Stream6, 5,
-      DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialHW::Stream1, 5 },
+    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
+        DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
+        DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
+    { USART2, USART2_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 4,
+        DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
+    { USART3, USART3_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 4,
+        DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 4 } },
+    { UART4 , UART4_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialDMAHW::Stream4, 4,
+        DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialDMAHW::Stream2, 4 } },
+    { UART5 , UART5_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
+        DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 4 } },
+    { USART6, USART6_IRQn, 8, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
+        DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5,
+        DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5 } },
 };
 #elif defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F469xx) \
    || defined(STM32F479xx)
 constexpr int maxPorts = 8;
 static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, 7, STM32SerialHW::APB2, RCC_APB2ENR_USART1EN,
-      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
-      DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialHW::Stream7, 4,
-      DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
-    { USART2, USART2_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART2EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialHW::Stream6, 4,
-      DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialHW::Stream5, 4 },
-    { USART3, USART3_IRQn, 7, STM32SerialHW::APB1, RCC_APB1ENR_USART3EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialHW::Stream3, 4,
-      DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialHW::Stream1, 4 },
-    { UART4 , UART4_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART4EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialHW::Stream4, 4,
-      DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialHW::Stream2, 4 },
-    { UART5 , UART5_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART5EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialHW::Stream7, 4,
-      DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialHW::Stream0, 4 },
-    { USART6, USART6_IRQn, 8, STM32SerialHW::APB2, RCC_APB2ENR_USART6EN,
-      DMA2, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA2EN,
-      DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialHW::Stream6, 5,
-      DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialHW::Stream1, 5 },
-    { UART7 , UART7_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART7EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialHW::Stream1, 5,
-      DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialHW::Stream3, 5 },
-    { UART8 , UART8_IRQn , 8, STM32SerialHW::APB1, RCC_APB1ENR_UART8EN,
-      DMA1, STM32SerialHW::AHB1, RCC_AHB1ENR_DMA1EN,
-      DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialHW::Stream0, 5,
-      DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialHW::Stream6, 5 },
+    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
+        DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
+        DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
+    { USART2, USART2_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 4,
+        DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
+    { USART3, USART3_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 4,
+        DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 4 } },
+    { UART4 , UART4_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialDMAHW::Stream4, 4,
+        DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialDMAHW::Stream2, 4 } },
+    { UART5 , UART5_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
+        DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 4 } },
+    { USART6, USART6_IRQn, 8, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
+        DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5,
+        DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5 } },
+    { UART7 , UART7_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART7EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5,
+        DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 5 } },
+    { UART8 , UART8_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART8EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 5,
+        DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5 } },
 };
 #else
 #error Unsupported STM32 chip for this serial driver
@@ -493,18 +577,19 @@ void STM32DMASerial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts)
 {
     //Check if DMA is supported for this port
-    if(!port->getDma()) errorHandler(UNEXPECTED);
+    auto dma=port->getDma();
+    if(!dma.get()) errorHandler(UNEXPECTED);
     InterruptDisableLock dLock;
 
-    port->IRQdmaEnable();
-    IRQregisterIrq(port->getDmaTxIRQn(),&STM32DMASerial::IRQhandleDmaTxInterrupt,this);
-    NVIC_SetPriority(port->getDmaTxIRQn(),15);
-    NVIC_EnableIRQ(port->getDmaTxIRQn());
+    dma.IRQenable();
+    IRQregisterIrq(dma.getTxIRQn(),&STM32DMASerial::IRQhandleDmaTxInterrupt,this);
+    NVIC_SetPriority(dma.getTxIRQn(),15);
+    NVIC_EnableIRQ(dma.getTxIRQn());
     //Higher priority to ensure IRQhandleDmaRxInterrupt() is called before
     //IRQhandleInterrupt(), so that idle is set correctly
-    IRQregisterIrq(port->getDmaRxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this);
-    NVIC_SetPriority(port->getDmaRxIRQn(),14);
-    NVIC_EnableIRQ(port->getDmaRxIRQn());
+    IRQregisterIrq(dma.getRxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this);
+    NVIC_SetPriority(dma.getRxIRQn(),14);
+    NVIC_EnableIRQ(dma.getRxIRQn());
 
     port->IRQenable();
     IRQregisterIrq(port->getIRQn(),&STM32DMASerial::IRQhandleInterrupt,this);
@@ -515,9 +600,9 @@ void STM32DMASerial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
 
     port->get()->CR3 = USART_CR3_DMAT | USART_CR3_DMAR; //Enable USART DMA
     port->get()->CR1 = USART_CR1_UE     //Enable port
-                       | USART_CR1_IDLEIE //Interrupt on idle line
-                       | USART_CR1_TE     //Transmission enbled
-                       | USART_CR1_RE;    //Reception enabled
+                     | USART_CR1_IDLEIE //Interrupt on idle line
+                     | USART_CR1_TE     //Transmission enbled
+                     | USART_CR1_RE;    //Reception enabled
     IRQstartDmaRead();
 }
 
@@ -592,41 +677,12 @@ void STM32DMASerial::startDmaWrite(const char *buffer, size_t size)
     while((port->get()->SR & USART_SR_TXE)==0) ;
     
     dmaTxInProgress=true;
-    port->getDmaTx()->PAR=reinterpret_cast<unsigned int>(&port->get()->DR);
-    port->getDmaTx()->M0AR=reinterpret_cast<unsigned int>(buffer);
-    port->getDmaTx()->NDTR=size;
-    //Quirk: not enabling DMA_SxFCR_FEIE because at the beginning of a transfer
-    //there is always at least one spurious fifo error due to the fact that the
-    //FIFO doesn't begin to fill up until after the DMA request is triggered.
-    //  This is just a FIFO underrun error and as such it is resolved
-    //automatically by the DMA internal logic and does not stop the transfer,
-    //just like for FIFO overruns.
-    //  On the other hand, a FIFO error caused by register misconfiguration
-    //would prevent the transfer from even starting, but the conditions for
-    //FIFO misconfiguration are known in advance and we don't fall in any of
-    //those cases.
-    //  In other words, underrun, overrun and misconfiguration are the only FIFO
-    //error conditions; misconfiguration is impossible, and we don't need to do
-    //anything for overruns and underruns, so there is literally no reason to
-    //enable FIFO error interrupts in the first place.
-    port->getDmaTx()->FCR=DMA_SxFCR_DMDIS;//Enable fifo
-    port->getDmaTx()->CR =
-                (port->getDmaTxChannel() << DMA_SxCR_CHSEL_Pos) //Select channel
-              | DMA_SxCR_MINC    //Increment RAM pointer
-              | DMA_SxCR_DIR_0   //Memory to peripheral
-              | DMA_SxCR_TCIE    //Interrupt on completion
-              | DMA_SxCR_TEIE    //Interrupt on transfer error
-              | DMA_SxCR_DMEIE   //Interrupt on direct mode error
-              | DMA_SxCR_EN;     //Start the DMA
+    port->getDma().startDmaWrite(&port->get()->DR,buffer,size);
 }
 
 void STM32DMASerial::IRQhandleDmaTxInterrupt()
 {
-    port->setDmaTxIFCR(
-          DMA_LIFCR_CTCIF0
-        | DMA_LIFCR_CTEIF0
-        | DMA_LIFCR_CDMEIF0
-        | DMA_LIFCR_CFEIF0);
+    port->getDma().IRQhandleDmaTxInterrupt();
     dmaTxInProgress=false;
     if(txWaiting==nullptr) return;
     txWaiting->IRQwakeup();
@@ -659,31 +715,12 @@ ssize_t STM32DMASerial::readBlock(void *buffer, size_t size, off_t where)
 
 void STM32DMASerial::IRQstartDmaRead()
 {
-    port->getDmaRx()->PAR=reinterpret_cast<unsigned int>(&port->get()->DR);
-    port->getDmaRx()->M0AR=reinterpret_cast<unsigned int>(rxBuffer);
-    port->getDmaRx()->NDTR=rxQueueMin;
-    port->getDmaRx()->CR = 
-                (port->getDmaRxChannel() << DMA_SxCR_CHSEL_Pos) //Select channel
-              | DMA_SxCR_MINC    //Increment RAM pointer
-              | 0                //Peripheral to memory
-              | DMA_SxCR_HTIE    //Interrupt on half transfer
-              | DMA_SxCR_TEIE    //Interrupt on transfer error
-              | DMA_SxCR_DMEIE   //Interrupt on direct mode error
-              | DMA_SxCR_EN;     //Start the DMA
+    port->getDma().IRQstartDmaRead(&port->get()->DR,rxBuffer,rxQueueMin);
 }
 
 int STM32DMASerial::IRQstopDmaRead()
 {
-    //Stop DMA and wait for it to actually stop
-    port->getDmaRx()->CR &= ~DMA_SxCR_EN;
-    while(port->getDmaRx()->CR & DMA_SxCR_EN) ;
-    port->setDmaRxIFCR(
-          DMA_LIFCR_CTCIF0
-        | DMA_LIFCR_CHTIF0
-        | DMA_LIFCR_CTEIF0
-        | DMA_LIFCR_CDMEIF0
-        | DMA_LIFCR_CFEIF0);
-    return rxQueueMin - port->getDmaRx()->NDTR;
+    return rxQueueMin - port->getDma().IRQstopDmaRead();
 }
 
 void STM32DMASerial::IRQflushDmaReadBuffer()
@@ -725,7 +762,7 @@ void STM32DMASerial::IRQwrite(const char *str)
     bool interrupts=areInterruptsEnabled();
     if(interrupts) fastDisableInterrupts();
     //Wait until DMA xfer ends. EN bit is cleared by hardware on transfer end
-    while(port->getDmaTx()->CR & DMA_SxCR_EN) ;
+    port->getDma().IRQwaitDmaWriteStop();
     STM32SerialBase::IRQwrite(str);
     if(interrupts) fastEnableInterrupts();
 }
@@ -737,12 +774,13 @@ STM32DMASerial::~STM32DMASerial()
         InterruptDisableLock dLock;
         port->get()->CR1=0;
         IRQstopDmaRead();
-        NVIC_DisableIRQ(port->getDmaTxIRQn());
-        NVIC_ClearPendingIRQ(port->getDmaTxIRQn());
-        IRQunregisterIrq(port->getDmaTxIRQn());
-        NVIC_DisableIRQ(port->getDmaRxIRQn());
-        NVIC_ClearPendingIRQ(port->getDmaRxIRQn());
-        IRQunregisterIrq(port->getDmaRxIRQn());
+        auto dma=port->getDma();
+        NVIC_DisableIRQ(dma.getTxIRQn());
+        NVIC_ClearPendingIRQ(dma.getTxIRQn());
+        IRQunregisterIrq(dma.getTxIRQn());
+        NVIC_DisableIRQ(dma.getRxIRQn());
+        NVIC_ClearPendingIRQ(dma.getRxIRQn());
+        IRQunregisterIrq(dma.getRxIRQn());
         NVIC_DisableIRQ(port->getIRQn());
         NVIC_ClearPendingIRQ(port->getIRQn());
         IRQunregisterIrq(port->getIRQn());
