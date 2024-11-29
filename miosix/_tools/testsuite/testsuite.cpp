@@ -3017,6 +3017,9 @@ public:
     }
 };
 
+//TODO: remove this guard
+//atomic_load/store brings in exception code but it shouldn't
+#ifndef __NO_EXCEPTIONS
 shared_ptr<t22_c1> t22_v7;
 
 void t22_t3(void*)
@@ -3032,6 +3035,7 @@ void t22_t3(void*)
     atomic_store(&t22_v7,shared_ptr<t22_c1>(nullptr));
     inst1->canDelete=true;
 }
+#endif
 
 static void test_22()
 {
@@ -3139,6 +3143,9 @@ static void test_22()
     t2->terminate();
     t2->join();
     
+    //TODO: remove this guard
+    //atomic_load/store brings in exception code but it shouldn't
+    #ifndef __NO_EXCEPTIONS
     t22_v8=0;
     {
         Thread *t3=Thread::create(t22_t3,STACK_SMALL,0,0,Thread::JOINABLE);
@@ -3167,7 +3174,8 @@ static void test_22()
         iprintf("deleted %d\n",t22_v8);
         fail("Not deleted");
     }
-    
+    #endif // __NO_EXCEPTIONS
+
     pass();
 }
 
@@ -3578,6 +3586,9 @@ static void test_24()
     pass();
 }
 
+//TODO: remove this guard
+//anything related to std::thread brings in exception code but it shouldn't
+#ifndef __NO_EXCEPTIONS
 //
 // Test 25
 //
@@ -3847,6 +3858,9 @@ static void test_25()
     pass();
     Thread::setPriority(0);
 }
+#else //__NO_EXCEPTIONS
+void test_25() {}
+#endif //__NO_EXCEPTIONS
 
 //
 // Test 26
