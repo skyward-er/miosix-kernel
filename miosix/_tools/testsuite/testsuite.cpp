@@ -4253,17 +4253,15 @@ serial write speed
 
 static void benchmark_1()
 {
-    using namespace std::chrono;
-    auto t=system_clock::now();
+    auto t=getTime();
     extern unsigned long _data asm("_data");
     char *data=reinterpret_cast<char*>(&_data);
     memDump(data,2048);
-    auto d=system_clock::now()-t;
+    int d=(getTime()-t)/1000000LL;
     //every line dumps 16 bytes, and is 81 char long (considering \r\n)
     //so (2048/16)*81=10368
-    iprintf("Time required to print 10368 char is %lldms\n",
-        duration_cast<milliseconds>(d).count());
-    unsigned int baudrate=10368*10000/duration_cast<milliseconds>(d).count();
+    iprintf("Time required to print 10368 char is %dms\n",d);
+    unsigned int baudrate=10368*10000/d;
     iprintf("Effective baud rate =%u\n",baudrate);
 }
 
@@ -4326,7 +4324,6 @@ makes a 1MB file and measures time required to read/write it.
 
 static void benchmark_3()
 {
-    using namespace std::chrono;
     //Write benchmark
     const char FILENAME[]="/sd/speed.txt";
     const unsigned int BUFSIZE=1024;
@@ -4341,22 +4338,22 @@ static void benchmark_3()
     }
     setbuf(f,NULL);
     int i,max=0;
-    auto total=system_clock::now();
+    auto total=getTime();
     for(i=0;i<1024;i++)
     {
-        auto part=system_clock::now();
+        auto part=getTime();
         if(fwrite(buf,1,BUFSIZE,f)!=BUFSIZE)
         {
             iprintf("Write error\n");
             break;
         }
-        auto d=system_clock::now()-part;
-        max=std::max(max,static_cast<int>(duration_cast<milliseconds>(d).count()));
+        auto d=getTime()-part;
+        max=std::max(max,static_cast<int>(d/1000000));
     }
-    auto d=system_clock::now()-total;
+    auto d=getTime()-total;
     if(fclose(f)!=0) iprintf("Error in fclose 1\n");
     iprintf("Filesystem write benchmark\n");
-    unsigned int writeTime=duration_cast<milliseconds>(d).count();
+    unsigned int writeTime=d/1000000;
     unsigned int writeSpeed=static_cast<unsigned int>(1024000.0/writeTime);
     iprintf("Total write time = %dms (%dKB/s)\n",writeTime,writeSpeed);
     iprintf("Max filesystem latency = %dms\n",max);
@@ -4369,18 +4366,18 @@ static void benchmark_3()
         return;
     }
     setbuf(f,NULL);
-    total=system_clock::now();
+    total=getTime();
     for(i=0;i<1024;i++)
     {
         memset(buf,0,BUFSIZE);
-        auto part=system_clock::now();
+        auto part=getTime();
         if(fread(buf,1,BUFSIZE,f)!=BUFSIZE)
         {
             iprintf("Read error 1\n");
             break;
         }
-        auto d=system_clock::now()-part;
-        max=std::max(max,static_cast<int>(duration_cast<milliseconds>(d).count()));
+        auto d=getTime()-part;
+        max=std::max(max,static_cast<int>(d/1000000));
         for(unsigned j=0;j<BUFSIZE;j++) if(buf[j]!='0')
         {
             iprintf("Read error 2\n");
@@ -4388,10 +4385,10 @@ static void benchmark_3()
         }
     }
     quit:
-    d=system_clock::now()-total;
+    d=getTime()-total;
     if(fclose(f)!=0) iprintf("Error in fclose 2\n");
     iprintf("Filesystem read test\n");
-    unsigned int readTime=duration_cast<milliseconds>(d).count();
+    unsigned int readTime=d/1000000;
     unsigned int readSpeed=static_cast<unsigned int>(1024000.0/readTime);
     iprintf("Total read time = %dms (%dKB/s)\n",readTime,readSpeed);
     iprintf("Max filesystem latency = %dms\n",max);
