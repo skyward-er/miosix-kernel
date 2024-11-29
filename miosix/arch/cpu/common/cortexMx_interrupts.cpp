@@ -88,7 +88,7 @@ struct IrqForwardingEntry
     void *arg;
 };
 
-/// \internal Table of rum-time registered interrupt handlers and args
+/// \internal Table of run-time registered interrupt handlers and args
 static IrqForwardingEntry irqForwardingTable[numInterrupts];
 
 /**
