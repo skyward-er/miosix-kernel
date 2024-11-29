@@ -239,6 +239,20 @@ int main()
 }
 
 /**
+ * Used at beginning of tests to check memory requirements and skip if not met
+ */
+#define CHECK_AVAIL_HEAP(minimum) do { \
+        unsigned int free=MemoryProfiling::getCurrentFreeHeap(); \
+        if(free<(minimum)) \
+        { \
+            iprintf("Skipping, low heap (%u<%u).\n",free,(minimum)); \
+            return; \
+        } \
+    } while(false)
+//Conservatively estimates the heap usage when creating a thread
+#define EST_THREAD_HEAP_USAGE(stack) (((16+32+(stack)+sizeof(Thread))+8)+16)
+
+/**
  * Called @ the beginning of a test
  * \param name test name
  */
@@ -351,6 +365,7 @@ static void t1_f1(Thread *p)
 static void test_1()
 {
     test_name("thread creation/deletion");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*3);
     //Testing getStackBottom()
     const unsigned int *y=Thread::getStackBottom();
     
@@ -512,6 +527,7 @@ static void t3_p2(void *argv)
 static void test_3()
 {
     test_name("time and sleep");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*3);
     long long delta;
     {
         FastInterruptDisableLock dLock;
@@ -1038,6 +1054,7 @@ bool checkIft6_m5aIsLocked()
 static void test_6()
 {
     test_name("Mutex class");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*5);
     #ifdef SCHED_TYPE_EDF
     Thread::setPriority(priorityAdapter(0));
     #endif //SCHED_TYPE_EDF
@@ -1701,6 +1718,7 @@ void t12_p2(void *argv)
 void test_12()
 {
     test_name("Priority inheritance 2");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*2);
     Thread::setPriority(priorityAdapter(0)); //For EDF
     Thread *t1;
     Thread *t2;
@@ -1788,6 +1806,8 @@ void t14_p3(void *argv)
 void test_14()
 {
     test_name("joinable threads");
+    //TODO: Not sure if 8 simultaneous threads alive is an overestimate or not
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*8);
     //
     // Memory leak tests. These tests make sure that memory of joinable threads
     // is always deallocated. Since during tests MemoryStatistics.print() is
@@ -1938,6 +1958,7 @@ void t15_p3(void *argv)
 static void test_15()
 {
     test_name("Condition variables");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*3);
     //Test signal
     t15_v1=false;
     t15_v2=false;
@@ -2139,6 +2160,7 @@ void t16_p5(void*)
 static void test_16()
 {
     test_name("posix threads");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*2);
     //
     // Test pthread_attr_*
     //
@@ -2937,6 +2959,7 @@ static void *t21_t1(void*)
 static void test_21()
 {
     test_name("Floating point");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_DEFAULT_FOR_PTHREAD));
     pthread_t t;
     pthread_create(&t,0,t21_t1,0);
     for(int i=0;i<5;i++)
@@ -3040,6 +3063,7 @@ void t22_t3(void*)
 static void test_22()
 {
     test_name("Atomic ops");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_DEFAULT_FOR_PTHREAD));
     
     //Check thread safety for atomic ops (both GCC provided and the miosix ones)
     t22_v1=t22_v2=t22_v3=t22_v4=0;
@@ -3883,6 +3907,7 @@ void *t26_t1(void*)
 static void test_26()
 {
     test_name("C reentrancy data");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_DEFAULT_FOR_PTHREAD));
     pthread_t t;
     pthread_create(&t,0,t26_t1,0);
     for(int i=0;i<10;i++)
@@ -3953,6 +3978,7 @@ void *t27_t3(void *xdata)
 static void test_27()
 {
     test_name("Semaphores");
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*5);
     t27_data data;
 
     Thread *thd=Thread::create(t27_t1,STACK_SMALL,MAIN_PRIORITY,reinterpret_cast<void*>(&data),Thread::JOINABLE);
@@ -4319,6 +4345,7 @@ static int b2_f1(int priority)
 
 static void benchmark_2()
 {
+    CHECK_AVAIL_HEAP(EST_THREAD_HEAP_USAGE(STACK_SMALL)*2);
     #ifndef SCHED_TYPE_EDF
     iprintf("%d context switch per second (max priority)\n",b2_f1(3));
     iprintf("%d context switch per second (min priority)\n",b2_f1(0));
@@ -4338,6 +4365,7 @@ makes a 1MB file and measures time required to read/write it.
 
 static void benchmark_3()
 {
+    CHECK_AVAIL_HEAP(2048);
     //Write benchmark
     const char FILENAME[]="/sd/speed.txt";
     const unsigned int BUFSIZE=1024;
