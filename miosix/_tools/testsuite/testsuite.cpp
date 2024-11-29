@@ -1837,7 +1837,7 @@ void test_14()
     if(!t) fail("thread creation (7)");
     Thread::yield();
     if(t->join(&result)==false) fail("Thread::join (1)");
-    if(Thread::exists(t)) fail("Therad::exists (1)");
+    if(Thread::exists(t)) fail("Thread::exists (1)");
     if(reinterpret_cast<unsigned>(result)!=0xdeadbeef) fail("join result (1)");
     Thread::sleep(10);
 
@@ -1874,9 +1874,9 @@ void test_14()
     if(!t) fail("thread creation (10)");
     t->terminate();
     Thread::sleep(10);
-    if(Thread::exists(t)==false) fail("Therad::exists (2)");
+    if(Thread::exists(t)==false) fail("Thread::exists (2)");
     if(t->join(&result)==false) fail("Thread::join (6)");
-    if(Thread::exists(t)) fail("Therad::exists (3)");
+    if(Thread::exists(t)) fail("Thread::exists (3)");
     if(reinterpret_cast<unsigned>(result)!=0xdeadbeef) fail("join result (2)");
     Thread::sleep(10);
 
@@ -1886,7 +1886,7 @@ void test_14()
     t->detach();
     t->terminate();
     Thread::sleep(10);
-    if(Thread::exists(t)) fail("Therad::exists (4)");
+    if(Thread::exists(t)) fail("Thread::exists (4)");
     if(t->join()==true) fail("Thread::join (7)");
     Thread::sleep(10);
     
