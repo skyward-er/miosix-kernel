@@ -44,7 +44,7 @@ using namespace std;
  * taken into account in the code.
  */
 
-#if defined(STM32F100xB)
+#if defined(STM32F100xB) || defined(STM32F103xB)
 #define BUS_HAS_AHB
 #define DMA_STM32F1
 #define ALTFUNC_STM32F1
@@ -372,7 +372,7 @@ public:
  * Table of hardware configurations
  */
 
-#if defined(STM32F100xB)
+#if defined(STM32F100xB) || defined(STM32F103xB)
 constexpr int maxPorts = 3;
 static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
@@ -517,10 +517,17 @@ void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
         }
     #endif
     unsigned int freq=port->IRQgetClock();
-    unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
-    port->get()->BRR=quot/2 + (quot & 1);           //Round to nearest
-    if(flowControl==false) port->get()->CR3 |= USART_CR3_ONEBIT;
-    else port->get()->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
+    unsigned int quot=2*freq/baudrate;      //2*freq for round to nearest
+    port->get()->BRR=quot/2 + (quot & 1);   //Round to nearest
+    // Some STM32 (i.e. F103xB) have broken one bit sampling mode,
+    // so ST "helpfully" removed the register field from the headers.
+    #ifdef USART_CR3_ONEBIT
+        unsigned long onebit=USART_CR3_ONEBIT;
+    #else
+        unsigned long onebit=0;
+    #endif
+    if(flowControl==false) port->get()->CR3 |= onebit;
+    else port->get()->CR3 |= onebit | USART_CR3_RTSE | USART_CR3_CTSE;
 }
 
 void STM32SerialBase::IRQwrite(const char *str)

@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "interfaces/gpio.h"
+
 /**
  * \internal
  * Versioning for board_settings.h for out of git tree projects
@@ -54,12 +56,26 @@ namespace miosix {
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
+/// Serial ports 1 to 3 are available
 const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
-#define SERIAL_1_DMA
-//#define SERIAL_2_DMA //Serial 1 is not used, so not enabling DMA
-//#define SERIAL_3_DMA //Serial 1 is not used, so not enabling DMA
+const bool defaultSerialDma=true;
+// Default serial 1 pins (uncomment when using serial 1)
+using defaultSerialTxPin = Gpio<GPIOA_BASE,9>;
+using defaultSerialRxPin = Gpio<GPIOA_BASE,10>;
+using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
+using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
+// Default serial 2 pins (uncomment when using serial 2)
+//using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
+// Default serial 3 pins (uncomment when using serial 3)
+//using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
+//using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
+//using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
+//using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
 
 ///\def STDOUT_REDIRECTED_TO_DCC
 ///If defined, stdout is redirected to the debug communication channel, and
