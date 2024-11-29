@@ -101,7 +101,7 @@ static ProcessBase *kernel=nullptr;
 
 /**
  * \internal
- * Idle thread. Created when the kernel is started, it phisically deallocates
+ * Idle thread. Created when the kernel is started, it physically deallocates
  * memory for deleted threads, and puts the cpu in sleep mode.
  */
 void *idleThread(void *argv)
