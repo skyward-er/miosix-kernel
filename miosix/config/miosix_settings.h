@@ -88,6 +88,10 @@ namespace miosix {
 /// By default it is defined (filesystem support is enabled)
 #define WITH_FILESYSTEM
 
+// The following options make sense only when filesystem is enabled, so they are
+// always left undefined otherwise
+#ifdef WITH_FILESYSTEM
+
 /// \def WITH_DEVFS
 /// Allows to enable/disable DevFs support to save code size
 /// By default it is defined (DevFs is enabled)
@@ -145,6 +149,8 @@ const unsigned char MAX_OPEN_FILES=8;
 #if defined(WITH_PROCESSES) && !defined(WITH_ROMFS)
 #define WITH_ROMFS
 #endif
+
+#endif // WITH_FILESYSTEM
 
 //
 // C/C++ standard library I/O (stdin, stdout and stderr related)
