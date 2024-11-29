@@ -165,7 +165,7 @@ public:
 
     static unsigned int IRQTimerFrequency() { return 16384; }
 
-    static void IRQinitTimer()
+    void IRQinitTimer()
     {
         {
             FastInterruptDisableLock dLock;
@@ -189,6 +189,8 @@ public:
             RTC->CNTH=0; RTC->CNTL=0;
             RTC->ALRH=0xffff; RTC->ALRL=0xffff;
         }
+        IRQregisterIrq(RTC_IRQn,&TimerAdapter<STM32F1RTC_Timer,32,1>::IRQhandler,
+                       static_cast<TimerAdapter<STM32F1RTC_Timer,32,1>*>(this));
         //High priority for RTC (Max=0, min=15)
         NVIC_SetPriority(RTC_IRQn,3);
         NVIC_EnableIRQ(RTC_IRQn);
@@ -333,17 +335,5 @@ void test()
     }
 }*/
 } //namespace miosix
-
-void __attribute__((naked)) RTC_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z11osTimerImplv");
-    restoreContext();
-}
-
-void __attribute__((used)) osTimerImpl()
-{
-    miosix::timer.IRQhandler();
-}
 
 #endif //WITH_RTC_AS_OS_TIMER
