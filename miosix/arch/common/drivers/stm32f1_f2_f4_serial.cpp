@@ -158,7 +158,7 @@ public:
 
     inline void IRQwaitDmaWriteStop() const
     {
-        while((tx->CCR & DMA_CCR_EN) && (getTxISR() & (DMA_ISR_TCIF1|DMA_ISR_TEIF1))) ;
+        while((tx->CCR & DMA_CCR_EN) && !(getTxISR() & (DMA_ISR_TCIF1|DMA_ISR_TEIF1))) ;
     }
 
     inline void IRQstartDmaRead(volatile uint32_t *dr, const char *buffer, unsigned int size) const
