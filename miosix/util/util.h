@@ -30,8 +30,7 @@
 * A collection of "utilities".
 ************************************************************************/
 
-#ifndef UTIL_H
-#define UTIL_H
+#pragma once
 
 #include "kernel/cpu_time_counter.h"
 #include <vector>
@@ -103,6 +102,18 @@ private:
     //All member functions static, disallow creating instances
     MemoryProfiling();
 };
+
+/**
+ * Format an unsigned integer in hexadecimal notation into a specified buffer.
+ * \param out The address of the destination buffer.
+ * \param n   The number to be formatted.
+ * \param len The amount of characters to output into the buffer. If n is
+ *            greater than 16^len, only the least significant len digits will
+ *            be considered.
+ * \returns The address of the character one past the last one emitted. This
+ * function does *not* produce any final terminating NUL ('\0').
+ */
+char *formatHex(char *out, unsigned long n, unsigned int len);
 
 /**
  * Dump a memory area in this format
@@ -209,5 +220,3 @@ private:
  */
 
 } //namespace miosix
-
-#endif //UTIL_H

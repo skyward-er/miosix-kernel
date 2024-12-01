@@ -25,30 +25,23 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/ 
 
+#include "util/util.h"
 #include "kernel/logging.h"
 #include "interfaces/poweroff.h"
 #include "config/miosix_settings.h"
 
 using namespace miosix;
 
-//Look up table used by printUnsignedInt()
-static const char hexdigits[]="0123456789abcdef";
-
 /**
  * \internal
  * Used to print an unsigned int in hexadecimal format, and to reboot the system
- * Note that printf/iprintf cannot be used inside an IRQ, so that's why there's
- * this function.
+ * This function exists because printf/iprintf cannot be used inside an IRQ.
  * \param x number to print
  */
 static void printUnsignedInt(unsigned int x)
 {
     char result[]="0x........\r\n";
-    for(int i=9;i>=2;i--)
-    {
-        result[i]=hexdigits[x & 0xf];
-        x>>=4;
-    }
+    formatHex(result+2,x,8);
     IRQerrorLog(result);
 }
 

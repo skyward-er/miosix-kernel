@@ -132,21 +132,15 @@ unsigned int MemoryProfiling::getCurrentFreeHeap()
     return getHeapSize()-mallocData.uordblks;
 }
 
-/**
- * \internal
- * used by memPrint
- */
-static char *formatHex(char *out, unsigned long n, int len)
+char *formatHex(char *out, unsigned long n, unsigned int len)
 {
-    int i=len;
-    do
+    unsigned int i=len;
+    while(i--)
     {
-        i--;
         unsigned long digit=n&0xF; n>>=4;
         if(digit<10) out[i]=digit+'0';
         else out[i]=(digit-10)+'a';
     }
-    while(i);
     return out+len;
 }
 
