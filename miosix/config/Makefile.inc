@@ -45,7 +45,7 @@
 #OPT_BOARD := stm32h723zg_nucleo
 #OPT_BOARD := stm32f407vg_thermal_test_chip
 #OPT_BOARD := stm32f205_generic
-#OPT_BOARD := stm32f103cx_generic
+#OPT_BOARD := stm32f103xb_generic
 #OPT_BOARD := stm32f072rb_stm32f0discovery
 #OPT_BOARD := stm32f100xb_generic
 #OPT_BOARD := stm32f303vc_stm32f3discovery
@@ -566,13 +566,13 @@ endif
 # No options
 
 ##---------------------------------------------------------------------------
-## stm32f103cx_generic
+## stm32f103xb_generic
 ##
 
-ifeq ($(OPT_BOARD),stm32f103cx_generic)
+ifeq ($(OPT_BOARD),stm32f103xb_generic)
     
     # stm32f103c8 has 64K, stm32f103cb has 128K
-    LINKER_SCRIPT_PATH := arch/cortexM3_stm32f1/stm32f103cx_generic/
+    LINKER_SCRIPT_PATH := arch/cortexM3_stm32f1/stm32f103xb_generic/
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_64k+20k_rom.ld
     LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_128k+20k_rom.ld
     
@@ -910,7 +910,7 @@ else ifeq ($(OPT_BOARD),stm32f407vg_thermal_test_chip)
     ARCH := cortexM4_stm32f4
 else ifeq ($(OPT_BOARD),stm32f205_generic)
     ARCH := cortexM3_stm32f2
-else ifeq ($(OPT_BOARD),stm32f103cx_generic)
+else ifeq ($(OPT_BOARD),stm32f103xb_generic)
     ARCH := cortexM3_stm32f1
 else ifeq ($(OPT_BOARD),stm32f072rb_stm32f0discovery)
     ARCH := cortexM0_stm32f0
@@ -1378,12 +1378,12 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         PROG ?= stm32flash -w $(if $(ROMFS_DIR), image.bin, main.bin) -v /dev/ttyUSB0
         
     ##-------------------------------------------------------------------------
-    ## BOARD: stm32f103cx_generic
+    ## BOARD: stm32f103xb_generic
     ##
-    else ifeq ($(OPT_BOARD),stm32f103cx_generic)
+    else ifeq ($(OPT_BOARD),stm32f103xb_generic)
 
         ## Base directory with header files for this board
-        BOARD_INC := arch/cortexM3_stm32f1/stm32f103cx_generic
+        BOARD_INC := arch/cortexM3_stm32f1/stm32f103xb_generic
 
         ## Select linker script
         #LINKER_SCRIPT := already selected in board options
@@ -1396,8 +1396,8 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         arch/common/drivers/stm32_rtc.cpp
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -D_BOARD_STM32F103CX_GENERIC
-        CXXFLAGS_BASE += -D_BOARD_STM32F103CX_GENERIC
+        CFLAGS_BASE   += -D_BOARD_STM32F103XB_GENERIC
+        CXXFLAGS_BASE += -D_BOARD_STM32F103XB_GENERIC
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
