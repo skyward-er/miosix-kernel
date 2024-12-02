@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2011-2021 by Terraneo Federico                          *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,59 +25,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#pragma once
-
-#include "interfaces/gpio.h"
-
-/**
- * \internal
- * Versioning for board_settings.h for out of git tree projects
- */
-#define BOARD_SETTINGS_VERSION 300
+extern "C" void SystemInit();
 
 namespace miosix {
 
-/**
- * \addtogroup Settings
- * \{
- */
+void IRQmemoryAndClockInit()
+{
+    // Currently we use the code provided by ST (with our modifications) to
+    // handle the memory and clock initialization process.
+    SystemInit();
+}
 
-/// Use RTC as os_timer. This requires a 32kHz crystal to be connected to the
-/// board, reduces timing resolution to only 16kHz and makes context switches
-/// much slower (due to RTC limitations, minimum time beween two context
-/// switches becomes 91us), but the os can keep precise time even when the CPU
-/// is clocked with an RC oscillator and time is kept across deep sleep
-//#define WITH_RTC_AS_OS_TIMER
-
-/// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB) but the
-/// STM32F100CB only has 8KB of RAM so the stack is only 1.5KB.
-const unsigned int MAIN_STACK_SIZE=1024+512;
-
-/// Serial port
-/// Serial ports 1 to 3 are available
-const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=115200;
-const bool defaultSerialFlowctrl=false;
-const bool defaultSerialDma=true;
-// Default serial 1 pins (uncomment when using serial 1)
-using defaultSerialTxPin = Gpio<GPIOA_BASE,9>;
-using defaultSerialRxPin = Gpio<GPIOA_BASE,10>;
-using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
-using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
-// Default serial 2 pins (uncomment when using serial 2)
-//using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
-//using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
-//using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
-//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
-// Default serial 3 pins (uncomment when using serial 3)
-//using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
-//using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
-//using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
-//using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
-
-/**
- * \}
- */
-
-} //namespace miosix
+} // namespace miosix

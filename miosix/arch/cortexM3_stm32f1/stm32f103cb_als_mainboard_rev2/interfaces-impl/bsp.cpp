@@ -30,10 +30,10 @@
  * Board support package, this file initializes hardware.
  ************************************************************************/
 
-
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -118,8 +118,10 @@ void IRQbspInit()
     ledOff();
     
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma)));
 }
 
 void bspInit2()

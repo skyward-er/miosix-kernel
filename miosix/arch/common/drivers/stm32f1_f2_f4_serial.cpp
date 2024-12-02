@@ -44,7 +44,7 @@ using namespace std;
  * taken into account in the code.
  */
 
-#if defined(STM32F100xB) || defined(STM32F103xB)
+#if defined(_ARCH_CORTEXM3_STM32F1)
 #define BUS_HAS_AHB
 #define DMA_STM32F1
 #define ALTFUNC_STM32F1
@@ -384,6 +384,21 @@ static const STM32SerialHW ports[maxPorts] = {
     { USART3, USART3_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
       { DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2,
         DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
+};
+#elif defined(STM32F103xE)
+constexpr int maxPorts = 5;
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4,
+        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5 } },
+    { USART2, USART2_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7,
+        DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6 } },
+    { USART3, USART3_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
+      { DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2,
+        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
+    { UART4, UART4_IRQn, STM32Bus::APB1, RCC_APB1ENR_UART4EN, { 0 } },
+    { UART5, UART5_IRQn, STM32Bus::APB1, RCC_APB1ENR_UART5EN, { 0 } },
 };
 #elif defined(STM32F401xE) || defined(STM32F401xC) || defined(STM32F411xE)
 constexpr int maxPorts = 6;

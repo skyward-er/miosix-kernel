@@ -32,8 +32,10 @@
 
 #include <utility>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "interfaces/delays.h"
+#include "interfaces/poweroff.h"
 #include "interfaces/arch_registers.h"
 #include "config/miosix_settings.h"
 #include "filesystem/file_access.h"
@@ -60,8 +62,10 @@ void IRQbspInit()
     RCC_SYNC();
 
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        defaultSerialFlowctrl ? STM32Serial::RTSCTS : STM32Serial::NOFLOWCTRL)));
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma)));
 }
 
 void bspInit2()

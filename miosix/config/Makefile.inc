@@ -1055,7 +1055,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         arch/common/drivers/sd_stm32f1.cpp           \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
@@ -1090,13 +1090,13 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         arch/common/drivers/sd_stm32f1.cpp           \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -D_BOARD_MP3V2 -DSTM32F103xE
-        CXXFLAGS_BASE += -D_BOARD_MP3V2 -DSTM32F103xE
+        CFLAGS_BASE   += -D_BOARD_MP3V2
+        CXXFLAGS_BASE += -D_BOARD_MP3V2
 
         ## Clock frequency
         CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
@@ -1161,7 +1161,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp         \
         arch/common/drivers/servo_stm32.cpp
 
@@ -1195,7 +1195,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         arch/common/drivers/sd_stm32f1.cpp           \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
@@ -1228,7 +1228,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         arch/common/drivers/sd_stm32f1.cpp           \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
@@ -1261,7 +1261,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -1294,7 +1294,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -1357,7 +1357,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp         \
         arch/common/drivers/stm32_rtc.cpp
 
@@ -1391,7 +1391,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp         \
         arch/common/drivers/stm32_rtc.cpp
 
@@ -1421,7 +1421,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp         \
         arch/common/drivers/stm32_rtc.cpp
 
@@ -1451,7 +1451,7 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
