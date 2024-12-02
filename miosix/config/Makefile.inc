@@ -63,6 +63,7 @@
 #OPT_BOARD := stm32f765ii_marco_ram_board
 #OPT_BOARD := rp2040_raspberry_pi_pico
 #OPT_BOARD := stm32h755zi_nucleo
+#OPT_BOARD := stm32l152re_nucleo
 
 ##
 ## Optimization flags, choose one.
@@ -826,6 +827,12 @@ ifeq ($(OPT_BOARD),stm32h755zi_nucleo)
 
 endif
 
+##---------------------------------------------------------------------------
+## stm32l152re_nucleo
+##
+
+# No options
+
 
 ############################################################################
 ## From the options selected above, now fill all the variables needed to  ##
@@ -946,6 +953,8 @@ else ifeq ($(OPT_BOARD),rp2040_raspberry_pi_pico)
     ARCH := cortexM0plus_rp2040
 else ifeq ($(OPT_BOARD),stm32h755zi_nucleo)
     ARCH := cortexM7_stm32h7
+else ifeq ($(OPT_BOARD),stm32l152re_nucleo)
+    ARCH := cortexM3_stm32l1
 else
     $(info Error: no board specified in miosix/config/Makefile.inc)
     $(error Error)
@@ -2279,8 +2288,8 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -D_BOARD_ALS_MAINBOARD -DSTM32L151xB
-        CXXFLAGS_BASE += -D_BOARD_ALS_MAINBOARD -DSTM32L151xB
+        CFLAGS_BASE   += -D_BOARD_ALS_MAINBOARD
+        CXXFLAGS_BASE += -D_BOARD_ALS_MAINBOARD
 
         ## Clock frequency
         CLOCK_FREQ := -DSYSCLK_FREQ_16MHz=16000000
@@ -2292,6 +2301,38 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
         ## error message saying that 'make program' is not supported for that
         ## board.
         PROG ?= stm32flash -w $(if $(ROMFS_DIR), image.bin, main.bin) -v /dev/ttyUSB0
+    
+    ##-------------------------------------------------------------------------
+    ## BOARD: stm32l152re_nucleo
+    ##
+    else ifeq ($(OPT_BOARD),stm32l152re_nucleo)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM3_stm32l1/stm32l152re_nucleo
+
+        ## Select linker script
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_512k+80k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/boot.cpp                        \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32L152RE_NUCLEO
+        CXXFLAGS_BASE += -D_BOARD_STM32L152RE_NUCLEO
+
+        ## Clock frequency
+        CLOCK_FREQ := -DSYSCLK_FREQ_32MHz=32000000
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROG ?= st-flash --connect-under-reset --reset write \
+                $(if $(ROMFS_DIR), image.bin, main.bin) 0x08000000
 
     ##-------------------------------------------------------------------------
     ## End of board list
@@ -2324,7 +2365,7 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
     arch/common/os_timer/stm32_16bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/drivers/serial_stm32.cpp                     \
+    arch/common/drivers/stm32f1_f2_f4_serial.cpp             \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/CMSIS/Device/ST/STM32L1xx/Source/Templates/system_stm32l1xx.c
 
