@@ -26,52 +26,34 @@
  ***************************************************************************/
 
 #include "interfaces/delays.h"
+#include "board_settings.h"
 
 namespace miosix {
 
+static inline void delayUsImpl(unsigned int useconds)
+{
+    unsigned int count;
+    if(sysclkFrequency==32000000) count=4*useconds;
+    else if(sysclkFrequency==24000000) count=3*useconds;
+    static_assert(sysclkFrequency==32000000||
+                  sysclkFrequency==24000000, "Delays uncalibrated");
+    //In internal Flash (1 wait state) each loop iteration takes exactly 0.25us
+    asm volatile("    .align 2         \n" //4-byte aligned inner loop 
+                 "1:  nop              \n"
+                 "    nop              \n"
+                 "    nop              \n"
+                 "    subs  %0, %0, #1 \n"
+                 "    bpl   1b         \n":"+r"(count)::"cc");
+}
+
 void delayMs(unsigned int mseconds)
 {
-    #ifndef __CODE_IN_XRAM
-
-    #ifdef SYSCLK_FREQ_16MHz
-    register const unsigned int count=4000;
-    #else
-    #warning "Delays are uncalibrated for this clock frequency"    
-    #endif
-    
-    for(unsigned int i=0;i<mseconds;i++)
-    {
-        // This delay has been calibrated to take 1 millisecond
-        // It is written in assembler to be independent on compiler optimization
-        asm volatile("           mov   r1, #0     \n"
-                     "___loop_m: cmp   r1, %0     \n"
-                     "           itt   lo         \n"
-                     "           addlo r1, r1, #1 \n"
-                     "           blo   ___loop_m  \n"::"r"(count):"r1","cc");
-    }
-
-    #else //__CODE_IN_XRAM
-    #error "No delays"
-    #endif //__CODE_IN_XRAM
+    for(unsigned int i=0;i<mseconds;i++) delayUsImpl(1000);
 }
 
 void delayUs(unsigned int useconds)
 {
-    #ifndef __CODE_IN_XRAM
-
-    // This delay has been calibrated to take x microseconds
-    // It is written in assembler to be independent on compiler optimization
-    asm volatile("           mov   r1, #4     \n"
-                 "           mul   r2, %0, r1 \n"
-                 "           mov   r1, #0     \n"
-                 "___loop_u: cmp   r1, r2     \n"
-                 "           itt   lo         \n"
-                 "           addlo r1, r1, #1 \n"
-                 "           blo   ___loop_u  \n"::"r"(useconds):"r1","r2","cc");
-
-    #else //__CODE_IN_XRAM
-    #error "No delays"
-    #endif //__CODE_IN_XRAM
+    if(useconds) delayUsImpl(useconds);
 }
 
 } //namespace miosix
