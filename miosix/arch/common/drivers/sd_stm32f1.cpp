@@ -54,6 +54,9 @@
  * heap (and not doing any pointer arithmetic on the value returned by
  * malloc/new)
  */
+#ifndef __ENABLE_XRAM
+#define SD_DMA
+#endif //__ENABLE_XRAM
 
 //Note: enabling debugging might cause deadlock when using sleep() or reboot()
 //The bug won't be fixed because debugging is only useful for driver development
@@ -64,33 +67,9 @@
 //#define DBGERR iprintf
 #define DBGERR(x,...) do {} while(0)
 
-#ifndef __ENABLE_XRAM
-/**
- * \internal
- * DMA2 Channel4 interrupt handler
- */
-void __attribute__((naked)) DMA2_Channel4_5_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _ZN6miosix19DMA2channel4irqImplEv");
-    restoreContext();
-}
-
-/**
- * \internal
- * SDIO interrupt handler
- */
-void __attribute__((naked)) SDIO_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _ZN6miosix11SDIOirqImplEv");
-    restoreContext();
-}
-#endif //__ENABLE_XRAM
-
 namespace miosix {
 
-#ifndef __ENABLE_XRAM
+#ifdef SD_DMA
 static volatile bool transferError; ///< \internal DMA or SDIO transfer error
 static Thread *waiting;             ///< \internal Thread waiting for transfer
 static unsigned int dmaFlags;       ///< \internal DMA status flags
@@ -110,7 +89,7 @@ void __attribute__((used)) DMA2channel4irqImpl()
     if(!waiting) return;
     waiting->IRQwakeup();
 	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		Scheduler::IRQfindNextThread();
+		IRQinvokeScheduler();
     waiting=0;
 }
 
@@ -130,10 +109,10 @@ void __attribute__((used)) SDIOirqImpl()
     if(!waiting) return;
     waiting->IRQwakeup();
 	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		Scheduler::IRQfindNextThread();
+		IRQinvokeScheduler();
     waiting=0;
 }
-#endif //__ENABLE_XRAM
+#endif //SD_DMA
 
 /*
  * Operating voltage of device. It is sent to the SD card to check if it can
@@ -943,7 +922,7 @@ static bool waitForCardReady()
     return false;
 }
 
-#ifdef __ENABLE_XRAM
+#ifndef SD_DMA
 
 /**
  * \internal
@@ -1169,7 +1148,7 @@ static bool singleBlockWrite(const unsigned int *buffer, unsigned int lba)
     return true;
 }
 
-#else //__ENABLE_XRAM
+#else //SD_DMA
 
 /**
  * \internal
@@ -1368,7 +1347,7 @@ static bool multipleBlockWrite(const unsigned int *buffer, unsigned int nblk,
     }
     return true;
 }
-#endif //__ENABLE_XRAM
+#endif //SD_DMA
 
 //
 // Class CardSelector
@@ -1430,11 +1409,11 @@ static void initSDIOPeripheral()
         FastInterruptDisableLock lock;
         RCC->APB2ENR |= RCC_APB2ENR_IOPCEN | RCC_APB2ENR_IOPDEN;
         RCC_SYNC();
-        #ifdef __ENABLE_XRAM
-        RCC->AHBENR |= RCC_AHBENR_SDIOEN;
-        #else //__ENABLE_XRAM
+        #ifdef SD_DMA
         RCC->AHBENR |= RCC_AHBENR_SDIOEN | RCC_AHBENR_DMA2EN;
-        #endif //__ENABLE_XRAM
+        #else //SD_DMA
+        RCC->AHBENR |= RCC_AHBENR_SDIOEN;
+        #endif //SD_DMA
         RCC_SYNC();
         sdD0::mode(Mode::ALTERNATE);
         sdD1::mode(Mode::ALTERNATE);
@@ -1443,12 +1422,14 @@ static void initSDIOPeripheral()
         sdCLK::mode(Mode::ALTERNATE);
         sdCMD::mode(Mode::ALTERNATE);
     }
-    #ifndef __ENABLE_XRAM
+    #ifdef SD_DMA
+    IRQregisterIrq(DMA2_Channel4_5_IRQn,DMA2channel4irqImpl);
     NVIC_SetPriority(DMA2_Channel4_5_IRQn,15);//Low priority for DMA
     NVIC_EnableIRQ(DMA2_Channel4_5_IRQn);
+    IRQregisterIrq(SDIO_IRQn,SDIOirqImpl);
     NVIC_SetPriority(SDIO_IRQn,15);//Low priority for SDIO
     NVIC_EnableIRQ(SDIO_IRQn);
-    #endif //__ENABLE_XRAM
+    #endif //SD_DMA
 
     SDIO->POWER=0; //Power off state
     delayUs(1);
@@ -1591,7 +1572,7 @@ ssize_t SDIODriver::readBlock(void* buffer, size_t size, off_t where)
         #endif //SD_KEEP_CARD_SELECTED
         bool error=false;
         
-        #ifdef __ENABLE_XRAM
+        #ifndef SD_DMA
         // In the XRAM fallback code multiple sector read is implemented as
         // a sequence of single block read operations
         unsigned char *tempBuffer=reinterpret_cast<unsigned char*>(buffer);
@@ -1608,8 +1589,8 @@ ssize_t SDIODriver::readBlock(void* buffer, size_t size, off_t where)
             tempBuffer+=512;
             tempLba++;
         }
-        #else //__ENABLE_XRAM
-        // If XRAM is not enabled, then check pointer alignment, and if it is
+        #else //SD_DMA
+        // If we are using DMA, then check pointer alignment, and if it is
         // aligned use a single multipleBlockRead(), else use the buffer
         // converter and read a sector at a time
         if(aligned)
@@ -1632,7 +1613,7 @@ ssize_t SDIODriver::readBlock(void* buffer, size_t size, off_t where)
                 tempLba++;
             }
         }
-        #endif //__ENABLE_XRAM
+        #endif //SD_DMA
 
         if(error==false)
         {
@@ -1661,8 +1642,8 @@ ssize_t SDIODriver::writeBlock(const void* buffer, size_t size, off_t where)
         #endif //SD_KEEP_CARD_SELECTED
         bool error=false;
 
-        #ifdef __ENABLE_XRAM
-        // In the XRAM fallback code multiple sector write is implemented as
+        #ifndef SD_DMA
+        // In polling mode multiple sector write is implemented as
         // a sequence of single block write operations
         const unsigned char *tempBuffer=
             reinterpret_cast<const unsigned char*>(buffer);
@@ -1678,8 +1659,8 @@ ssize_t SDIODriver::writeBlock(const void* buffer, size_t size, off_t where)
             tempBuffer+=512;
             tempLba++;
         }
-        #else //__ENABLE_XRAM
-        // If XRAM is not enabled, then check pointer alignment, and if it is
+        #else //SD_DMA
+        // If we are using DMA, then check pointer alignment, and if it is
         // aligned use a single multipleBlockWrite(), else use the buffer
         // converter and write a sector at a time
         if(aligned)
@@ -1702,7 +1683,7 @@ ssize_t SDIODriver::writeBlock(const void* buffer, size_t size, off_t where)
                 tempLba++;
             }
         }
-        #endif //__ENABLE_XRAM
+        #endif //SD_DMA
         
         if(error==false)
         {
