@@ -2284,15 +2284,12 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_ALS_MAINBOARD
         CXXFLAGS_BASE += -D_BOARD_ALS_MAINBOARD
-
-        ## Clock frequency
-        CLOCK_FREQ := -DSYSCLK_FREQ_16MHz=16000000
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -2321,9 +2318,6 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -D_BOARD_STM32L152RE_NUCLEO
         CXXFLAGS_BASE += -D_BOARD_STM32L152RE_NUCLEO
-
-        ## Clock frequency
-        CLOCK_FREQ := -DSYSCLK_FREQ_32MHz=32000000
 
         ## Select programmer command line
         ## This is the program that is invoked when the user types
@@ -2366,8 +2360,7 @@ else ifeq ($(ARCH),cortexM3_stm32l1)
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
     arch/common/drivers/stm32f1_f2_f4_serial.cpp             \
-    $(ARCH_INC)/interfaces-impl/delays.cpp                   \
-    arch/common/CMSIS/Device/ST/STM32L1xx/Source/Templates/system_stm32l1xx.c
+    $(ARCH_INC)/interfaces-impl/delays.cpp
 
 ##-----------------------------------------------------------------------------
 ## ARCHITECTURE: cortexM3_efm32gg

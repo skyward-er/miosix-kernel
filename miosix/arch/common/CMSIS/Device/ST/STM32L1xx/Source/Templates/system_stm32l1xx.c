@@ -166,12 +166,9 @@
 #endif
 // Miosix end
 
-//By TFT: we want to run the ALS_MAINBOARD at a lower clock to save power
-#ifdef _BOARD_ALS_MAINBOARD
-uint32_t SystemCoreClock    = 16000000;
-#else //_BOARD_ALS_MAINBOARD
+// Miosix begin: SystemCoreClock is now declared in boot.cpp
 extern uint32_t SystemCoreClock;
-#endif //_BOARD_ALS_MAINBOARD
+// Miosix end
 const uint8_t PLLMulTable[9] = {3, 4, 6, 8, 12, 16, 24, 32, 48};
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 

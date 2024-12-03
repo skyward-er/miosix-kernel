@@ -1,4 +1,5 @@
 /***************************************************************************
+ *   Copyright (C) 2012 by Federico Terraneo                               *
  *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -25,51 +26,44 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include "interfaces/arch_registers.h"
 #include "interfaces/delays.h"
+#include "interfaces/gpio.h"
 #include "board_settings.h"
+
+//We want to run the ALS_MAINBOARD at a lower clock to save power
+uint32_t SystemCoreClock=miosix::sysclkFrequency;
 
 namespace miosix {
 
-static inline void delayUsImpl(unsigned int useconds)
+void IRQmemoryAndClockInit()
 {
-    unsigned int count;
-    static_assert(sysclkFrequency==32000000||
-                  sysclkFrequency==24000000||
-                  sysclkFrequency==16000000, "Delays uncalibrated");
-    if(sysclkFrequency>16000000)
+    static_assert(oscillatorType==OscillatorType::LowSpeedInt);
+    static_assert(sysclkFrequency==16000000,"Unsupported sysclk setting");
+    FLASH->ACR |= FLASH_ACR_ACC64;
+    FLASH->ACR |= FLASH_ACR_PRFTEN;
+    
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    RCC_SYNC();
+  
+    /* Select the Voltage Range 1 (1.8 V) */
+    PWR->CR = PWR_CR_VOS_0;
+  
+    /* Wait Until the Voltage Regulator is ready */
+    while((PWR->CSR & PWR_CSR_VOSF) != RESET)
     {
-        //1 wait state
-        if     (sysclkFrequency==32000000) count=4*useconds;
-        else if(sysclkFrequency==24000000) count=3*useconds;
-        //In internal Flash at 32MHz each loop iteration takes exactly 0.25us
-        asm volatile("    .align 2         \n" //4-byte aligned inner loop 
-                     "1:  nop              \n"
-                     "    nop              \n"
-                     "    nop              \n"
-                     "    subs  %0, %0, #1 \n"
-                     "    bpl   1b         \n":"+r"(count)::"cc");
-    } else {
-        //0 wait state
-        if(sysclkFrequency==16000000) count=2*useconds;
-        asm volatile("    .align 2         \n" //4-byte aligned inner loop 
-                     "1:  nop              \n"
-                     "    nop              \n"
-                     "    nop              \n"
-                     "    nop              \n"
-                     "    nop              \n"
-                     "    subs  %0, %0, #1 \n"
-                     "    bpl   1b         \n":"+r"(count)::"cc");
-    }    
+    }
+    
+    //For low power reasons, this board runs off of the HSI 16MHz oscillator
+    RCC->CR |= RCC_CR_HSION;
+    //We should wait at least 6us for the HSI to stabilize. Therefore we wait
+    //8us. However, the current clock is 2MHz (MSI) instead of 16, so ...
+    delayUs(8*2/16);
+    RCC->CFGR = 0x00000001; //Select HSI
+    while((RCC->CFGR & 0xc)!=0x4) ;
+    RCC->CR &= ~RCC_CR_MSION;
+    /*!< Disable all interrupts */
+    RCC->CIR = 0x00000000;
 }
 
-void delayMs(unsigned int mseconds)
-{
-    for(unsigned int i=0;i<mseconds;i++) delayUsImpl(1000);
-}
-
-void delayUs(unsigned int useconds)
-{
-    if(useconds) delayUsImpl(useconds);
-}
-
-} //namespace miosix
+} // namespace miosix
