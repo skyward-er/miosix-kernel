@@ -44,6 +44,13 @@ int main()
 //    mco::mode(Mode::ALTERNATE);
 //    mco::alternateFunction(0);
 //    RCC->CFGR |= (0x3<<21);
+//    //STM32L1-specific: enable SYSCLK/2 freq to be output on PA8
+//    using mco = Gpio<GPIOA_BASE,8>;
+//    mco::speed(Speed::VERY_HIGH);
+//    mco::mode(Mode::ALTERNATE);
+//    mco::alternateFunction(0);
+//    RCC->CFGR &= ~(RCC_CFGR_MCOSEL | RCC_CFGR_MCOPRE);
+//    RCC->CFGR |= (1 << RCC_CFGR_MCOPRE_Pos) | RCC_CFGR_MCOSEL_SYSCLK;
 //    //ATSAM4L-specific: output RCFAST clock on PA2
 //    SCIF->SCIF_GCCTRL[0].SCIF_GCCTRL = SCIF_GCCTRL_OSCSEL(5) | SCIF_GCCTRL_CEN;
 //    using gclk0 = Gpio<GPIOA_BASE,2>;
