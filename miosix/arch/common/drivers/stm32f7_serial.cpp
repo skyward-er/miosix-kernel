@@ -39,6 +39,17 @@
 
 using namespace std;
 
+//Work around ST renaming register fields for some STM32L4
+#if defined(USART_CR1_RXNEIE_RXFNEIE) && !defined(USART_CR1_RXNEIE)
+#define USART_CR1_RXNEIE    USART_CR1_RXNEIE_RXFNEIE
+#endif
+#if defined(USART_ISR_RXNE_RXFNE) && !defined(USART_ISR_RXNE)
+#define USART_ISR_RXNE      USART_ISR_RXNE_RXFNE
+#endif
+#if defined(USART_ISR_TXE_TXFNF) && !defined(USART_ISR_TXE)
+#define USART_ISR_TXE       USART_ISR_TXE_TXFNF
+#endif
+
 namespace miosix {
 
 /*
@@ -54,24 +65,7 @@ public:
     inline USART_TypeDef *get() const { return port; }
     inline IRQn_Type getIRQn() const { return irq; }
     inline unsigned char getAltFunc() const { return altFunc; }
-    inline unsigned int IRQgetClock() const
-    {
-        unsigned int freq=SystemCoreClock;
-        switch(bus)
-        {
-            case STM32Bus::APB1:
-                if(RCC->CFGR & RCC_CFGR_PPRE1_2)
-                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
-                break;
-            case STM32Bus::APB2:
-                if(RCC->CFGR & RCC_CFGR_PPRE2_2)
-                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
-                break;
-            default:
-                break;
-        }
-        return freq;
-    }
+    inline unsigned int IRQgetClock() const { return STM32Bus::getClock(bus); }
     inline void IRQenable() const { STM32Bus::IRQen(bus, clkEnMask); }
     inline void IRQdisable() const { STM32Bus::IRQdis(bus, clkEnMask); }
     inline const STM32SerialDMAHW& getDma() const { return dma; }
@@ -124,6 +118,30 @@ static const STM32SerialHW ports[maxPorts] = {
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 5,
         DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5 } },
+};
+#elif defined(STM32L4R9xx)
+constexpr int maxPorts = 5;
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4, {4, 25},
+        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5, {5, 24} } },
+    { USART2, USART2_IRQn, 7, STM32Bus::APB1L, RCC_APB1ENR1_USART2EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7, {7, 27},
+        DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6, {6, 26} } },
+    { USART3, USART3_IRQn, 7, STM32Bus::APB1L, RCC_APB1ENR1_USART3EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2, {2, 29},
+        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3, {3, 28} } },
+    { UART4 , UART4_IRQn , 8, STM32Bus::APB1L, RCC_APB1ENR1_UART4EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA2_Channel5, DMA2_Channel5_IRQn, STM32SerialDMAHW::Channel5, {7+5, 31},
+        DMA2_Channel3, DMA2_Channel3_IRQn, STM32SerialDMAHW::Channel3, {7+3, 30} } },
+    { UART5 , UART5_IRQn , 8, STM32Bus::APB1L, RCC_APB1ENR1_UART5EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA2_Channel1, DMA2_Channel1_IRQn, STM32SerialDMAHW::Channel1, {7+1, 33},
+        DMA2_Channel2, DMA2_Channel2_IRQn, STM32SerialDMAHW::Channel2, {7+2, 32} } }
 };
 #else
 #error Unsupported STM32 chip for this serial driver
@@ -379,6 +397,7 @@ void STM32DMASerial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     IRQregisterIrq(dma.getRxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this);
     NVIC_SetPriority(dma.getRxIRQn(),14);
     NVIC_EnableIRQ(dma.getRxIRQn());
+    dma.IRQinit();
 
     port->IRQenable();
     IRQregisterIrq(port->getIRQn(),&STM32DMASerial::IRQhandleInterrupt,this);
@@ -466,7 +485,11 @@ void STM32DMASerial::startDmaWrite(const char *buffer, size_t size)
     while((port->get()->ISR & USART_ISR_TXE)==0) ;
     
     dmaTxInProgress=true;
-    port->getDma().startDmaWrite(&port->get()->TDR,buffer,size);
+    //The reinterpret cast is needed because ST, in its infinite wisdom, decided
+    //that in L4 headers this register is now 16 bit. Please, nameless engineers
+    //at ST, stop fighting on the names and register definitions!
+    port->getDma().startDmaWrite(
+        reinterpret_cast<volatile uint32_t *>(&port->get()->TDR),buffer,size);
 }
 
 void STM32DMASerial::IRQhandleDmaTxInterrupt()
@@ -504,7 +527,9 @@ ssize_t STM32DMASerial::readBlock(void *buffer, size_t size, off_t where)
 
 void STM32DMASerial::IRQstartDmaRead()
 {
-    port->getDma().IRQstartDmaRead(&port->get()->RDR,rxBuffer,rxQueueMin);
+    port->getDma().IRQstartDmaRead(
+        reinterpret_cast<volatile uint32_t *>(&port->get()->RDR),
+        rxBuffer,rxQueueMin);
 }
 
 int STM32DMASerial::IRQstopDmaRead()

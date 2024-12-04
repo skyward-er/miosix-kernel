@@ -68,24 +68,7 @@ public:
     #ifdef ALTFUNC_STM32F2
         inline unsigned char getAltFunc() const { return altFunc; }
     #endif
-    inline unsigned int IRQgetClock() const
-    {
-        unsigned int freq=SystemCoreClock;
-        switch(bus)
-        {
-            case STM32Bus::APB1:
-                if(RCC->CFGR & RCC_CFGR_PPRE1_2)
-                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
-                break;
-            case STM32Bus::APB2:
-                if(RCC->CFGR & RCC_CFGR_PPRE2_2)
-                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
-                break;
-            default:
-                break;
-        }
-        return freq;
-    }
+    inline unsigned int IRQgetClock() const { return STM32Bus::getClock(bus); }
     inline void IRQenable() const { STM32Bus::IRQen(bus, clkEnMask); }
     inline void IRQdisable() const { STM32Bus::IRQdis(bus, clkEnMask); }
     inline const STM32SerialDMAHW& getDma() const { return dma; }
@@ -533,6 +516,7 @@ void STM32DMASerial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     IRQregisterIrq(dma.getRxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this);
     NVIC_SetPriority(dma.getRxIRQn(),14);
     NVIC_EnableIRQ(dma.getRxIRQn());
+    dma.IRQinit();
 
     port->IRQenable();
     IRQregisterIrq(port->getIRQn(),&STM32DMASerial::IRQhandleInterrupt,this);

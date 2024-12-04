@@ -42,12 +42,20 @@
 
 #if defined(_ARCH_CORTEXM3_STM32F1)
 #define BUS_HAS_AHB
+#define BUS_HAS_APB12
 #define DMA_STM32F1
 #elif defined(_ARCH_CORTEXM3_STM32L1)
 #define BUS_HAS_AHB
+#define BUS_HAS_APB12
+#define DMA_STM32F1
+#elif defined(_ARCH_CORTEXM4_STM32L4)
+#define BUS_HAS_AHB12
+#define BUS_HAS_APB1L1H2
+#define DMA_HAS_MUX
 #define DMA_STM32F1
 #else
 #define BUS_HAS_AHB12
+#define BUS_HAS_APB12
 #define DMA_STM32F2
 #endif
 
@@ -61,45 +69,119 @@ class STM32Bus
 {
 public:
     enum ID {
-        APB1, APB2,
+        #if defined(BUS_HAS_APB12)
+            APB1, APB2,
+        #elif defined(BUS_HAS_APB1L1H2)
+            APB1L, APB1H, APB2,
+        #else // BUS_HAS_APBx
+        #error APB compile time bus setting unspecified
+        #endif // BUS_HAS_APBx
         #if defined(BUS_HAS_AHB)
             AHB,
         #elif defined(BUS_HAS_AHB12)
             AHB1, AHB2
-        #endif // BUS_HAS_x
+        #else // BUS_HAS_AHBx
+        #error AHB compile time bus setting unspecified
+        #endif // BUS_HAS_AHBx
     };
 
     static inline void IRQen(STM32Bus::ID bus, unsigned long mask)
     {
-        switch(bus)
-        {
-            case STM32Bus::APB1: RCC->APB1ENR|=mask; break;
-            case STM32Bus::APB2: RCC->APB2ENR|=mask; break;
-            #if defined(BUS_HAS_AHB)
-                case STM32Bus::AHB: RCC->AHBENR|=mask; break;
-            #elif defined(BUS_HAS_AHB12)
-                case STM32Bus::AHB1: RCC->AHB1ENR|=mask; break;
-                case STM32Bus::AHB2: RCC->AHB2ENR|=mask; break;
-            #endif // BUS_HAS_x
-        }
+        getENR(bus)|=mask;
         RCC_SYNC();
     }
     static inline void IRQdis(STM32Bus::ID bus, unsigned long mask)
     {
-        switch(bus)
-        {
-            case STM32Bus::APB1: RCC->APB1ENR&=~mask; break;
-            case STM32Bus::APB2: RCC->APB2ENR&=~mask; break;
-            #if defined(BUS_HAS_AHB)
-                case STM32Bus::AHB: RCC->AHBENR|=mask; break;
-            #elif defined(BUS_HAS_AHB12)
-                case STM32Bus::AHB1: RCC->AHB1ENR&=~mask; break;
-                case STM32Bus::AHB2: RCC->AHB2ENR&=~mask; break;
-            #endif // BUS_HAS_x
-        }
+        getENR(bus)&=mask;
         RCC_SYNC();
     }
+    
+    static inline unsigned int getClock(STM32Bus::ID bus)
+    {
+        unsigned int freq=SystemCoreClock;
+        switch(bus)
+        {
+        #if defined(BUS_HAS_APB1L1H2)
+            case STM32Bus::APB1L:
+            case STM32Bus::APB1H:
+        #else
+            case STM32Bus::APB1:
+        #endif
+                if(RCC->CFGR & RCC_CFGR_PPRE1_2)
+                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
+                break;
+            case STM32Bus::APB2:
+                if(RCC->CFGR & RCC_CFGR_PPRE2_2)
+                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
+                break;
+            default:
+                break;
+        }
+        return freq;
+    }
+
+private:
+    static volatile unsigned long& getENR(STM32Bus::ID bus)
+    {
+        switch(bus)
+        {
+            #if defined(BUS_HAS_APB12)
+                case STM32Bus::APB1: return RCC->APB1ENR;
+                case STM32Bus::APB2: return RCC->APB2ENR;
+            #elif defined(BUS_HAS_APB1L1H2)
+                case STM32Bus::APB1L: return RCC->APB1ENR1;
+                case STM32Bus::APB1H: return RCC->APB1ENR2;
+                case STM32Bus::APB2: return RCC->APB2ENR;
+            #endif // BUS_HAS_APBx
+            default:
+            #if defined(BUS_HAS_AHB)
+                case STM32Bus::AHB: return RCC->AHBENR;
+            #elif defined(BUS_HAS_AHB12)
+                case STM32Bus::AHB1: return RCC->AHB1ENR;
+                case STM32Bus::AHB2: return RCC->AHB2ENR;
+            #endif // BUS_HAS_AHBx
+        }
+    }
 };
+
+#if defined(DMA_HAS_MUX)
+
+class STM32SerialDMAMUXHW
+{
+public:
+    inline void IRQinit()
+    {
+        get()->CCR&=~DMAMUX_CxCR_DMAREQ_ID;
+        get()->CCR|=static_cast<unsigned long>(id)<<DMAMUX_CxCR_DMAREQ_ID_Pos;
+    }
+
+    unsigned char channel;
+    unsigned char id;
+
+private:
+    inline DMAMUX_Channel_TypeDef *get() const
+    {
+        static DMAMUX_Channel_TypeDef * const ptrs[]={
+            DMAMUX1_Channel0,
+            DMAMUX1_Channel1,
+            DMAMUX1_Channel2,
+            DMAMUX1_Channel3,
+            DMAMUX1_Channel4,
+            DMAMUX1_Channel5,
+            DMAMUX1_Channel6,
+            DMAMUX1_Channel7,
+            DMAMUX1_Channel8,
+            DMAMUX1_Channel9,
+            DMAMUX1_Channel10,
+            DMAMUX1_Channel11,
+            DMAMUX1_Channel12,
+            DMAMUX1_Channel13
+        };
+        return ptrs[channel-1];
+    }
+};
+
+#endif
 
 /*
  * Auxiliary class that encapsulates all parts of code that differ between
@@ -140,6 +222,15 @@ public:
     inline IRQn_Type getRxIRQn() const { return rxIrq; }
     inline unsigned long getRxISR() const { return getISR(rxIRShift); }
     inline void setRxIFCR(unsigned long v) const { return setIFCR(rxIRShift,v); }
+
+    inline void IRQinit()
+    {
+        #if defined(DMA_HAS_MUX)
+            STM32Bus::IRQen(STM32Bus::AHB1, RCC_AHB1ENR_DMAMUX1EN);
+            txMux.IRQinit();
+            rxMux.IRQinit();
+        #endif
+    }
 
     inline void startDmaWrite(volatile uint32_t *dr, const char *buffer, size_t size) const
     {
@@ -192,10 +283,16 @@ public:
     DMA_Channel_TypeDef *tx;    ///< Pointer to DMA TX channel
     IRQn_Type txIrq;            ///< DMA TX stream IRQ number
     unsigned char txIRShift;    ///< Value from DMAIntRegShift for the stream
+    #if defined(DMA_HAS_MUX)
+        STM32SerialDMAMUXHW txMux;
+    #endif
 
     DMA_Channel_TypeDef *rx;    ///< Pointer to DMA RX channel
     IRQn_Type rxIrq;            ///< DMA RX stream IRQ number
     unsigned char rxIRShift;    ///< Value from DMAIntRegShift for the stream
+    #if defined(DMA_HAS_MUX)
+        STM32SerialDMAMUXHW rxMux;
+    #endif
 
 private:
     inline unsigned long getISR(unsigned char pos) const
@@ -230,6 +327,8 @@ public:
     inline IRQn_Type getRxIRQn() const { return rxIrq; }
     inline unsigned long getRxISR() const { return getISR(rxIRShift); }
     inline void setRxIFCR(unsigned long v) const { return setIFCR(rxIRShift,v); }
+
+    inline void IRQinit() { }
 
     inline void startDmaWrite(volatile uint32_t *dr, const char *buffer, size_t size) const
     {
