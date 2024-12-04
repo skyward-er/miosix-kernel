@@ -22,13 +22,6 @@
 //#define DBGERR iprintf
 #define DBGERR(x,...) do {} while(0)
 
-void __attribute__((naked)) SDMMC1_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _ZN6miosix12SDMMCirqImplEv");
-    restoreContext();
-}
-
 
 
 namespace miosix {
@@ -44,7 +37,7 @@ static unsigned int sdioFlags;      ///< \internal SDIO status flags
  * \internal
  * DMA2 Stream3 interrupt handler actual implementation
  */
-void __attribute__((used)) SDMMCirqImpl()
+void SDMMCirqImpl()
 {
     sdioFlags=SDMMC1->STA;
 
@@ -59,7 +52,7 @@ void __attribute__((used)) SDMMCirqImpl()
     if(!waiting) return;
     waiting->IRQwakeup();
 	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		Scheduler::IRQfindNextThread();
+		IRQinvokeScheduler();
     waiting=0;
 }
 
@@ -899,6 +892,7 @@ static void initSDIOPeripheral()
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(12);
     }
+    IRQregisterIrq(SDMMC1_IRQn,&SDMMCirqImpl);
     NVIC_SetPriority(SDMMC1_IRQn,15);//Low priority for SDIO
     NVIC_EnableIRQ(SDMMC1_IRQn);
     
