@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2015 by Terraneo Federico                               *
- *   Copyright (C) 2023 by Daniele Cattaneo                                *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,72 +23,17 @@
  *                                                                         *
  *   You should have received a copy of the GNU General Public License     *
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
- ***************************************************************************/ 
+ ***************************************************************************/
 
-/***********************************************************************
-* bsp_impl.h Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
-
-#pragma once
-
-#include "config/miosix_settings.h"
-#include "interfaces/gpio.h"
+extern "C" void SystemInit();
 
 namespace miosix {
 
-/**
-\addtogroup Hardware
-\{
-*/
-
-/**
- * \internal
- * used by the ledOn() and ledOff() implementation
- */
-typedef Gpio<GPIOD_BASE,0> _led;
-
-inline void ledOn()
+void IRQmemoryAndClockInit()
 {
-    _led::high();
+    // Currently we use the code provided by ST (with our modifications) to
+    // handle the memory and clock initialization process.
+    SystemInit();
 }
 
-inline void ledOff()
-{
-    _led::low();
-}
-
-typedef Gpio<GPIOE_BASE,1> _greenLed;
-
-inline void greenLedOn()
-{
-    _greenLed::high();
-}
-
-inline void greenLedOff()
-{
-    _greenLed::low();
-}
-
-typedef Gpio<GPIOD_BASE, 4> _usart2_rts;
-
-
-///\internal Pin connected to SD_DETECT
-typedef Gpio<GPIOB_BASE,12> sdCardDetect;
-
-/**
- * Polls the SD card sense GPIO
- * \return true if there is an uSD card in the socket.
- * \note According to the schematic, SD_DETECT is shorted to GND when the card
- * is removed, and open when the card is inserted.
- */
-inline bool sdCardSense()
-{
-    return sdCardDetect::value()!=0;
-}
-
-/**
-\}
-*/
-
-} //namespace miosix
+} // namespace miosix

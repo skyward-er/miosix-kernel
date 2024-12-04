@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -52,8 +53,6 @@ namespace miosix {
 //
 // Initialization
 //
-typedef Gpio<GPIOD_BASE,5>  u2tx;
-typedef Gpio<GPIOD_BASE,6>  u2rx;
 
 void IRQbspInit()
 {
@@ -74,22 +73,17 @@ void IRQbspInit()
     GPIOG->OSPEEDR=0xaaaaaaaa;
     GPIOH->OSPEEDR=0xaaaaaaaa;
     GPIOI->OSPEEDR=0xaaaaaaaa;
-    // On sensortile board we bind USART2_RTS, USART2_TX and USART2_RX respectively to pins D4, D5, D6 (we use STLINK V3)
-    u2tx::mode(Mode::ALTERNATE);
-    u2rx::mode(Mode::ALTERNATE);
-    u2tx::alternateFunction(7);
-    u2rx::alternateFunction(7);
-    _usart2_rts::mode(Mode::OUTPUT);
     _led::mode(Mode::OUTPUT);
     _greenLed::mode(Mode::OUTPUT);
-    _usart2_rts::high();
     sdCardDetect::mode(Mode::INPUT_PULL_UP);
     ledOn();
     delayMs(100);
     ledOff();
     DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(defaultSerial,defaultSerialSpeed,
-        u2tx::getPin(), u2rx::getPin())));
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma)));
 
 }
 
@@ -128,18 +122,6 @@ void shutdown()
 
     disableInterrupts();
 
-    /*
-    Removed because low power mode causes issues with SWD programming
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN; //Fuckin' clock gating...  
-    RCC_SYNC();
-    PWR->CR |= PWR_CR_PDDS; //Select standby mode
-    PWR->CR |= PWR_CR_CWUF;
-    PWR->CSR |= PWR_CSR_EWUP; //Enable PA.0 as wakeup source
-    
-    SCB->SCR |= SCB_SCR_SLEEPDEEP;
-    __WFE();
-    NVIC_SystemReset();
-    */
     for(;;) ;
 }
 
