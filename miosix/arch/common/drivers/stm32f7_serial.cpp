@@ -29,7 +29,7 @@
 #include <cstring>
 #include <errno.h>
 #include <termios.h>
-#include "stm32f1_f2_f4_serial.h"
+#include "stm32f7_serial.h"
 #include "stm32_serial_common.h"
 #include "kernel/sync.h"
 #include "kernel/scheduler/scheduler.h"
@@ -38,18 +38,6 @@
 #include "interfaces/gpio.h"
 
 using namespace std;
-
-/*
- * We support multiple revisions of the hardware; the following defines select
- * the hardware variant and additional quirks that need to be taken into
- * account in the code.
- */
-
-#if defined(_ARCH_CORTEXM3_STM32F1)
-#define ALTFUNC_STM32F1
-#else
-#define ALTFUNC_STM32F2
-#endif
 
 namespace miosix {
 
@@ -65,9 +53,7 @@ class STM32SerialHW
 public:
     inline USART_TypeDef *get() const { return port; }
     inline IRQn_Type getIRQn() const { return irq; }
-    #ifdef ALTFUNC_STM32F2
-        inline unsigned char getAltFunc() const { return altFunc; }
-    #endif
+    inline unsigned char getAltFunc() const { return altFunc; }
     inline unsigned int IRQgetClock() const
     {
         unsigned int freq=SystemCoreClock;
@@ -92,9 +78,7 @@ public:
 
     USART_TypeDef *port;        ///< USART port
     IRQn_Type irq;              ///< USART IRQ number
-    #ifdef ALTFUNC_STM32F2
-        unsigned char altFunc;  ///< Alternate function to set for GPIOs
-    #endif
+    unsigned char altFunc;      ///< Alternate function to set for GPIOs
     STM32Bus::ID bus;           ///< Bus where the port is (APB1 or 2)
     unsigned long clkEnMask;    ///< USART clock enable
 
@@ -104,127 +88,8 @@ public:
 /*
  * Table of hardware configurations
  */
-#if defined(STM32F100xB) || defined(STM32F103xB)
-constexpr int maxPorts = 3;
-static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
-      { DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4,
-        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5 } },
-    { USART2, USART2_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
-      { DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7,
-        DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6 } },
-    { USART3, USART3_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
-      { DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2,
-        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
-};
-#elif defined(STM32F103xE)
-constexpr int maxPorts = 5;
-static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
-      { DMA1, STM32Bus::AHB, RCC_AHBENR_DMA1EN,
-        DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4,
-        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5 } },
-    { USART2, USART2_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
-      { DMA1, STM32Bus::AHB, RCC_AHBENR_DMA1EN,
-        DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7,
-        DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6 } },
-    { USART3, USART3_IRQn, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
-      { DMA1, STM32Bus::AHB, RCC_AHBENR_DMA1EN,
-        DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2,
-        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
-    { UART4, UART4_IRQn, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
-      { DMA2, STM32Bus::AHB, RCC_AHBENR_DMA2EN,
-        DMA2_Channel5, DMA2_Channel4_5_IRQn, STM32SerialDMAHW::Channel5,
-        DMA2_Channel3, DMA2_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
-    { UART5, UART5_IRQn, STM32Bus::APB1, RCC_APB1ENR_UART5EN, { 0 } },
-};
-#elif defined(STM32L151xB) || defined(STM32L152xB)
-constexpr int maxPorts = 3;
-static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
-      { DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4,
-        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5 } },
-    { USART2, USART2_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
-      { DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7,
-        DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6 } },
-    { USART3, USART3_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
-      { DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2,
-        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
-};
-#elif defined(STM32L151xE) || defined(STM32L152xE)
-constexpr int maxPorts = 5;
-static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
-      { DMA1, STM32Bus::AHB, RCC_AHBENR_DMA1EN,
-        DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4,
-        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5 } },
-    { USART2, USART2_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
-      { DMA1, STM32Bus::AHB, RCC_AHBENR_DMA1EN,
-        DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7,
-        DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6 } },
-    { USART3, USART3_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
-      { DMA1, STM32Bus::AHB, RCC_AHBENR_DMA1EN,
-        DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2,
-        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
-    { UART4 , UART4_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
-      { DMA2, STM32Bus::AHB, RCC_AHBENR_DMA2EN,
-        DMA2_Channel5, DMA2_Channel5_IRQn, STM32SerialDMAHW::Channel5,
-        DMA2_Channel3, DMA2_Channel3_IRQn, STM32SerialDMAHW::Channel3 } },
-    { UART5 , UART5_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
-      { DMA2, STM32Bus::AHB, RCC_AHBENR_DMA2EN,
-        DMA2_Channel1, DMA2_Channel1_IRQn, STM32SerialDMAHW::Channel1,
-        DMA2_Channel2, DMA2_Channel2_IRQn, STM32SerialDMAHW::Channel2 } },
-};
-#elif defined(STM32F401xE) || defined(STM32F401xC) || defined(STM32F411xE)
-constexpr int maxPorts = 6;
-static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
-      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
-        DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
-        DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { USART2, USART2_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
-      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
-        DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 4,
-        DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { 0 },
-    { 0 },
-    { 0 },
-    { USART6, USART6_IRQn, 8, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
-      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
-        DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5,
-        DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5 } },
-};
-#elif defined(STM32F405xx) || defined(STM32F415xx) || defined(STM32F407xx) \
-   || defined(STM32F417xx) || defined(STM32F205xx) || defined(STM32F207xx)
-constexpr int maxPorts = 6;
-static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
-      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
-        DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
-        DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { USART2, USART2_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
-      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
-        DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 4,
-        DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { USART3, USART3_IRQn, 7, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
-      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
-        DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 4,
-        DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 4 } },
-    { UART4 , UART4_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
-      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
-        DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialDMAHW::Stream4, 4,
-        DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialDMAHW::Stream2, 4 } },
-    { UART5 , UART5_IRQn , 8, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
-      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
-        DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
-        DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 4 } },
-    { USART6, USART6_IRQn, 8, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
-      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
-        DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5,
-        DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5 } },
-};
-#elif defined(STM32F427xx) || defined(STM32F429xx) || defined(STM32F469xx) \
-   || defined(STM32F479xx)
+
+#if defined(STM32F765xx)
 constexpr int maxPorts = 8;
 static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
@@ -282,57 +147,38 @@ STM32SerialBase::STM32SerialBase(int id, int baudrate, bool flowControl) :
 void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts)
 {
-    #if defined(ALTFUNC_STM32F1)
-        //Quirk: stm32f1 rx pin has to be in input mode, while stm32f2 and up
-        //want it in ALTERNATE mode. Go figure...
-        tx.mode(Mode::ALTERNATE);
-        rx.mode(Mode::INPUT);
-        if(flowControl)
-        {
-            rts.mode(Mode::ALTERNATE);
-            cts.mode(Mode::INPUT);
-        }
-    #elif defined(ALTFUNC_STM32F2)
-        //First we set the AF then the mode to avoid glitches
-        tx.alternateFunction(port->getAltFunc());
-        tx.mode(Mode::ALTERNATE);
-        rx.alternateFunction(port->getAltFunc());
-        rx.mode(Mode::ALTERNATE);
-        if(flowControl)
-        {
-            rts.alternateFunction(port->getAltFunc());
-            rts.mode(Mode::ALTERNATE);
-            cts.alternateFunction(port->getAltFunc());
-            cts.mode(Mode::ALTERNATE);
-        }
-    #endif
+    //First we set the AF then the mode to avoid glitches
+    tx.alternateFunction(port->getAltFunc());
+    tx.mode(Mode::ALTERNATE);
+    rx.alternateFunction(port->getAltFunc());
+    rx.mode(Mode::ALTERNATE);
+    if(flowControl)
+    {
+        rts.alternateFunction(port->getAltFunc());
+        rts.mode(Mode::ALTERNATE);
+        cts.alternateFunction(port->getAltFunc());
+        cts.mode(Mode::ALTERNATE);
+    }
     unsigned int freq=port->IRQgetClock();
     unsigned int quot=2*freq/baudrate;      //2*freq for round to nearest
     port->get()->BRR=quot/2 + (quot & 1);   //Round to nearest
-    // Some STM32 (i.e. F103xB) have broken one bit sampling mode,
-    // so ST "helpfully" removed the register field from the headers.
-    #ifdef USART_CR3_ONEBIT
-        unsigned long onebit=USART_CR3_ONEBIT;
-    #else
-        unsigned long onebit=0;
-    #endif
-    if(flowControl==false) port->get()->CR3 |= onebit;
-    else port->get()->CR3 |= onebit | USART_CR3_RTSE | USART_CR3_CTSE;
+    if(flowControl==false) port->get()->CR3 |= USART_CR3_ONEBIT;
+    else port->get()->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
 }
 
 void STM32SerialBase::IRQwrite(const char *str)
 {
     while(*str)
     {
-        while((port->get()->SR & USART_SR_TXE)==0) ;
-        port->get()->DR=*str++;
+        while((port->get()->ISR & USART_ISR_TXE)==0) ;
+        port->get()->TDR=*str++;
     }
     waitSerialTxFifoEmpty();
 }
 
 inline void STM32SerialBase::waitSerialTxFifoEmpty()
 {
-    while((port->get()->SR & USART_SR_TC)==0) ;
+    while((port->get()->ISR & USART_ISR_TC)==0) ;
 }
 
 ssize_t STM32SerialBase::readFromRxQueue(void *buffer, size_t size)
@@ -446,30 +292,30 @@ ssize_t STM32Serial::writeBlock(const void *buffer, size_t size, off_t where)
     const char *buf=reinterpret_cast<const char*>(buffer);
     for(size_t i=0;i<size;i++)
     {
-        while((port->get()->SR & USART_SR_TXE)==0) ;
-        port->get()->DR=*buf++;
+        while((port->get()->ISR & USART_ISR_TXE)==0) ;
+        port->get()->TDR=*buf++;
     }
     return size;
 }
 
 void STM32Serial::IRQhandleInterrupt()
 {
-    unsigned int status=port->get()->SR;
+    unsigned int status=port->get()->ISR;
     char c;
     rxUpdateIdle(status);
-    if(status & USART_SR_RXNE)
+    if(status & USART_ISR_RXNE)
     {
         //Always read data, since this clears interrupt flags
-        c=port->get()->DR;
+        c=port->get()->RDR;
         //If no error put data in buffer
-        if((status & USART_SR_FE)==0)
+        if((status & USART_ISR_FE)==0)
             if(rxQueuePut(c)==false) /*fifo overflow*/;
     }
-    if(status & USART_SR_IDLE)
+    if(status & USART_ISR_IDLE)
     {
-        c=port->get()->DR; //clears interrupt flags
+        port->get()->ICR=USART_ICR_IDLECF; //clears interrupt flags
     }
-    if((status & USART_SR_IDLE) || rxQueue.size()>=rxQueueMin)
+    if((status & USART_ISR_IDLE) || rxQueue.size()>=rxQueueMin)
     {
         //Enough data in buffer or idle line, awake thread
         rxWakeup();
@@ -617,10 +463,10 @@ void STM32DMASerial::startDmaWrite(const char *buffer, size_t size)
     //USART won't be pushing out bytes but TC will still be zero. As a result,
     //waitSerialTxFifoEmpty() will loop forever waiting for the end of a
     //transfer that is not happening.
-    while((port->get()->SR & USART_SR_TXE)==0) ;
+    while((port->get()->ISR & USART_ISR_TXE)==0) ;
     
     dmaTxInProgress=true;
-    port->getDma().startDmaWrite(&port->get()->DR,buffer,size);
+    port->getDma().startDmaWrite(&port->get()->TDR,buffer,size);
 }
 
 void STM32DMASerial::IRQhandleDmaTxInterrupt()
@@ -658,7 +504,7 @@ ssize_t STM32DMASerial::readBlock(void *buffer, size_t size, off_t where)
 
 void STM32DMASerial::IRQstartDmaRead()
 {
-    port->getDma().IRQstartDmaRead(&port->get()->DR,rxBuffer,rxQueueMin);
+    port->getDma().IRQstartDmaRead(&port->get()->RDR,rxBuffer,rxQueueMin);
 }
 
 int STM32DMASerial::IRQstopDmaRead()
@@ -684,14 +530,14 @@ void STM32DMASerial::IRQhandleDmaRxInterrupt()
 
 void STM32DMASerial::IRQhandleInterrupt()
 {
-    unsigned int status=port->get()->SR;
+    unsigned int status=port->get()->ISR;
     rxUpdateIdle(status);
-    if(status & USART_SR_IDLE)
+    if(status & USART_ISR_IDLE)
     {
-        (unsigned long)port->get()->DR; //clears interrupt flags
+        port->get()->ICR=USART_ICR_IDLECF; //clears interrupt flags
         IRQflushDmaReadBuffer();
     }
-    if((status & USART_SR_IDLE) || rxQueue.size()>=rxQueueMin)
+    if((status & USART_ISR_IDLE) || rxQueue.size()>=rxQueueMin)
     {
         //Enough data in buffer or idle line, awake thread
         rxWakeup();
