@@ -4038,16 +4038,6 @@ static void test_27()
 static Thread *waiting=nullptr; /// Thread waiting on DMA completion IRQ
 
 /**
- * DMA completion IRQ
- */
-void __attribute__((naked)) DMA2_Stream0_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z9dma2s0irqv");
-    restoreContext();
-}
-
-/**
  * DMA completion IRQ actual implementation
  */
 void dma2s0irq()
@@ -4055,7 +4045,7 @@ void dma2s0irq()
     DMA2->LIFCR=0b111101;
     if(waiting) waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
+        IRQinvokeScheduler();
     waiting=nullptr;
 }
 
@@ -4156,6 +4146,7 @@ void testCacheAndDMA()
         FastInterruptDisableLock dLock;
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         RCC_SYNC();
+        IRQregisterIrq(DMA2_Stream0_IRQn,&dma2s0irq);
         NVIC_SetPriority(DMA2_Stream0_IRQn,15);//Lowest priority for serial
         NVIC_EnableIRQ(DMA2_Stream0_IRQn);
     }
@@ -4200,6 +4191,8 @@ void testCacheAndDMA()
             testOneDmaTransaction(size,offset);
         }
     }
+
+    IRQunregisterIrq(DMA2_Stream0_IRQn);
     pass();
 }
 #endif //_ARCH_CORTEXM7_STM32F7/H7
