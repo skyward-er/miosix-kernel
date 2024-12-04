@@ -45,15 +45,12 @@ ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 /* Mapping the heap to the end of SRAM2 */
 _heap_end = 0x20000000 + 512K;                       /* end of available ram */
 
-/* Establish a temporary location for a temporary stack used at boot time */
-_boot_stack_top = _heap_end;
-
 /* Mapping the process pool into external SDRAM bank 1 */
 _process_pool_start = 0xd0000000;
 _process_pool_end = 0xd0000000 + 256M;              /* end of available ram  */
 
 /* Identify the Entry Point  */
-ENTRY(_Z13Reset_Handlerv)
+ENTRY(_ZN6miosix13Reset_HandlerEv)
 
 /*
  * Specify the memory areas
@@ -138,7 +135,7 @@ SECTIONS
         KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
         KEEP (*(SORT(.ctors.*)))
         KEEP (*crtend.o(.ctors))
-       _ctor_end = .;
+        _ctor_end = .;
 
         . = ALIGN(4);
         KEEP (*crtbegin.o(.dtors))

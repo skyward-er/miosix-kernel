@@ -2568,7 +2568,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                           \
-        $(BOARD_INC)/core/stage_1_boot.cpp    \
+        $(BOARD_INC)/boot.cpp                 \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -2621,7 +2621,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/cache/cortexMx_cache.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/drivers/serial_stm32.cpp                     \
+    arch/common/drivers/stm32f7_serial.cpp                   \
     arch/common/drivers/dcc.cpp                              \
     arch/common/drivers/sd_stm32f2_f4_f7.cpp                 \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \

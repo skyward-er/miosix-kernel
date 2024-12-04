@@ -46,11 +46,8 @@ ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 _end      = 0xd0000000;     /* start of heap */
 _heap_end = 0xe0000000;     /* end of heap */
 
-/* Establish a temporary location for a temporary stack used at boot time */
-_boot_stack_top = 0x20000000 + 512K;
-
 /* Identify the Entry Point  */
-ENTRY(_Z13Reset_Handlerv)
+ENTRY(_ZN6miosix13Reset_HandlerEv)
 
 /*
  * Specify the memory areas
@@ -135,7 +132,7 @@ SECTIONS
         KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
         KEEP (*(SORT(.ctors.*)))
         KEEP (*crtend.o(.ctors))
-       _ctor_end = .;
+        _ctor_end = .;
 
         . = ALIGN(4);
         KEEP (*crtbegin.o(.dtors))

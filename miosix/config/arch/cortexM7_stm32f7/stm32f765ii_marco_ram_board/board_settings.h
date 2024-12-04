@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include "interfaces/gpio.h"
+
 /**
  * \internal
  * Versioning for board_settings.h for out of git tree projects
@@ -45,10 +47,24 @@ namespace miosix {
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
+/// Serial ports 1 to 8 are available, but there are a lot of other peripherals
+/// conflicting on the serial pins and the extension header pins are few.
+/// Serial 1 pins are available on the extension header, serial 3 is connected
+/// to the FT2232.
+const unsigned int defaultSerial=3;
 const unsigned int defaultSerialSpeed=115200;
-// #define SERIAL_1_DMA
-// #define SERIAL_2_DMA
-#define SERIAL_3_DMA
+const bool defaultSerialFlowctrl=false;
+const bool defaultSerialDma=true;
+// Default serial 1 pins (uncomment when using serial 1)
+//using defaultSerialTxPin = Gpio<GPIOB_BASE,6>;
+//using defaultSerialRxPin = Gpio<GPIOB_BASE,7>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,0>; //unavailable
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>; //unavailable
+// Default serial 3 pins (uncomment when using serial 3)
+using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
+using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
+using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
+using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
 
 //SD card driver
 static const unsigned char sdVoltage=33; //Board powered @ 3.3V
