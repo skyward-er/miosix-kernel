@@ -148,7 +148,7 @@ static const STM32SerialHW ports[maxPorts] = {
         DMA2_Channel6, DMA2_Channel6_IRQn, STM32SerialDMAHW::Channel6, 4 } },
 };
 #elif defined(STM32L4R9xx)
-constexpr int maxPorts = 5;
+constexpr int maxPorts = 6;
 static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
@@ -169,7 +169,11 @@ static const STM32SerialHW ports[maxPorts] = {
     { UART5 , UART5_IRQn , 8, STM32Bus::APB1L, RCC_APB1ENR1_UART5EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA2_Channel1, DMA2_Channel1_IRQn, STM32SerialDMAHW::Channel1, {7+1, 33},
-        DMA2_Channel2, DMA2_Channel2_IRQn, STM32SerialDMAHW::Channel2, {7+2, 32} } }
+        DMA2_Channel2, DMA2_Channel2_IRQn, STM32SerialDMAHW::Channel2, {7+2, 32} } },
+    { LPUART1, LPUART1_IRQn, 8, STM32Bus::APB1H, RCC_APB1ENR2_LPUART1EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA2_Channel7, DMA2_Channel7_IRQn, STM32SerialDMAHW::Channel7, {7+7, 35},
+        DMA2_Channel6, DMA2_Channel6_IRQn, STM32SerialDMAHW::Channel6, {7+6, 34} } },
 };
 #else
 #error Unsupported STM32 chip for this serial driver
