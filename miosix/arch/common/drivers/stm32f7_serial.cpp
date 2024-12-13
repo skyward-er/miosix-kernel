@@ -119,6 +119,34 @@ static const STM32SerialHW ports[maxPorts] = {
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 5,
         DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5 } },
 };
+#elif defined(STM32L476xx)
+constexpr int maxPorts = 6;
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, 7, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4, 2,
+        DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5, 2 } },
+    { USART2, USART2_IRQn, 7, STM32Bus::APB1L, RCC_APB1ENR1_USART2EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7, 2,
+        DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6, 2 } },
+    { USART3, USART3_IRQn, 7, STM32Bus::APB1L, RCC_APB1ENR1_USART3EN,
+      { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2, 2,
+        DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3, 2 } },
+    { UART4 , UART4_IRQn , 8, STM32Bus::APB1L, RCC_APB1ENR1_UART4EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA2_Channel5, DMA2_Channel5_IRQn, STM32SerialDMAHW::Channel5, 2,
+        DMA2_Channel3, DMA2_Channel3_IRQn, STM32SerialDMAHW::Channel3, 2 } },
+    { UART5 , UART5_IRQn , 8, STM32Bus::APB1L, RCC_APB1ENR1_UART5EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA2_Channel1, DMA2_Channel1_IRQn, STM32SerialDMAHW::Channel1, 2,
+        DMA2_Channel2, DMA2_Channel2_IRQn, STM32SerialDMAHW::Channel2, 2 } },
+    { LPUART1, LPUART1_IRQn, 8, STM32Bus::APB1H, RCC_APB1ENR2_LPUART1EN,
+      { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
+        DMA2_Channel7, DMA2_Channel7_IRQn, STM32SerialDMAHW::Channel7, 4,
+        DMA2_Channel6, DMA2_Channel6_IRQn, STM32SerialDMAHW::Channel6, 4 } },
+};
 #elif defined(STM32L4R9xx)
 constexpr int maxPorts = 5;
 static const STM32SerialHW ports[maxPorts] = {

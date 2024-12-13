@@ -2972,7 +2972,7 @@ else ifeq ($(ARCH),cortexM4_stm32l4)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name

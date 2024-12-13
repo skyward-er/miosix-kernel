@@ -41,22 +41,26 @@
  */
 
 #if defined(_ARCH_CORTEXM3_STM32F1)
-#define BUS_HAS_AHB
-#define BUS_HAS_APB12
-#define DMA_STM32F1
+    #define BUS_HAS_AHB
+    #define BUS_HAS_APB12
+    #define DMA_STM32F1
 #elif defined(_ARCH_CORTEXM3_STM32L1)
-#define BUS_HAS_AHB
-#define BUS_HAS_APB12
-#define DMA_STM32F1
+    #define BUS_HAS_AHB
+    #define BUS_HAS_APB12
+    #define DMA_STM32F1
 #elif defined(_ARCH_CORTEXM4_STM32L4)
-#define BUS_HAS_AHB12
-#define BUS_HAS_APB1L1H2
-#define DMA_HAS_MUX
-#define DMA_STM32F1
+    #define BUS_HAS_AHB12
+    #define BUS_HAS_APB1L1H2
+    #if defined(DMAMUX1_Channel0)
+        #define DMA_HAS_MUX
+    #else
+        #define DMA_HAS_CSELR
+    #endif
+    #define DMA_STM32F1
 #else
-#define BUS_HAS_AHB12
-#define BUS_HAS_APB12
-#define DMA_STM32F2
+    #define BUS_HAS_AHB12
+    #define BUS_HAS_APB12
+    #define DMA_STM32F2
 #endif
 
 namespace miosix {
@@ -229,6 +233,16 @@ public:
             STM32Bus::IRQen(STM32Bus::AHB1, RCC_AHB1ENR_DMAMUX1EN);
             txMux.IRQinit();
             rxMux.IRQinit();
+        #elif defined(DMA_HAS_CSELR)
+            //Work around the fact that ST's headers are extremely yabai
+            //(yabai means bad in Chinese)
+            static_assert(DMA1_CSELR_BASE==DMA1_BASE+0xA8);
+            unsigned volatile long *cselr=
+                reinterpret_cast<unsigned volatile long *>(
+                    reinterpret_cast<uintptr_t>(get())+0xA8);
+            unsigned long mask=(0xFUL<<txIRShift) | (0xFUL<<rxIRShift);
+            unsigned long val=(txCsel<<txIRShift) | (rxCsel<<rxIRShift);
+            *cselr=(*cselr & ~mask) | val;
         #endif
     }
 
@@ -285,6 +299,8 @@ public:
     unsigned char txIRShift;    ///< Value from DMAIntRegShift for the stream
     #if defined(DMA_HAS_MUX)
         STM32SerialDMAMUXHW txMux;
+    #elif defined(DMA_HAS_CSELR)
+        unsigned char txCsel;
     #endif
 
     DMA_Channel_TypeDef *rx;    ///< Pointer to DMA RX channel
@@ -292,6 +308,8 @@ public:
     unsigned char rxIRShift;    ///< Value from DMAIntRegShift for the stream
     #if defined(DMA_HAS_MUX)
         STM32SerialDMAMUXHW rxMux;
+    #elif defined(DMA_HAS_CSELR)
+        unsigned char rxCsel;
     #endif
 
 private:

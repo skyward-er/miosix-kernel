@@ -1,7 +1,7 @@
 #pragma once
 
 //Always include stm32l4xx.h before core_cm4.h, there's some nasty dependency
-#define STM32L475xx
+#define STM32L476xx
 #include "CMSIS/Device/ST/STM32L4xx/Include/stm32l4xx.h"
 #include "CMSIS/Include/core_cm4.h"
 #include "CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
@@ -14,3 +14,6 @@
 //CPU level alone, the bus matrices and peripherals themselves may also reorder
 //accesses as a side-effect of how they work.
 #define RCC_SYNC()
+
+//Peripheral interrupt start from 0 and the last one is 81, so there are 82
+#define MIOSIX_NUM_PERIPHERAL_IRQ 82
