@@ -702,7 +702,12 @@ public:
      * Wakeup a thread.
      * <br>CANNOT be called when the kernel is paused.
      */
-    void wakeup();
+    void wakeup()
+    {
+        //pausing the kernel is not enough because of IRQwait and IRQwakeup
+        FastInterruptDisableLock lock;
+        IRQwakeup();
+    }
 
     /**
      * Wakeup a thread.

@@ -439,21 +439,11 @@ TimedWaitResult Thread::PKrestartKernelAndTimedWait(PauseKernelLock& dLock,
     return result;
 }
 
-void Thread::wakeup()
-{
-    //pausing the kernel is not enough because of IRQwait and IRQwakeup
-    {
-        FastInterruptDisableLock lock;
-        this->flags.IRQsetWait(false);
-    }
-    #ifdef SCHED_TYPE_EDF
-    yield();//The other thread might have a closer deadline
-    #endif //SCHED_TYPE_EDF
-}
-
 void Thread::PKwakeup()
 {
     //pausing the kernel is not enough because of IRQwait and IRQwakeup
+    //DO NOT refactor this code by calling IRQwakeup() as IRQwakeup can cause
+    //the scheduler interrupt to be called something we should avoid doing here
     FastInterruptDisableLock lock;
     this->flags.IRQsetWait(false);
 }
@@ -461,6 +451,8 @@ void Thread::PKwakeup()
 void Thread::IRQwakeup()
 {
     this->flags.IRQsetWait(false);
+    if(this->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+        IRQinvokeScheduler();
 }
 
 Thread *Thread::IRQgetCurrentThread()
