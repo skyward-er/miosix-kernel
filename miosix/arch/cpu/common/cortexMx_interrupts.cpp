@@ -238,6 +238,7 @@ bool IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexcept
     if(irqForwardingTable[id].handler!=unexpectedInterrupt) return false;
     irqForwardingTable[id].handler=handler;
     irqForwardingTable[id].arg=arg;
+    NVIC_EnableIRQ(id);
     return true;
 }
 
@@ -246,6 +247,8 @@ void IRQunregisterIrq(unsigned int id) noexcept
     if(id>=numInterrupts) return;
     irqForwardingTable[id].handler=unexpectedInterrupt;
     irqForwardingTable[id].arg=nullptr;
+    NVIC_DisableIRQ(id);
+    NVIC_ClearPendingIRQ(id);
 }
 
 bool IRQisIrqRegistered(unsigned int id) noexcept
