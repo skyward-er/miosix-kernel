@@ -61,8 +61,6 @@ ATSAMSerial::ATSAMSerial(int id, int baudrate)
         PM->PM_UNLOCK = PM_UNLOCK_KEY(0xaa) | PM_UNLOCK_ADDR(PM_PBAMASK_OFFSET);
         PM->PM_PBAMASK |= PM_PBAMASK_USART2;
         IRQregisterIrq(USART2_IRQn,&ATSAMSerial::IRQhandleInterrupt,this);
-        NVIC_SetPriority(USART2_IRQn,15);//Lowest priority for serial
-        NVIC_EnableIRQ(USART2_IRQn);
     }
 
     unsigned int div=(SystemCoreClock+baudrate/2)/baudrate;
@@ -191,9 +189,7 @@ void ATSAMSerial::IRQhandleInterrupt()
     if(wake && rxWaiting)
     {
         rxWaiting->IRQwakeup();
-        if(rxWaiting->IRQgetPriority()>
-            Thread::IRQgetCurrentThread()->IRQgetPriority()) IRQinvokeScheduler();
-        rxWaiting=0;
+        rxWaiting=nullptr;
     }
 }
 
@@ -206,8 +202,6 @@ ATSAMSerial::~ATSAMSerial()
     
     InterruptDisableLock dLock;
     //TODO: USART2 hardcoded
-    NVIC_DisableIRQ(USART2_IRQn);
-    NVIC_ClearPendingIRQ(USART2_IRQn);
     IRQunregisterIrq(USART2_IRQn);
     PM->PM_UNLOCK = PM_UNLOCK_KEY(0xaa) | PM_UNLOCK_ADDR(PM_PBAMASK_OFFSET);
     PM->PM_PBAMASK &= ~PM_PBAMASK_USART2;
