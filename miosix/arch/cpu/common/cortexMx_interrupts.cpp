@@ -230,7 +230,12 @@ void IRQinitIrqTable() noexcept
     //vector table offset to the one in the firmware, so we force it here
     SCB->VTOR=reinterpret_cast<unsigned int>(&hardwareInterruptTable);
     for(unsigned int i=0;i<numInterrupts;i++)
+    {
         irqForwardingTable[i].handler=&unexpectedInterrupt;
+        #if __CORTEX_M == 0
+        NVIC_SetPriority(static_cast<IRQn_Type>(i),3);
+        #endif //__CORTEX_M == 0
+    }
 }
 
 bool IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexcept

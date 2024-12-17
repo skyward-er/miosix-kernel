@@ -164,8 +164,6 @@ RP2040PL011Serial::~RP2040PL011Serial()
 {
     //Disable UART operation
     uart->cr = 0;
-    NVIC_DisableIRQ(irqn);
-    NVIC_ClearPendingIRQ(irqn);
     IRQunregisterIrq(irqn);
 }
 
@@ -189,8 +187,6 @@ void RP2040PL011Serial::commonInit(int number, int baudrate)
     // UART IRQ saves context: its priority must be 3 (see portability.cpp)
     if(IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this)==false)
         errorHandler(UNEXPECTED);
-    NVIC_SetPriority(irqn, 3);
-    NVIC_EnableIRQ(irqn);
     uart->ifls = (2<<UART_UARTIFLS_RXIFLSEL_LSB) | (2<<UART_UARTIFLS_TXIFLSEL_LSB);
     enableAllInterrupts();
     //Setup baud rate
@@ -205,12 +201,11 @@ void RP2040PL011Serial::commonInit(int number, int baudrate)
 
 void RP2040PL011Serial::IRQhandleInterrupt()
 {
-    bool hppw=false;
     uint32_t flags = uart->mis;
     if(flags & UART_UARTMIS_TXMIS_BITS)
     {
         // Wake up the thread currently writing and clear interrupt status
-        txLowWaterFlag.IRQsignal(hppw);
+        txLowWaterFlag.IRQsignal();
         uart->icr = UART_UARTICR_TXIC_BITS;
     }
     if(flags & (UART_UARTMIS_RXMIS_BITS|UART_UARTMIS_RTMIS_BITS))
@@ -219,7 +214,7 @@ void RP2040PL011Serial::IRQhandleInterrupt()
         // or until the software-side queue is full
         while((uart->mis & (UART_UARTMIS_RXMIS_BITS | UART_UARTMIS_RTMIS_BITS))
                 && !rxQueue.isFull())
-            rxQueue.IRQput(static_cast<unsigned char>(uart->dr), hppw);
+            rxQueue.IRQput(static_cast<unsigned char>(uart->dr));
         // If the sw queue is full, mask RX interrupts temporarily. The
         // device read handler will un-mask them when the queue has some
         // space again. If there was more data to read and hence the interrupt
@@ -229,8 +224,6 @@ void RP2040PL011Serial::IRQhandleInterrupt()
         // in the interrupt flags).
         if(rxQueue.isFull()) disableRXInterrupts();
     }
-    // Reschedule if needed
-    if(hppw) IRQinvokeScheduler();
 }
 
 } // namespace miosix
