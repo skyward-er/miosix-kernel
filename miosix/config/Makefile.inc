@@ -3101,9 +3101,7 @@ else ifeq ($(ARCH),cortexM4_atsam4l)
 
     CPU_INC := arch/cpu/armv7m
     ## Select appropriate compiler flags for both ASM/C/C++/linker
-    ## NOTE: although the atsam4l are cortex M4, they have no FPU, so the
-    ## closest multilib we have is cortex M3, and that's basically what they are
-    CPU := -mcpu=cortex-m3 -mthumb
+    CPU := -mcpu=cortex-m4 -mthumb
     AFLAGS_BASE   := $(CPU)
     CFLAGS_BASE   += -D_ARCH_CORTEXM4_ATSAM4L $(CPU) $(OPT_OPTIMIZATION) -c
     CXXFLAGS_BASE += -D_ARCH_CORTEXM4_ATSAM4L $(CPU) $(OPT_OPTIMIZATION) \
