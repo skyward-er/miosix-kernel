@@ -51,7 +51,7 @@ const unsigned int MAIN_STACK_SIZE=4*1024;
 /// Serial port
 /// Serial ports 1, 2, 6 are available (ports 3, 4, 5 do not exist!)
 const unsigned int defaultSerial=2;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
 //Disable DMA for serial 2 because it conflicts with I2S driver in examples
 const bool defaultSerialDma=false;

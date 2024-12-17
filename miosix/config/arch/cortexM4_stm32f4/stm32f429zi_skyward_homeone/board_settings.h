@@ -52,7 +52,7 @@ const unsigned int MAIN_STACK_SIZE=4*1024;
 /// Serial ports 1 to 8 are available
 /// Serial 2 and 3 are used by gps and radio respectively
 const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
 const bool defaultSerialDma=true;
 // Default serial 1 pins (uncomment when using serial 1)

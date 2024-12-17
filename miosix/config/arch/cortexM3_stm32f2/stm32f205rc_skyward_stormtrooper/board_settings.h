@@ -53,7 +53,7 @@ const unsigned int MAIN_STACK_SIZE=4*1024;
 //Serial 1 has no DMA as it would conflict with SPI6
 //Serial 2 is used by the piksi GPS
 const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
 const bool defaultSerialDma=false;
 // Default serial 1 pins (uncomment when using serial 1)

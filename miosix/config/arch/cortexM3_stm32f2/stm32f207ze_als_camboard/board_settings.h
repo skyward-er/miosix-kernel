@@ -49,7 +49,7 @@ const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
 const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
 //TODO: DCMI driver conflicts with DMA, but can be fixed
 const bool defaultSerialDma=false;

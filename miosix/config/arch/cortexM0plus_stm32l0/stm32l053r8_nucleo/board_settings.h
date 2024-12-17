@@ -47,7 +47,7 @@ const unsigned int MAIN_STACK_SIZE=1024+512;
 
 /// Serial port
 const unsigned int defaultSerial=2;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
 //#define SERIAL_1_DMA
 //#define SERIAL_2_DMA

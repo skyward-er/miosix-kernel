@@ -52,7 +52,7 @@ const unsigned int MAIN_STACK_SIZE=4*1024;
 /// Serial ports 1 to 8 are available
 /// Note that serial 2 is used by the piksi GPS
 const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
 // Serial 1 has no DMA as it would conflict with SPI6
 const bool defaultSerialDma=false;

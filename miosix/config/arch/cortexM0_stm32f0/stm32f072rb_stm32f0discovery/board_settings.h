@@ -47,7 +47,7 @@ const unsigned int MAIN_STACK_SIZE=1024+512;
 
 /// Serial port
 const unsigned int defaultSerial=1;
-const unsigned int defaultSerialSpeed=19200;
+const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
 //#define SERIAL_1_DMA //Serial DMA not supported yet on STM32F0
 //#define SERIAL_2_DMA //Serial DMA not supported yet on STM32F0
