@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include "interfaces/gpio.h"
+
 /**
  * \internal
  * Versioning for board_settings.h for out of git tree projects
@@ -45,10 +47,26 @@ namespace miosix {
 const unsigned int MAIN_STACK_SIZE=4*1024;
 
 /// Serial port
+/// Serial ports 1 to 8 are available
+const unsigned int defaultSerial=3;
 const unsigned int defaultSerialSpeed=115200;
-// #define SERIAL_1_DMA
-// #define SERIAL_2_DMA
-#define SERIAL_3_DMA
+const bool defaultSerialFlowctrl=false;
+const bool defaultSerialDma=true;
+// Default serial 1 pins (uncomment when using serial 1)
+//using defaultSerialTxPin = Gpio<GPIOA_BASE,9>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE,10>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
+// Default serial 2 pins (uncomment when using serial 2)
+//using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
+// Default serial 3 pins (uncomment when using serial 3)
+using defaultSerialTxPin = Gpio<GPIOD_BASE,8>;
+using defaultSerialRxPin = Gpio<GPIOD_BASE,9>;
+using defaultSerialRtsPin = Gpio<GPIOD_BASE,12>;
+using defaultSerialCtsPin = Gpio<GPIOD_BASE,11>;
 
 //SD card driver
 static const unsigned char sdVoltage=33; //Board powered @ 3.3V

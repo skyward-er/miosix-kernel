@@ -30,6 +30,7 @@
  * Board support package, this file initializes hardware.
  ************************************************************************/
 
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 
 #include <inttypes.h>
@@ -40,7 +41,6 @@
 #include "board_settings.h"
 #include "config/miosix_settings.h"
 #include "drivers/serial.h"
-#include "drivers/serial_stm32.h"
 #include "drivers/sd_stm32f2_f4_f7.h"
 #include "filesystem/console/console_device.h"
 #include "filesystem/file_access.h"
@@ -261,8 +261,11 @@ void IRQbspInit()
     delayMs(100);
     ledOff();
 
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(new STM32Serial(
-        defaultSerial, defaultSerialSpeed, STM32Serial::NOFLOWCTRL)));
+    DefaultConsole::instance().IRQset(
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()

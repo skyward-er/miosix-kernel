@@ -2459,7 +2459,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                  \
-        $(BOARD_INC)/core/stage_1_boot.cpp           \
+        $(BOARD_INC)/boot.cpp                        \
         arch/common/drivers/stm32_hardware_rng.cpp   \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
@@ -2495,7 +2495,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                           \
-        $(BOARD_INC)/core/stage_1_boot.cpp    \
+        $(BOARD_INC)/boot.cpp                 \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
@@ -2530,7 +2530,7 @@ else ifeq ($(ARCH),cortexM7_stm32f7)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                           \
-        $(BOARD_INC)/core/stage_1_boot.cpp    \
+        $(BOARD_INC)/boot.cpp                 \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
