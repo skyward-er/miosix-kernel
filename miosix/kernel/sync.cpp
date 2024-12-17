@@ -402,42 +402,57 @@ TimedWaitResult ConditionVariable::timedWait(pthread_mutex_t *m, long long absTi
     return result;
 }
 
-bool ConditionVariable::doSignal()
+void ConditionVariable::signal()
 {
-    bool hppw=false;
     // We could just pause the kernel but it's faster to disable interrupts
     FastInterruptDisableLock dLock;
-    if(condList.empty()) return false;
+    if(condList.empty()) return;
     Thread *t=condList.front()->thread;
     condList.pop_front();
     t->IRQwakeup();
-    if(t->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        hppw=true;
-    return hppw;
+    /*
+     * A note on whether we should yield if waking a higher priority thread.
+     * Doing a signal()/broadcast() is permitted either with the mutex locked
+     * or not. If we're calling signal with the mutex locked, yielding if we
+     * woke up a higher priority thread causes a "bounce back" since the woken
+     * thread will block trying to lock the mutex we're holding.
+     * The issue is, within signal()/broadcast(), we don't know if we're being
+     * called with the mutex locked or not.
+     * We used to only yield in ConditionVariable and not in pthread_cond_singal
+     * as only the former can be used with priority inheritance mutexes, relying
+     * in the latter case on the higher priority thread being scheduled anyway
+     * at the end of the scheduling time quantum, but we changed this policy in
+     * Miosix 3 and yield always. Note that even though there's no explicit
+     * yield code, IRQwakeup() is where it's hidden. This new behavior is better
+     * for real-time but does incur the bounce back penalty. Tradeoffs.
+     */
 }
 
-bool ConditionVariable::doBroadcast()
+void ConditionVariable::broadcast()
 {
     bool hppw=false;
     // Disabling interrupts would be faster but pausing kernel is an opportunity
-    // to reduce interrupt latency
-    PauseKernelLock dLock;
-    while(!condList.empty())
+    // to reduce interrupt latency in case we loop a large number of iterations
     {
-        Thread *t=condList.front()->thread;
-        condList.pop_front();
-        t->PKwakeup();
-        if(t->PKgetPriority()>Thread::PKgetCurrentThread()->PKgetPriority())
-            hppw=true;
+        PauseKernelLock dLock;
+        while(!condList.empty())
+        {
+            Thread *t=condList.front()->thread;
+            condList.pop_front();
+            t->PKwakeup();
+            if(t->PKgetPriority()>Thread::PKgetCurrentThread()->PKgetPriority())
+                hppw=true;
+        }
     }
-    return hppw;
+    //PKwakeup() does NOT make the scheduler IRQ pending, we need to do it here
+    if(hppw) Thread::yield();
 }
 
 //
 // class Semaphore
 //
 
-Thread *Semaphore::IRQsignalNoPreempt()
+Thread *Semaphore::IRQsignalImpl()
 {
     //Check if somebody is waiting
     if(fifo.empty())
@@ -456,30 +471,23 @@ Thread *Semaphore::IRQsignalNoPreempt()
 
 void Semaphore::IRQsignal(bool& hppw)
 {
-    //Update the state of the FIFO and the counter
-    Thread *t=IRQsignalNoPreempt();
+    Thread *t=IRQsignalImpl();
     if(t==nullptr) return;
-    //If the woken thread has higher priority trigger a reschedule
     if(Thread::IRQgetCurrentThread()->IRQgetPriority()<t->IRQgetPriority())
         hppw=true;
 }
 
+void Semaphore::IRQsignal()
+{
+    IRQsignalImpl();
+}
+
 void Semaphore::signal()
 {
-    bool hppw=false;
-    {
-        //Global interrupt lock because Semaphore is IRQ-safe
-        FastInterruptDisableLock dLock;
-        //Update the state of the FIFO and the counter
-        Thread *t=IRQsignalNoPreempt();
-        if(t)
-        {
-            //If the woken thread has higher priority trigger a yield
-            if(Thread::IRQgetCurrentThread()->IRQgetPriority()<t->IRQgetPriority())
-                hppw=true;
-        }
-    }
-    if(hppw) Thread::yield();
+    //Global interrupt lock because Semaphore is IRQ-safe
+    FastInterruptDisableLock dLock;
+    //Update the state of the FIFO and the counter
+    IRQsignalImpl();
 }
 
 void Semaphore::wait()

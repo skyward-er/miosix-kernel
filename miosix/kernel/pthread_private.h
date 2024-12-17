@@ -134,41 +134,6 @@ static inline void IRQdoMutexLockToDepth(pthread_mutex_t *mutex,
 
 /**
  * \internal
- * Implementation code to unlock a mutex.
- * Must be called with interrupts disabled
- * \param mutex mutex to unlock
- * \return true if a higher priority thread was woken,
- * only if EDF scheduler is selected, otherwise it always returns false
- */
-static inline bool IRQdoMutexUnlock(pthread_mutex_t *mutex)
-{
-//    Safety check removed for speed reasons
-//    if(mutex->owner!=reinterpret_cast<void*>(Thread::IRQgetCurrentThread()))
-//        return false;
-    if(mutex->recursive>0)
-    {
-        mutex->recursive--;
-        return false;
-    }
-    if(mutex->first!=nullptr)
-    {
-        Thread *t=reinterpret_cast<Thread*>(mutex->first->thread);
-        t->IRQwakeup();
-        mutex->owner=mutex->first->thread;
-        mutex->first=mutex->first->next;
-
-        #ifndef SCHED_TYPE_EDF
-        if(Thread::IRQgetCurrentThread()->IRQgetPriority() < t->IRQgetPriority())
-            return true;
-        #endif //SCHED_TYPE_EDF
-        return false;
-    }
-    mutex->owner=nullptr;
-    return false;
-}
-
-/**
- * \internal
  * Implementation code to unlock all depth levels of a mutex.
  * Must be called with interrupts disabled
  * \param mutex mutex to unlock

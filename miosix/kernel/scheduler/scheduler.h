@@ -155,8 +155,13 @@ public:
      * \internal
      * NOTE: If you're coming here because you were looking for a function
      * named IRQfindNextThread(), it has been removed in Miosix 3.0.
-     * THIS FUNCTION IS NOT WHAT YOU WANT.
-     * The replacement is called IRQinvokeScheduler() and you should
+     * THIS FUNCTION (IRQrunScheduler()) IS NOT WHAT YOU WANT.
+     *
+     * In Miosix 3.0 IRQwakeup() automatically sets the scheduler interrupt to
+     * become pending if the priority of the woken thread is higher than the
+     * current one, so in 99% of cases you only need to call IRQwakeup().
+     * In the remaining cases where you absolutely need to set the scheduler
+     * interrupt to be pending you can use IRQinvokeScheduler() found in
      * \code
      * #include <interfaces/interrupts.h>
      * \endcode

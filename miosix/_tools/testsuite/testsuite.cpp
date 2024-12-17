@@ -4044,8 +4044,6 @@ void dma2s0irq()
 {
     DMA2->LIFCR=0b111101;
     if(waiting) waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
     waiting=nullptr;
 }
 
@@ -4147,8 +4145,6 @@ void testCacheAndDMA()
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         RCC_SYNC();
         IRQregisterIrq(DMA2_Stream0_IRQn,&dma2s0irq);
-        NVIC_SetPriority(DMA2_Stream0_IRQn,15);//Lowest priority for serial
-        NVIC_EnableIRQ(DMA2_Stream0_IRQn);
     }
 
     //Testing cache-aligned transactions
@@ -4192,7 +4188,10 @@ void testCacheAndDMA()
         }
     }
 
-    IRQunregisterIrq(DMA2_Stream0_IRQn);
+    {
+        FastInterruptDisableLock dLock;
+        IRQunregisterIrq(DMA2_Stream0_IRQn);
+    }
     pass();
 }
 #endif //_ARCH_CORTEXM7_STM32F7/H7

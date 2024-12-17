@@ -484,20 +484,12 @@ public:
      * Wakeup one waiting thread.
      * Currently implemented policy is fifo.
      */
-    void signal()
-    {
-        //If the woken thread has higher priority than our priority, yield
-        if(doSignal()) Thread::yield();
-    }
+    void signal();
 
     /**
      * Wakeup all waiting threads.
      */
-    void broadcast()
-    {
-        //If at least one woken thread has higher priority than our priority, yield
-        if(doBroadcast()) Thread::yield();
-    }
+    void broadcast();
 
     //Unwanted methods
     ConditionVariable(const ConditionVariable&) = delete;
@@ -514,23 +506,7 @@ private:
         Thread *thread; ///<\internal Waiting thread
     };
 
-    /**
-     * Wakeup one waiting thread.
-     * Currently implemented policy is fifo.
-     * \return true if the woken thread has higher priority than the current one
-     */
-    bool doSignal();
-
-    /**
-     * Wakeup all waiting threads.
-     * \return true if at least one of the woken threads has higher priority
-     * than the current one
-     */
-    bool doBroadcast();
-
     friend int ::pthread_cond_destroy(pthread_cond_t *);   //Needs condList
-    friend int ::pthread_cond_signal(pthread_cond_t *);    //Needs doSignal()
-    friend int ::pthread_cond_broadcast(pthread_cond_t *); //Needs doBroadcast()
 
     //Memory layout must be kept in sync with pthread_cond, see pthread.cpp
     IntrusiveList<WaitToken> condList;
@@ -568,27 +544,15 @@ public:
     /**
      * Increment the semaphore counter, putting threads out of sleep without
      * triggering a reschedule.
-     * Only for use in IRQ handlers.
-     * \param hppw is set to `true' if a scheduler update is necessary to
-     * wake up a formerly sleeping thread with `IRQinvokeScheduler()`.
+     * \param hppw is set to `true' if a higher priority thread is woken up.
      * Otherwise it is not modified.
-     * \warning Use in a thread context with interrupts disabled or with the
-     * kernel paused is forbidden.
      */
     void IRQsignal(bool& hppw);
 
     /**
      * Increment the semaphore counter, waking up at most one waiting thread.
-     * Only for use in IRQ handlers.
-     * \warning Use in a thread context with interrupts disabled or with the
-     * kernel paused is forbidden.
      */
-    void IRQsignal()
-    {
-        bool hppw=false;
-        IRQsignal(hppw);
-        if(hppw) IRQinvokeScheduler();
-    }
+    void IRQsignal();
 
     /**
      * Increment the semaphore counter, waking up at most one waiting thread.
@@ -684,7 +648,7 @@ private:
      * Internal method that signals the semaphore without triggering a
      * rescheduling for prioritizing newly-woken threads.
      */
-    inline Thread *IRQsignalNoPreempt();
+    inline Thread *IRQsignalImpl();
 
     volatile unsigned int count; ///< Counter of the semaphore
     IntrusiveList<WaitToken> fifo; ///< List of waiting threads
