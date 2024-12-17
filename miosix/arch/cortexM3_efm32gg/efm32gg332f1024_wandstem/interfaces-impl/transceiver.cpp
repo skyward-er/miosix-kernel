@@ -425,8 +425,6 @@ Transceiver::Transceiver()
     [this]{
         if(!waiting) return;
         waiting->IRQwakeup();
-        if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-            IRQinvokeScheduler();
         waiting=nullptr;
     });
 }

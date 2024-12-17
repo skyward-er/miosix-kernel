@@ -68,8 +68,6 @@ EFM32Serial::EFM32Serial(int id, int baudrate, GpioPin tx, GpioPin rx)
         }
         if(IRQregisterIrq(irqn,&EFM32Serial::IRQinterruptHandler,this)==false)
             errorHandler(UNEXPECTED);
-        NVIC_SetPriority(irqn,15);//Lowest priority for serial
-        NVIC_EnableIRQ(irqn);
     }
     
     port->IEN=USART_IEN_RXDATAV;
@@ -195,8 +193,6 @@ EFM32Serial::~EFM32Serial()
             | USART_CMD_RXDIS;
     port->ROUTE=0;
     IRQunregisterIrq(irqn);
-    NVIC_DisableIRQ(irqn);
-    NVIC_ClearPendingIRQ(irqn);
     if(port==USART0) CMU->HFPERCLKEN0 &= ~CMU_HFPERCLKEN0_USART0;
     else             CMU->HFPERCLKEN0 &= ~CMU_HFPERCLKEN0_USART1;
 }
@@ -229,9 +225,7 @@ void EFM32Serial::IRQinterruptHandler()
     if(atLeastOne && rxWaiting)
     {
         rxWaiting->IRQwakeup();
-        if(rxWaiting->IRQgetPriority()>
-            Thread::IRQgetCurrentThread()->IRQgetPriority()) IRQinvokeScheduler();
-        rxWaiting=0;
+        rxWaiting=nullptr;
     }
 }
 

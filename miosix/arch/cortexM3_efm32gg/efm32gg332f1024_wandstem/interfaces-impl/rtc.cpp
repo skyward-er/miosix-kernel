@@ -146,8 +146,6 @@ static WaitResult waitImpl(long long value, bool eventSensitive)
 //
 //     if(!rtcWaiting) return;
 //     rtcWaiting->IRQwakeup();
-//     if(rtcWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-//         IRQinvokeScheduler();
 //     rtcWaiting=nullptr;
 // }
 
@@ -261,9 +259,8 @@ Rtc::Rtc() : tc(frequency)
     //COMP0 -> used for wait and trigger
     //COMP1 -> reserved for VHT resync and Power manager
     //NOTE: interrupt not yet enabled as we're not setting RTC->IEN
-    IRQregisterIrq(RTC_IRQn,&Rtc::IRQinterruptHandler);
-    NVIC_EnableIRQ(RTC_IRQn);
     NVIC_SetPriority(RTC_IRQn,7); // 0 is the higest priority, 15 il the lowest
+    IRQregisterIrq(RTC_IRQn,&Rtc::IRQinterruptHandler);
     
     RTC->IEN |= RTC_IEN_OF;
     
@@ -298,8 +295,6 @@ void Rtc::IRQinterruptHandler()
         if(rtcWaiting)
         {
             rtcWaiting->IRQwakeup();
-            if(rtcWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-                IRQinvokeScheduler();
             rtcWaiting=nullptr;
         }
     }

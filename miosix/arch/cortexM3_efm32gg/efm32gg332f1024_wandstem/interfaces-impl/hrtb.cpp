@@ -115,8 +115,6 @@ inline void interruptGPIOTimerRoutine(){
     //Reactivating the thread that is waiting for the event.
     if(gpioWaiting){
         gpioWaiting->IRQwakeup();
-        if(gpioWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-            IRQinvokeScheduler();
         gpioWaiting=nullptr;
     }
 }
@@ -125,8 +123,6 @@ inline void interruptTransceiverTimerRoutine(){
     //Reactivating the thread that is waiting for the event.
     if(transceiverWaiting){
         transceiverWaiting->IRQwakeup();
-        if(transceiverWaiting->IRQgetPriority() > Thread::IRQgetCurrentThread()->IRQgetPriority())
-            IRQinvokeScheduler();
         transceiverWaiting=nullptr;
     }
 }
@@ -240,8 +236,6 @@ void cstirqhnd2(){
                 //Reactivating the thread that is waiting for the event, WITHOUT changing the tWaiting
                 if(transceiverWaiting){
                     transceiverWaiting->IRQwakeup();
-                    if(transceiverWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    IRQinvokeScheduler();
                 }
             }
         }
@@ -274,9 +268,6 @@ void cstirqhnd2(){
 
         if(VHT::softEnable){
             HRTB::flopsyncThread->IRQwakeup();
-            if(HRTB::flopsyncThread->IRQgetPriority() > Thread::IRQgetCurrentThread()->IRQgetPriority()){
-                IRQinvokeScheduler();
-            }
         }
     }
 }
@@ -321,8 +312,6 @@ void cstirqhnd1(){
             //Reactivating the thread that is waiting for the event, WITHOUT changing the tWaiting
             if(gpioWaiting){
                 gpioWaiting->IRQwakeup();
-                if(gpioWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    IRQinvokeScheduler();
             }
         }
     }
@@ -812,19 +801,13 @@ HRTB::HRTB() {
     TIMER1->CC[1].CTRL = TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
     TIMER3->CC[1].CTRL = TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
 
-    IRQregisterIrq(TIMER1_IRQn,&cstirqhnd1);
-    IRQregisterIrq(TIMER2_IRQn,&cstirqhnd2);
-    IRQregisterIrq(TIMER3_IRQn,&cstirqhnd3);
     NVIC_SetPriority(TIMER1_IRQn,3);
     // Priority 8, this is very important, it MUST be a lower priority than RTC priority
     NVIC_SetPriority(TIMER2_IRQn,8);
     NVIC_SetPriority(TIMER3_IRQn,3);
-    NVIC_ClearPendingIRQ(TIMER1_IRQn);
-    NVIC_ClearPendingIRQ(TIMER2_IRQn);
-    NVIC_ClearPendingIRQ(TIMER3_IRQn);
-    NVIC_EnableIRQ(TIMER1_IRQn);
-    NVIC_EnableIRQ(TIMER2_IRQn);
-    NVIC_EnableIRQ(TIMER3_IRQn);
+    IRQregisterIrq(TIMER1_IRQn,&cstirqhnd1);
+    IRQregisterIrq(TIMER2_IRQn,&cstirqhnd2);
+    IRQregisterIrq(TIMER3_IRQn,&cstirqhnd3);
     
     tc=new TimeConversion(HRTB::freq);
     //Start timers

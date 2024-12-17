@@ -103,10 +103,9 @@ public:
         TIMER2->CC[0].CTRL=TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
         TIMER2->CC[0].CCV=0xffff;
 
+        NVIC_SetPriority(TIMER2_IRQn,3); //High priority (Max=0, min=15)
         IRQregisterIrq(TIMER2_IRQn,&TimerAdapter<EFM32Timer2,16>::IRQhandler,
                        static_cast<TimerAdapter<EFM32Timer2, 16>*>(this));
-        NVIC_SetPriority(TIMER2_IRQn,3); //High priority (Max=0, min=15)
-        NVIC_EnableIRQ(TIMER2_IRQn);
     }
 };
 
