@@ -44,10 +44,12 @@
     #define BUS_HAS_AHB
     #define BUS_HAS_APB12
     #define DMA_STM32F1
+    #define ALTFUNC_STM32F1
 #elif defined(_ARCH_CORTEXM3_STM32L1)
     #define BUS_HAS_AHB
     #define BUS_HAS_APB12
     #define DMA_STM32F1
+    #define ALTFUNC_STM32F2
 #elif defined(_ARCH_CORTEXM4_STM32L4)
     #define BUS_HAS_AHB12
     #define BUS_HAS_APB1L1H2
@@ -57,10 +59,17 @@
         #define DMA_HAS_CSELR
     #endif
     #define DMA_STM32F1
+    #define ALTFUNC_STM32F2
+#elif defined(_ARCH_CORTEXM7_STM32F7)
+    #define BUS_HAS_AHB12
+    #define BUS_HAS_APB12
+    #define DMA_STM32F2
+    #define ALTFUNC_STM32F2_SPLIT
 #else
     #define BUS_HAS_AHB12
     #define BUS_HAS_APB12
     #define DMA_STM32F2
+    #define ALTFUNC_STM32F2
 #endif
 
 namespace miosix {
@@ -147,6 +156,63 @@ private:
         }
     }
 };
+
+
+#if defined(ALTFUNC_STM32F1)
+
+struct STM32SerialAltFunc
+{
+};
+
+#elif defined(ALTFUNC_STM32F2)
+
+struct STM32SerialAltFunc
+{
+    void set(GpioPin& pin) const
+    {
+        //First we set the AF then the mode to avoid glitches
+        pin.alternateFunction(af);
+        pin.mode(Mode::ALTERNATE);
+    }
+    unsigned char af;
+};
+
+#elif defined(ALTFUNC_STM32F2_SPLIT)
+
+struct STM32SerialAltFunc
+{
+    struct Span
+    {
+        // when the span ends (exclusive)
+        unsigned char port:8, pin:4; 
+        unsigned char af:4; // alternate function ID
+    };
+    const Span *spans;
+
+    void set(GpioPin& pin) const
+    {
+        //First we set the AF then the mode to avoid glitches
+        pin.alternateFunction(lookup(pin));
+        pin.mode(Mode::ALTERNATE);
+    }
+private:
+    unsigned char lookup(GpioPin& gpio) const
+    {
+        unsigned char port=(gpio.getPort()-GPIOA_BASE)/0x400;
+        unsigned char pin=gpio.getNumber();
+        int i;
+        for(i=0; spans[i].port!=0 && spans[i].pin!=0; i++) {
+            if(spans[i].port>port || (spans[i].port==port && spans[i].pin>pin))
+               return spans[i].af;
+        }
+        return spans[i].af;
+    }
+};
+
+#else
+#error Alternate function mode undefined
+#endif
+
 
 #if defined(DMA_HAS_MUX)
 
