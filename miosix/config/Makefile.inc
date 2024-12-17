@@ -3238,8 +3238,7 @@ else ifeq ($(ARCH),cortexM0plus_stm32l0)
 
     CPU_INC := arch/cpu/armv6m
     ## Select appropriate compiler flags for both ASM/C/C++/linker
-    # TODO arch is actually -mcpu=cortex-m0plus but compiler doesn't support it yet
-    CPU := -mcpu=cortex-m0 -mthumb
+    CPU := -mcpu=cortex-m0plus -mthumb
     AFLAGS_BASE   := $(CPU)
     CFLAGS_BASE   += -D_ARCH_CORTEXM0PLUS_STM32L0 $(CLOCK_FREQ) $(CPU) \
                      $(OPT_OPTIMIZATION) -c
@@ -3306,8 +3305,7 @@ else ifeq ($(ARCH),cortexM0plus_rp2040)
 
     CPU_INC := arch/cpu/armv6m
     ## Select appropriate compiler flags for both ASM/C/C++/linker
-    # TODO arch is actually -mcpu=cortex-m0plus but compiler doesn't support it yet
-    CPU := -mcpu=cortex-m0 -mthumb
+    CPU := -mcpu=cortex-m0plus -mthumb
     AFLAGS_BASE   := $(CPU)
     CFLAGS_BASE   += -D_ARCH_CORTEXM0PLUS_RP2040 $(CLOCK_FREQ) $(CPU) \
                      $(OPT_OPTIMIZATION) -c
