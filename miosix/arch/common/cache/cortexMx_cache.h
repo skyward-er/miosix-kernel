@@ -106,7 +106,7 @@
 namespace miosix {
 
 /**
- * To be called in stage_1_boot.cpp to configure caches.
+ * To be called in boot.cpp to configure caches.
  * Only call this function if the board has caches.
  * \param xramBase base address of external memory, if present, otherwise nullptr
  * \param xramSize size of external memory, if present, otherwise 0
