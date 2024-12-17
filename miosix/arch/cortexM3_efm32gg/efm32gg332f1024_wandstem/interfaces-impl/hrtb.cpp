@@ -801,10 +801,16 @@ HRTB::HRTB() {
     TIMER1->CC[1].CTRL = TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
     TIMER3->CC[1].CTRL = TIMER_CC_CTRL_MODE_OUTPUTCOMPARE;
 
-    NVIC_SetPriority(TIMER1_IRQn,3);
+    //FIXME: in Miosix 2 the timer 1 and 3 priority was set to 3 like in all
+    //other architectures, the RTC priority was set to 7 and TIMER2 to 8.
+    //However, the EFM32 only has 3 bits of priority unlike the STM32 so setting
+    //priority to 8 effectively set it to 0, the highest one!
+    //In Miosix 3 we changed the default priority values but for now we keep this
+    //wrong line here in case the priority 0 is important.
+    //This code needs a refactoring anyway...
+
     // Priority 8, this is very important, it MUST be a lower priority than RTC priority
     NVIC_SetPriority(TIMER2_IRQn,8);
-    NVIC_SetPriority(TIMER3_IRQn,3);
     IRQregisterIrq(TIMER1_IRQn,&cstirqhnd1);
     IRQregisterIrq(TIMER2_IRQn,&cstirqhnd2);
     IRQregisterIrq(TIMER3_IRQn,&cstirqhnd3);

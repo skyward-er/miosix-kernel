@@ -77,11 +77,7 @@ void registerGpioIrq(GpioPin pin, GpioIrqEdge edge, function<void ()> callback)
             first=true;
             GPIO->INSENSE |= GPIO_INSENSE_INT | GPIO_INSENSE_PRS;
             IRQregisterIrq(GPIO_EVEN_IRQn,&IRQGpioEvenInterruptHandler);
-            NVIC_EnableIRQ(GPIO_EVEN_IRQn);
-            NVIC_SetPriority(GPIO_EVEN_IRQn,10); //Low priority
             IRQregisterIrq(GPIO_ODD_IRQn,&IRQGpioOddInterruptHandler);
-            NVIC_EnableIRQ(GPIO_ODD_IRQn);
-            NVIC_SetPriority(GPIO_ODD_IRQn,10); //Low priority
         }
         
         if(callbacks[number])

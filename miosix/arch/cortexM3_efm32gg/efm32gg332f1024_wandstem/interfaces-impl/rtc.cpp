@@ -259,7 +259,6 @@ Rtc::Rtc() : tc(frequency)
     //COMP0 -> used for wait and trigger
     //COMP1 -> reserved for VHT resync and Power manager
     //NOTE: interrupt not yet enabled as we're not setting RTC->IEN
-    NVIC_SetPriority(RTC_IRQn,7); // 0 is the higest priority, 15 il the lowest
     IRQregisterIrq(RTC_IRQn,&Rtc::IRQinterruptHandler);
     
     RTC->IEN |= RTC_IEN_OF;
