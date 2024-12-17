@@ -52,24 +52,13 @@ void initKernelThreadCtxsave(unsigned int *ctxsave, void (*pc)(void *(*)(void*),
 
 void IRQportableStartKernel()
 {
-    // FIXME: on M0 we cannot disable interrupt preemption: all IRQs must
-    // have the same priority, otherwise everything breaks!
-    //   As a convention we choose a priority of 3, which is the *lowest* one.
-    // This counterintuitive setting allows for higher-priority handlers as long
-    // as they do NOT perform context switches and are fully reentrant.
-    //   However such an interrupt handler is in practice impossible for Miosix,
-    // as at the moment IRQ contexts are assumed to be in mutual exclusion.
-    //   This will be fixable once we introduce SMP support.
-    NVIC_SetPriority(SVCall_IRQn,3);
-    NVIC_SetPriority(PendSV_IRQn,3);
-
     //create a temporary space to save current registers. This data is useless
     //since there's no way to stop the sheduler, but we need to save it anyway.
     unsigned int s_ctxsave[miosix::CTXSAVE_SIZE];
     ctxsave=s_ctxsave;//make global ctxsave point to it
     //Note, we can't use enableInterrupts() now since the call is not matched
     //by a call to disableInterrupts()
-    //FIXME: there's no __enable_fault_irq(); is this right?
+    //There's no __enable_fault_irq() in ARMv6M
     __enable_irq();
     miosix::Thread::yield();
     //Never reaches here

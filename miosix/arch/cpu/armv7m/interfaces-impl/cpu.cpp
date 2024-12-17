@@ -63,13 +63,6 @@ void IRQportableStartKernel()
     //was removed as gcc starting from 4.7.2 generates unaligned accesses by
     //default (https://www.gnu.org/software/gcc/gcc-4.7/changes.html)
     SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
-    NVIC_SetPriorityGrouping(7);//This should disable interrupt nesting
-    //Quirk: static_cast<IRQn_Type>(-5) is sometimes defined as SVCall_IRQn and
-    //sometimes as SVC_IRQn. We could use complicated means to detect which
-    //enumeration item is defined, or we could use its value directly which
-    //is much simpler. This is not a constant that is subject to change anyway.
-    NVIC_SetPriority(static_cast<IRQn_Type>(-5),3);//High priority for SVC (Max=0, min=15)
-    NVIC_SetPriority(MemoryManagement_IRQn,2);//Higher priority for MemoryManagement (Max=0, min=15)
 
     #ifdef WITH_PROCESSES
     //NOTE: For Cortex-M7, if caches are enabled, the MPU will be enabled also
