@@ -53,7 +53,7 @@
     #define DMA_STM32F1
     #define DMA_HAS_CSELR
     #define ALTFUNC_STM32F2_SPLIT
-#elif defined(_ARCH_CORTEXM3_STM32L1)
+#elif defined(_ARCH_CORTEXM3_STM32L1) || defined(_ARCH_CORTEXM4_STM32F3)
     #define BUS_HAS_AHB
     #define BUS_HAS_APB12
     #define DMA_STM32F1
