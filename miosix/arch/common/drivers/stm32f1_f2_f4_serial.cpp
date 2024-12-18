@@ -52,7 +52,9 @@ class STM32SerialHW
 public:
     inline USART_TypeDef *get() const { return port; }
     inline IRQn_Type getIRQn() const { return irq; }
-    inline STM32SerialAltFunc const & getAltFunc() const { return altFunc; }
+    #if !defined(ALTFUNC_STM32F1)
+        inline STM32SerialAltFunc const & getAltFunc() const { return altFunc; }
+    #endif
     inline unsigned int IRQgetClock() const { return STM32Bus::getClock(bus); }
     inline void IRQenable() const { STM32Bus::IRQen(bus, clkEnMask); }
     inline void IRQdisable() const { STM32Bus::IRQdis(bus, clkEnMask); }
@@ -60,7 +62,9 @@ public:
 
     USART_TypeDef *port;        ///< USART port
     IRQn_Type irq;              ///< USART IRQ number
-    STM32SerialAltFunc altFunc; ///< Alternate function to set for GPIOs
+    #if !defined(ALTFUNC_STM32F1)
+        STM32SerialAltFunc altFunc; ///< Alternate function to set for GPIOs
+    #endif
     STM32Bus::ID bus;           ///< Bus where the port is (APB1 or 2)
     unsigned long clkEnMask;    ///< USART clock enable
 
