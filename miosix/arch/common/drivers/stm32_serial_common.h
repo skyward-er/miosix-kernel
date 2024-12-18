@@ -85,6 +85,12 @@
     #define BUS_HAS_APB12
     #define DMA_STM32F2
     #define ALTFUNC_STM32F2_SPLIT
+#elif defined(_ARCH_CORTEXM7_STM32H7)
+    #define BUS_HAS_AHB1234
+    #define BUS_HAS_APB1L1H234
+    #define DMA_STM32F2
+    #define DMA_HAS_MUX
+    #define ALTFUNC_STM32F2_SPLIT
 #else
     #define BUS_HAS_AHB12
     #define BUS_HAS_APB12
@@ -106,13 +112,17 @@ public:
             APB1, APB2,
         #elif defined(BUS_HAS_APB1L1H2)
             APB1L, APB1H, APB2,
+        #elif defined(BUS_HAS_APB1L1H234)
+            APB1L, APB1H, APB2, APB3, APB4,
         #else // BUS_HAS_APBx
         #error APB compile time bus setting unspecified
         #endif // BUS_HAS_APBx
         #if defined(BUS_HAS_AHB)
             AHB,
         #elif defined(BUS_HAS_AHB12)
-            AHB1, AHB2
+            AHB1, AHB2,
+        #elif defined(BUS_HAS_AHB1234)
+            AHB1, AHB2, AHB3, AHB4,
         #else // BUS_HAS_AHBx
         #error AHB compile time bus setting unspecified
         #endif // BUS_HAS_AHBx
@@ -159,6 +169,26 @@ public:
                 if(RCC->CFGR & RCC_CFGR_PPRE2_2)
                     freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
                 break;
+        #elif defined(BUS_HAS_APB1L1H234)
+            case STM32Bus::APB1L:
+            case STM32Bus::APB1H: // rcc_pclk1
+                if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                    freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+                if(RCC->D2CFGR & RCC_D2CFGR_D2PPRE1_2)
+                    freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE1_Pos) & 0x3)+1);
+                break;
+            case STM32Bus::APB2: // rcc_pclk2
+                if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                    freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+                if(RCC->D2CFGR & RCC_D2CFGR_D2PPRE2_2)
+                    freq/=1<<(((RCC->D2CFGR>>RCC_D2CFGR_D2PPRE2_Pos) & 0x3)+1);
+                break;
+            case STM32Bus::APB4: // rcc_pclk4
+                if(RCC->D1CFGR & RCC_D1CFGR_HPRE_3)
+                    freq/=1<<(((RCC->D1CFGR>>RCC_D1CFGR_HPRE_Pos) & 0x7)+1);
+                if(RCC->D3CFGR & RCC_D3CFGR_D3PPRE_2)
+                    freq/=1<<(((RCC->D3CFGR>>RCC_D3CFGR_D3PPRE_Pos) & 0x3)+1);
+                break;
         #endif
         default:
             break;
@@ -178,6 +208,12 @@ private:
                 case STM32Bus::APB1L: return RCC->APB1ENR1;
                 case STM32Bus::APB1H: return RCC->APB1ENR2;
                 case STM32Bus::APB2: return RCC->APB2ENR;
+            #elif defined(BUS_HAS_APB1L1H234)
+                case STM32Bus::APB1L: return RCC->APB1LENR;
+                case STM32Bus::APB1H: return RCC->APB1HENR;
+                case STM32Bus::APB2: return RCC->APB2ENR;
+                case STM32Bus::APB3: return RCC->APB3ENR;
+                case STM32Bus::APB4: return RCC->APB4ENR;
             #endif // BUS_HAS_APBx
             default:
             #if defined(BUS_HAS_AHB)
@@ -185,6 +221,11 @@ private:
             #elif defined(BUS_HAS_AHB12)
                 case STM32Bus::AHB1: return RCC->AHB1ENR;
                 case STM32Bus::AHB2: return RCC->AHB2ENR;
+            #elif defined(BUS_HAS_AHB1234)
+                case STM32Bus::AHB1: return RCC->AHB1ENR;
+                case STM32Bus::AHB2: return RCC->AHB2ENR;
+                case STM32Bus::AHB3: return RCC->AHB3ENR;
+                case STM32Bus::AHB4: return RCC->AHB4ENR;
             #endif // BUS_HAS_AHBx
         }
     }
@@ -278,9 +319,26 @@ private:
             DMAMUX1_Channel10,
             DMAMUX1_Channel11,
             DMAMUX1_Channel12,
-            DMAMUX1_Channel13
+            DMAMUX1_Channel13,
+            #ifdef DMAMUX1_Channel14
+                DMAMUX1_Channel14,
+                DMAMUX1_Channel15,
+                DMAMUX2_Channel0,
+                DMAMUX2_Channel1,
+                DMAMUX2_Channel2,
+                DMAMUX2_Channel3,
+                DMAMUX2_Channel4,
+                DMAMUX2_Channel5,
+                DMAMUX2_Channel6,
+                DMAMUX2_Channel7,
+            #endif
         };
-        return ptrs[channel-1];
+        #ifdef DMA_STM32F1
+            // STM32F1-style DMA controller has 1-based numbering
+            return ptrs[channel-1];
+        #else
+            return ptrs[channel];
+        #endif
     }
 };
 
@@ -445,7 +503,13 @@ public:
     inline unsigned long getRxISR() const { return getISR(rxIRShift); }
     inline void setRxIFCR(unsigned long v) const { return setIFCR(rxIRShift,v); }
 
-    inline void IRQinit() { }
+    inline void IRQinit()
+    {
+        #if defined(DMA_HAS_MUX)
+            txMux.IRQinit();
+            rxMux.IRQinit();
+        #endif
+    }
 
     inline void startDmaWrite(volatile uint32_t *dr, const char *buffer, size_t size) const
     {
@@ -467,7 +531,11 @@ public:
         //anything for overruns and underruns, so there is literally no reason to
         //enable FIFO error interrupts in the first place.
         tx->FCR=DMA_SxFCR_DMDIS;//Enable fifo
-        tx->CR = (txChannel << DMA_SxCR_CHSEL_Pos) //Select channel
+        unsigned long channel=0;
+        #if !defined(DMA_HAS_MUX)
+            channel=txChannel << DMA_SxCR_CHSEL_Pos;
+        #endif
+        tx->CR = channel          //Select channel
                | DMA_SxCR_MINC    //Increment RAM pointer
                | DMA_SxCR_DIR_0   //Memory to peripheral
                | DMA_SxCR_TCIE    //Interrupt on completion
@@ -494,7 +562,11 @@ public:
         rx->PAR=reinterpret_cast<unsigned int>(dr);
         rx->M0AR=reinterpret_cast<unsigned int>(buffer);
         rx->NDTR=size;
-        rx->CR = (rxChannel << DMA_SxCR_CHSEL_Pos) //Select channel
+        unsigned long channel=0;
+        #if !defined(DMA_HAS_MUX)
+            channel=rxChannel << DMA_SxCR_CHSEL_Pos;
+        #endif
+        rx->CR = channel          //Select channel
                | DMA_SxCR_MINC    //Increment RAM pointer
                | 0                //Peripheral to memory
                | DMA_SxCR_HTIE    //Interrupt on half transfer
@@ -523,12 +595,20 @@ public:
     DMA_Stream_TypeDef *tx;     ///< Pointer to DMA TX stream
     IRQn_Type txIrq;            ///< DMA TX stream IRQ number
     unsigned char txIRShift;    ///< Value from DMAIntRegShift for the stream
-    unsigned char txChannel;    ///< DMA TX stream channel
+    #if defined(DMA_HAS_MUX)
+        STM32SerialDMAMUXHW txMux;
+    #else
+        unsigned char txChannel;    ///< DMA TX stream channel
+    #endif
 
     DMA_Stream_TypeDef *rx;     ///< Pointer to DMA RX stream
     IRQn_Type rxIrq;            ///< DMA RX stream IRQ number
     unsigned char rxIRShift;    ///< Value from DMAIntRegShift for the stream
-    unsigned char rxChannel;    ///< DMA TX stream channel
+    #if defined(DMA_HAS_MUX)
+        STM32SerialDMAMUXHW rxMux;
+    #else
+        unsigned char rxChannel;    ///< DMA TX stream channel
+    #endif
 
 private:
     inline unsigned long getISR(unsigned char pos) const
