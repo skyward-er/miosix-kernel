@@ -125,6 +125,14 @@ static const STM32SerialHW ports[maxPorts] = {
       { DMA1_Channel2, DMA1_Channel2_3_IRQn,     STM32SerialDMAHW::Channel2, 5,
         DMA1_Channel6, DMA1_Channel4_5_6_7_IRQn, STM32SerialDMAHW::Channel6, 5 } },
 };
+#elif defined(STM32F030x6) || defined(STM32F030x8)
+constexpr int maxPorts = 2;
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, {1}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+    { USART2, USART2_IRQn, {1}, false, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+};
 #elif defined(STM32F303xC)
 constexpr int maxPorts = 5;
 static const STM32SerialHW ports[maxPorts] = {

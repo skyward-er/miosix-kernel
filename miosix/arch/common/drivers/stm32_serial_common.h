@@ -58,6 +58,14 @@
     #define BUS_HAS_APB12
     #define DMA_STM32F1
     #define ALTFUNC_STM32F2
+#elif defined(_ARCH_CORTEXM0_STM32F0)
+    #define BUS_HAS_AHB
+    #define BUS_HAS_APB
+    #if defined(STM32F030xC)
+        #define DMA_HAS_CSELR
+    #endif
+    #define DMA_STM32F1
+    #define ALTFUNC_STM32F2
 #elif defined(_ARCH_CORTEXM4_STM32L4)
     #define BUS_HAS_AHB12
     #define BUS_HAS_APB1L1H2
@@ -90,7 +98,7 @@ class STM32Bus
 {
 public:
     enum ID {
-        #if defined(BUS_HAS_APB12)
+        #if defined(BUS_HAS_APB) || defined(BUS_HAS_APB12)
             APB1, APB2,
         #elif defined(BUS_HAS_APB1L1H2)
             APB1L, APB1H, APB2,
@@ -122,12 +130,14 @@ public:
         unsigned int freq=SystemCoreClock;
         switch(bus)
         {
-        #if defined(BUS_HAS_APB1L1H2)
-            case STM32Bus::APB1L:
-            case STM32Bus::APB1H:
-        #else
+        #if defined(BUS_HAS_APB)
             case STM32Bus::APB1:
-        #endif
+            case STM32Bus::APB2:
+                if(RCC->CFGR & RCC_CFGR_PPRE_2)
+                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE_Pos) & 0x3)+1);
+                break;
+        #elif defined(BUS_HAS_APB12)
+            case STM32Bus::APB1:
                 if(RCC->CFGR & RCC_CFGR_PPRE1_2)
                     freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
                 break;
@@ -135,8 +145,19 @@ public:
                 if(RCC->CFGR & RCC_CFGR_PPRE2_2)
                     freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
                 break;
-            default:
+        #elif defined(BUS_HAS_APB1L1H2)
+            case STM32Bus::APB1L:
+            case STM32Bus::APB1H:
+                if(RCC->CFGR & RCC_CFGR_PPRE1_2)
+                        freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE1_Pos) & 0x3)+1);
+                    break;
+            case STM32Bus::APB2:
+                if(RCC->CFGR & RCC_CFGR_PPRE2_2)
+                    freq/=1<<(((RCC->CFGR>>RCC_CFGR_PPRE2_Pos) & 0x3)+1);
                 break;
+        #endif
+        default:
+            break;
         }
         return freq;
     }
@@ -146,7 +167,7 @@ private:
     {
         switch(bus)
         {
-            #if defined(BUS_HAS_APB12)
+            #if defined(BUS_HAS_APB) || defined(BUS_HAS_APB12)
                 case STM32Bus::APB1: return RCC->APB1ENR;
                 case STM32Bus::APB2: return RCC->APB2ENR;
             #elif defined(BUS_HAS_APB1L1H2)

@@ -206,13 +206,15 @@ void SystemCoreClockUpdate (void)
       if (pllsource == RCC_CFGR_PLLSRC_HSE_PREDIV)
       {
         /* HSE used as PLL clock source : SystemCoreClock = HSE/PREDIV * PLLMUL */
-        SystemCoreClock = (HSE_VALUE/predivfactor) * pllmull;
+        // Miosix: first multiply and then divide to fix numerical precision
+        SystemCoreClock = (HSE_VALUE*pllmull)/predivfactor;
       }
 #if defined(STM32F042x6) || defined(STM32F048xx) || defined(STM32F071xB) || defined(STM32F072xB) || defined(STM32F078xx) || defined(STM32F091xC) || defined(STM32F098xx)
       else if (pllsource == RCC_CFGR_PLLSRC_HSI48_PREDIV)
       {
         /* HSI48 used as PLL clock source : SystemCoreClock = HSI48/PREDIV * PLLMUL */
-        SystemCoreClock = (HSI48_VALUE/predivfactor) * pllmull;
+        // Miosix: first multiply and then divide to fix numerical precision
+        SystemCoreClock = (HSI48_VALUE*pllmull)/predivfactor;
       }
 #endif /* STM32F042x6 || STM32F048xx || STM32F071xB || STM32F072xB || STM32F078xx || STM32F091xC || STM32F098xx */
       else
@@ -221,10 +223,12 @@ void SystemCoreClockUpdate (void)
  || defined(STM32F078xx) || defined(STM32F071xB)  || defined(STM32F072xB) \
  || defined(STM32F070xB) || defined(STM32F091xC) || defined(STM32F098xx)  || defined(STM32F030xC)
         /* HSI used as PLL clock source : SystemCoreClock = HSI/PREDIV * PLLMUL */
-        SystemCoreClock = (HSI_VALUE/predivfactor) * pllmull;
+        // Miosix: first multiply and then divide to fix numerical precision
+        SystemCoreClock = (HSI_VALUE*pllmull)/predivfactor;
 #else
         /* HSI used as PLL clock source : SystemCoreClock = HSI/2 * PLLMUL */
-        SystemCoreClock = (HSI_VALUE >> 1) * pllmull;
+        // Miosix: first multiply and then divide to fix numerical precision
+        SystemCoreClock = (HSI_VALUE*pllmull)/2;
 #endif /* STM32F042x6 || STM32F048xx || STM32F070x6 || 
           STM32F071xB || STM32F072xB || STM32F078xx || STM32F070xB ||
           STM32F091xC || STM32F098xx || STM32F030xC */
