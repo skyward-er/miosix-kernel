@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <inttypes.h>
 #include <sys/ioctl.h>
+#include "interfaces/bsp.h"
 #include "interfaces_private/bsp_private.h"
 #include "kernel/kernel.h"
 #include "kernel/sync.h"
@@ -78,10 +79,11 @@ void IRQbspInit()
     ledOn();
     delayMs(100);
     ledOff();
-    auto tx=Gpio<GPIOB_BASE,14>::getPin(); tx.alternateFunction(4);
-    auto rx=Gpio<GPIOB_BASE,15>::getPin(); rx.alternateFunction(4);
-    DefaultConsole::instance().IRQset(intrusive_ref_ptr<Device>(
-        new STM32Serial(1,defaultSerialSpeed,tx,rx)));
+    DefaultConsole::instance().IRQset(
+        STM32SerialBase::get<defaultSerialTxPin,defaultSerialRxPin,
+        defaultSerialRtsPin,defaultSerialCtsPin>(
+            defaultSerial,defaultSerialSpeed,
+            defaultSerialFlowctrl,defaultSerialDma));
 }
 
 void bspInit2()
