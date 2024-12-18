@@ -98,10 +98,9 @@ unsigned int HardwareRng::getImpl()
     for(;;) //Can't return an error, keep retrying
     #endif
     {
-        int timeout=1000000;
-        unsigned int sr;
-        while(--timeout>0) { sr=RNG->SR; if(sr & RNG_SR_DRDY) break; }
-        if((sr & RNG_SR_SECS) || (sr & RNG_SR_CECS) || timeout<=0)
+        unsigned int sr,timeout=1000000;
+        for(;timeout!=0;timeout--) { sr=RNG->SR; if(sr & RNG_SR_DRDY) break; }
+        if((sr & RNG_SR_SECS) || (sr & RNG_SR_CECS) || timeout==0)
         {
             RNG->CR=0;
             delayUs(1);
