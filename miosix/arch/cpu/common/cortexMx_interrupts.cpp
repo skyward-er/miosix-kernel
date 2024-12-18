@@ -40,10 +40,6 @@
 #error "__CORTEX_M undefined"
 #endif //__CORTEX_M
 
-#ifndef __NVIC_PRIO_BITS
-#error "__NVIC_PRIO_BITS undefined"
-#endif //__NVIC_PRIO_BITS
-
 namespace miosix {
 
 //
@@ -233,12 +229,6 @@ void IRQinitIrqTable() noexcept
     //NOTE: the bootoader in some MCUs such as ATSam4l does not relocate the
     //vector table offset to the one in the firmware, so we force it here
     SCB->VTOR=reinterpret_cast<unsigned int>(&hardwareInterruptTable);
-
-    //Compute default priority. ARM Cortex use 0 for the highest priority and
-    //(1<<__NVIC_PRIO_BITS)-1 for the lowest one. We chose to use the top 3/4
-    //of the range for higher than default priority and the bottom 1/4 of the
-    //range for lower than default
-    constexpr int defaultIrqPriority=0.75f*(1<<__NVIC_PRIO_BITS);
 
     //Quirk: static_cast<IRQn_Type>(-5) is sometimes defined as SVCall_IRQn and
     //sometimes as SVC_IRQn. We could use complicated means to detect which

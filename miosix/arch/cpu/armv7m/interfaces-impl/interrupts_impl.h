@@ -63,6 +63,22 @@ inline bool areInterruptsEnabled() noexcept
     return true;
 }
 
+#ifndef __NVIC_PRIO_BITS
+#error "__NVIC_PRIO_BITS undefined"
+#endif //__NVIC_PRIO_BITS
+
+/// Default interrupt priority. All interrupt priorities are set at boot to this
+/// value. ARM Cortex use 0 for the highest priority and (1<<__NVIC_PRIO_BITS)-1
+/// for the lowest one. We chose to use the top 3/4 of the range for higher than
+/// default priority and the bottom 1/4 of the range for lower than default.
+/// With 4 bit priorities the default is 11
+/// With 3 bit priorities the default is 5
+/// With 2 bit priorities the default is 2
+constexpr int defaultIrqPriority=(0.75f*(1<<__NVIC_PRIO_BITS))-1;
+
+/// Minimum interrupt priority that the hardware provides
+constexpr int minimumIrqPriority=(1<<__NVIC_PRIO_BITS)-1;
+
 /**
  * \}
  */
