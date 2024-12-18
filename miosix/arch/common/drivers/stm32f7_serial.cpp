@@ -70,9 +70,24 @@ public:
     inline void IRQdisable() const { STM32Bus::IRQdis(bus, clkEnMask); }
     inline const STM32SerialDMAHW& getDma() const { return dma; }
 
+    inline void setBaudRate(unsigned int baudrate) const
+    {
+        unsigned int freq=IRQgetClock();
+        if(isLowPower)
+        {
+            freq/=1000000;
+            unsigned int fac=1000000U*4096U/baudrate;
+            port->BRR=((fac*freq)+8)/16;
+        } else {
+            unsigned int quot=2*freq/baudrate; //2*freq for round to nearest
+            port->BRR=quot/2 + (quot & 1);     //Round to nearest
+        }
+    }
+
     USART_TypeDef *port;        ///< USART port
     IRQn_Type irq;              ///< USART IRQ number
     STM32SerialAltFunc altFunc; ///< Alternate function to set for GPIOs
+    bool isLowPower;            ///< If it is a LPUART or not
     STM32Bus::ID bus;           ///< Bus where the port is (APB1 or 2)
     unsigned long clkEnMask;    ///< USART clock enable
 
@@ -83,41 +98,56 @@ public:
  * Table of hardware configurations
  */
 
-#if defined(STM32F745xx) || defined(STM32F746xx)
+#if defined(STM32L053xx)
+constexpr int maxPorts = 3;
+static const STM32SerialAltFunc::Span usart1AfSpans[]={{1,0,4},{0,0,0}};
+static const STM32SerialAltFunc::Span usart2AfSpans[]={{0,0,4}};
+static const STM32SerialAltFunc::Span lpuart1AfSpans[]={{1,12,4},{1,13,2},{2,0,4},{2,10,2},{0,0,0}};
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, {usart1AfSpans}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { DMA1_Channel2, DMA1_Channel2_3_IRQn,     STM32SerialDMAHW::Channel2, 3,
+        DMA1_Channel5, DMA1_Channel4_5_6_7_IRQn, STM32SerialDMAHW::Channel5, 3 } },
+    { USART2, USART2_IRQn, {usart2AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+    { LPUART1, LPUART1_IRQn, {lpuart1AfSpans}, true, STM32Bus::APB1, RCC_APB1ENR_LPUART1EN,
+      { DMA1_Channel2, DMA1_Channel2_3_IRQn,     STM32SerialDMAHW::Channel2, 5,
+        DMA1_Channel6, DMA1_Channel4_5_6_7_IRQn, STM32SerialDMAHW::Channel6, 5 } },
+};
+#elif defined(STM32F745xx) || defined(STM32F746xx)
 constexpr int maxPorts = 8;
 static const STM32SerialAltFunc::Span af7Spans[]={{0,0,7}};
 static const STM32SerialAltFunc::Span af8Spans[]={{0,0,7}};
 static const STM32SerialAltFunc::Span uart5AfSpans[]={{3,12,7},{0,0,8}};
 static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, {af7Spans}, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+    { USART1, USART1_IRQn, {af7Spans}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
         DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
         DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { USART2, USART2_IRQn, {af7Spans}, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+    { USART2, USART2_IRQn, {af7Spans}, false, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 4,
         DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { USART3, USART3_IRQn, {af7Spans}, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
+    { USART3, USART3_IRQn, {af7Spans}, false, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 4,
         DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 4 } },
-    { UART4 , UART4_IRQn , {af8Spans}, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
+    { UART4 , UART4_IRQn , {af8Spans}, false, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialDMAHW::Stream4, 4,
         DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialDMAHW::Stream2, 4 } },
-    { UART5 , UART5_IRQn , {uart5AfSpans}, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
+    { UART5 , UART5_IRQn , {uart5AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 4 } },
-    { USART6, USART6_IRQn, {af8Spans}, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
+    { USART6, USART6_IRQn, {af8Spans}, false, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
         DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5,
         DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5 } },
-    { UART7 , UART7_IRQn , {af8Spans}, STM32Bus::APB1, RCC_APB1ENR_UART7EN,
+    { UART7 , UART7_IRQn , {af8Spans}, false, STM32Bus::APB1, RCC_APB1ENR_UART7EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5,
         DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 5 } },
-    { UART8 , UART8_IRQn , {af8Spans}, STM32Bus::APB1, RCC_APB1ENR_UART8EN,
+    { UART8 , UART8_IRQn , {af8Spans}, false, STM32Bus::APB1, RCC_APB1ENR_UART8EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 5,
         DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5 } },
@@ -130,35 +160,35 @@ static const STM32SerialAltFunc::Span uart4AfSpans[]={{0,11,8},{0,15,6},{0,0,8}}
 static const STM32SerialAltFunc::Span uart5AfSpans[]={{1,12,7},{2,8,8},{0,0,7}};
 constexpr int maxPorts = 8;
 static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, {uart1AfSpans}, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+    { USART1, USART1_IRQn, {uart1AfSpans}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
         DMA2_Stream7, DMA2_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
         DMA2_Stream5, DMA2_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { USART2, USART2_IRQn, {af7Spans}, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+    { USART2, USART2_IRQn, {af7Spans}, false, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 4,
         DMA1_Stream5, DMA1_Stream5_IRQn, STM32SerialDMAHW::Stream5, 4 } },
-    { USART3, USART3_IRQn, {af7Spans}, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
+    { USART3, USART3_IRQn, {af7Spans}, false, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 4,
         DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 4 } },
-    { UART4 , UART4_IRQn , {uart4AfSpans}, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
+    { UART4 , UART4_IRQn , {uart4AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_UART4EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream4, DMA1_Stream4_IRQn, STM32SerialDMAHW::Stream4, 4,
         DMA1_Stream2, DMA1_Stream2_IRQn, STM32SerialDMAHW::Stream2, 4 } },
-    { UART5 , UART5_IRQn , {uart5AfSpans}, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
+    { UART5 , UART5_IRQn , {uart5AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_UART5EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialDMAHW::Stream7, 4,
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 4 } },
-    { USART6, USART6_IRQn, {af8Spans}, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
+    { USART6, USART6_IRQn, {af8Spans}, false, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
         DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5,
         DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5 } },
-    { UART7 , UART7_IRQn , {af8Spans}, STM32Bus::APB1, RCC_APB1ENR_UART7EN,
+    { UART7 , UART7_IRQn , {af8Spans}, false, STM32Bus::APB1, RCC_APB1ENR_UART7EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, 5,
         DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, 5 } },
-    { UART8 , UART8_IRQn , {af8Spans}, STM32Bus::APB1, RCC_APB1ENR_UART8EN,
+    { UART8 , UART8_IRQn , {af8Spans}, false, STM32Bus::APB1, RCC_APB1ENR_UART8EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, 5,
         DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, 5 } },
@@ -166,27 +196,27 @@ static const STM32SerialHW ports[maxPorts] = {
 #elif defined(STM32L476xx)
 constexpr int maxPorts = 6;
 static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, {7}, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+    { USART1, USART1_IRQn, {7}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4, 2,
         DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5, 2 } },
-    { USART2, USART2_IRQn, {7}, STM32Bus::APB1L, RCC_APB1ENR1_USART2EN,
+    { USART2, USART2_IRQn, {7}, false, STM32Bus::APB1L, RCC_APB1ENR1_USART2EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7, 2,
         DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6, 2 } },
-    { USART3, USART3_IRQn, {7}, STM32Bus::APB1L, RCC_APB1ENR1_USART3EN,
+    { USART3, USART3_IRQn, {7}, false, STM32Bus::APB1L, RCC_APB1ENR1_USART3EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2, 2,
         DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3, 2 } },
-    { UART4 , UART4_IRQn , {8}, STM32Bus::APB1L, RCC_APB1ENR1_UART4EN,
+    { UART4 , UART4_IRQn , {8}, false, STM32Bus::APB1L, RCC_APB1ENR1_UART4EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA2_Channel5, DMA2_Channel5_IRQn, STM32SerialDMAHW::Channel5, 2,
         DMA2_Channel3, DMA2_Channel3_IRQn, STM32SerialDMAHW::Channel3, 2 } },
-    { UART5 , UART5_IRQn , {8}, STM32Bus::APB1L, RCC_APB1ENR1_UART5EN,
+    { UART5 , UART5_IRQn , {8}, false, STM32Bus::APB1L, RCC_APB1ENR1_UART5EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA2_Channel1, DMA2_Channel1_IRQn, STM32SerialDMAHW::Channel1, 2,
         DMA2_Channel2, DMA2_Channel2_IRQn, STM32SerialDMAHW::Channel2, 2 } },
-    { LPUART1, LPUART1_IRQn, {8}, STM32Bus::APB1H, RCC_APB1ENR2_LPUART1EN,
+    { LPUART1, LPUART1_IRQn, {8}, true, STM32Bus::APB1H, RCC_APB1ENR2_LPUART1EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA2_Channel7, DMA2_Channel7_IRQn, STM32SerialDMAHW::Channel7, 4,
         DMA2_Channel6, DMA2_Channel6_IRQn, STM32SerialDMAHW::Channel6, 4 } },
@@ -194,27 +224,27 @@ static const STM32SerialHW ports[maxPorts] = {
 #elif defined(STM32L4R9xx)
 constexpr int maxPorts = 6;
 static const STM32SerialHW ports[maxPorts] = {
-    { USART1, USART1_IRQn, {7}, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+    { USART1, USART1_IRQn, {7}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Channel4, DMA1_Channel4_IRQn, STM32SerialDMAHW::Channel4, {4, 25},
         DMA1_Channel5, DMA1_Channel5_IRQn, STM32SerialDMAHW::Channel5, {5, 24} } },
-    { USART2, USART2_IRQn, {7}, STM32Bus::APB1L, RCC_APB1ENR1_USART2EN,
+    { USART2, USART2_IRQn, {7}, false, STM32Bus::APB1L, RCC_APB1ENR1_USART2EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Channel7, DMA1_Channel7_IRQn, STM32SerialDMAHW::Channel7, {7, 27},
         DMA1_Channel6, DMA1_Channel6_IRQn, STM32SerialDMAHW::Channel6, {6, 26} } },
-    { USART3, USART3_IRQn, {7}, STM32Bus::APB1L, RCC_APB1ENR1_USART3EN,
+    { USART3, USART3_IRQn, {7}, false, STM32Bus::APB1L, RCC_APB1ENR1_USART3EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Channel2, DMA1_Channel2_IRQn, STM32SerialDMAHW::Channel2, {2, 29},
         DMA1_Channel3, DMA1_Channel3_IRQn, STM32SerialDMAHW::Channel3, {3, 28} } },
-    { UART4 , UART4_IRQn , {8}, STM32Bus::APB1L, RCC_APB1ENR1_UART4EN,
+    { UART4 , UART4_IRQn , {8}, false, STM32Bus::APB1L, RCC_APB1ENR1_UART4EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA2_Channel5, DMA2_Channel5_IRQn, STM32SerialDMAHW::Channel5, {7+5, 31},
         DMA2_Channel3, DMA2_Channel3_IRQn, STM32SerialDMAHW::Channel3, {7+3, 30} } },
-    { UART5 , UART5_IRQn , {8}, STM32Bus::APB1L, RCC_APB1ENR1_UART5EN,
+    { UART5 , UART5_IRQn , {8}, false, STM32Bus::APB1L, RCC_APB1ENR1_UART5EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA2_Channel1, DMA2_Channel1_IRQn, STM32SerialDMAHW::Channel1, {7+1, 33},
         DMA2_Channel2, DMA2_Channel2_IRQn, STM32SerialDMAHW::Channel2, {7+2, 32} } },
-    { LPUART1, LPUART1_IRQn, {8}, STM32Bus::APB1H, RCC_APB1ENR2_LPUART1EN,
+    { LPUART1, LPUART1_IRQn, {8}, true, STM32Bus::APB1H, RCC_APB1ENR2_LPUART1EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA2_Channel7, DMA2_Channel7_IRQn, STM32SerialDMAHW::Channel7, {7+7, 35},
         DMA2_Channel6, DMA2_Channel6_IRQn, STM32SerialDMAHW::Channel6, {7+6, 34} } },
@@ -248,9 +278,7 @@ void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
         port->getAltFunc().set(rts);
         port->getAltFunc().set(cts);
     }
-    unsigned int freq=port->IRQgetClock();
-    unsigned int quot=2*freq/baudrate;      //2*freq for round to nearest
-    port->get()->BRR=quot/2 + (quot & 1);   //Round to nearest
+    port->setBaudRate(baudrate);
     if(flowControl==false) port->get()->CR3 |= USART_CR3_ONEBIT;
     else port->get()->CR3 |= USART_CR3_ONEBIT | USART_CR3_RTSE | USART_CR3_CTSE;
 }

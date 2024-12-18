@@ -28,7 +28,9 @@
 
 #pragma once
 
+#include <cstdlib>
 #include "interfaces/arch_registers.h"
+#include "interfaces/gpio.h"
 
 /*
  * Common code for STM32 serial drivers
@@ -45,6 +47,12 @@
     #define BUS_HAS_APB12
     #define DMA_STM32F1
     #define ALTFUNC_STM32F1
+#elif defined(_ARCH_CORTEXM0PLUS_STM32L0)
+    #define BUS_HAS_AHB
+    #define BUS_HAS_APB12
+    #define DMA_STM32F1
+    #define DMA_HAS_CSELR
+    #define ALTFUNC_STM32F2_SPLIT
 #elif defined(_ARCH_CORTEXM3_STM32L1)
     #define BUS_HAS_AHB
     #define BUS_HAS_APB12
@@ -179,6 +187,21 @@ struct STM32SerialAltFunc
 
 #elif defined(ALTFUNC_STM32F2_SPLIT)
 
+/**
+ * Class representing a compressed Alternate Function assignment table.
+ *   The assignment table is represented as a sequence of spans which implicitly
+ * starts from port GPIOA, pin 0.
+ * An example of a sequence of such spans is the following:
+ *     {{1,12,4},{1,13,2},{0,0,4}}
+ *       | |  |
+ *       | |  \--- Alternate Function ID
+ *       | \------ Pin in a port (0 to 15)
+ *       \-------- Port as a number (GPIOA=0, GPIOB=1, GPIOC=2, GPIOD=3, ...)
+ * This means that the above array specifies the following table: 
+ *   - {1,12,4}: AF 4 from GPIOA, 0 to GPIOB, 12 (not included)
+ *   - {1,13,2}: AF 2 from GPIOB, 12 to GPIOB, 13 (not included)
+ *   - {0,0,4}: AF 4 from GPIOB, 13 and for all other following GPIOs.
+ */
 struct STM32SerialAltFunc
 {
     struct Span
@@ -189,24 +212,9 @@ struct STM32SerialAltFunc
     };
     const Span *spans;
 
-    void set(GpioPin& pin) const
-    {
-        //First we set the AF then the mode to avoid glitches
-        pin.alternateFunction(lookup(pin));
-        pin.mode(Mode::ALTERNATE);
-    }
+    void set(GpioPin& pin) const;
 private:
-    unsigned char lookup(GpioPin& gpio) const
-    {
-        unsigned char port=(gpio.getPort()-GPIOA_BASE)/0x400;
-        unsigned char pin=gpio.getNumber();
-        int i;
-        for(i=0; spans[i].port!=0 && spans[i].pin!=0; i++) {
-            if(spans[i].port>port || (spans[i].port==port && spans[i].pin>pin))
-               return spans[i].af;
-        }
-        return spans[i].af;
-    }
+    inline unsigned char lookup(GpioPin& gpio) const;
 };
 
 #else
