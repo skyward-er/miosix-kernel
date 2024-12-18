@@ -64,6 +64,7 @@
 #OPT_BOARD := rp2040_raspberry_pi_pico
 #OPT_BOARD := stm32h755zi_nucleo
 #OPT_BOARD := stm32l152re_nucleo
+#OPT_BOARD := stm32l010rb_nucleo
 
 ##
 ## Optimization flags, choose one.
@@ -833,6 +834,12 @@ endif
 
 # No options
 
+##---------------------------------------------------------------------------
+## stm32l010rb_nucleo
+##
+
+# No options
+
 
 ############################################################################
 ## From the options selected above, now fill all the variables needed to  ##
@@ -955,6 +962,8 @@ else ifeq ($(OPT_BOARD),stm32h755zi_nucleo)
     ARCH := cortexM7_stm32h7
 else ifeq ($(OPT_BOARD),stm32l152re_nucleo)
     ARCH := cortexM3_stm32l1
+else ifeq ($(OPT_BOARD),stm32l010rb_nucleo)
+    ARCH := cortexM0plus_stm32l0
 else
     $(info Error: no board specified in miosix/config/Makefile.inc)
     $(error Error)
@@ -3208,13 +3217,46 @@ else ifeq ($(ARCH),cortexM0plus_stm32l0)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
-        ARCH_SRC :=                          \
-        $(BOARD_INC)/boot.cpp                \
+        ARCH_SRC :=                             \
+        $(BOARD_INC)/boot.cpp                   \
+        $(BOARD_INC)/interfaces-impl/delays.cpp \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
         CFLAGS_BASE   += -DBOARD_STM32L053R8_NUCLEO
         CXXFLAGS_BASE += -DBOARD_STM32L053R8_NUCLEO
+
+        ## Clock frequency
+        ## External clock is 8Mhz provided from MCO output of ST-LINK. Actual
+        ## HSE crystal (X3) is not fitted.
+        CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_32MHz=32000000
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        PROG ?= st-flash --connect-under-reset --reset write \
+                $(if $(ROMFS_DIR), image.bin, main.bin) 0x08000000
+    
+    else ifeq ($(OPT_BOARD),stm32l010rb_nucleo)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM0plus_stm32l0/stm32l010rb_nucleo
+
+        ## Select linker script
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_128k+20k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                             \
+        $(BOARD_INC)/boot.cpp                   \
+        $(BOARD_INC)/interfaces-impl/delays.cpp \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -DBOARD_STM32L010RB_NUCLEO
+        CXXFLAGS_BASE += -DBOARD_STM32L010RB_NUCLEO
 
         ## Clock frequency
         ## External clock is 8Mhz provided from MCO output of ST-LINK. Actual
@@ -3263,7 +3305,6 @@ else ifeq ($(ARCH),cortexM0plus_stm32l0)
     arch/common/drivers/stm32_gpio.cpp                       \
     arch/common/drivers/stm32f7_serial.cpp                   \
     arch/common/drivers/stm32_serial_common.cpp              \
-    $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/CMSIS/Device/ST/STM32L0xx/Source/Templates/system_stm32l0xx.c
 
 ##-----------------------------------------------------------------------------

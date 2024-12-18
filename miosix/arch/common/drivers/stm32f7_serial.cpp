@@ -98,7 +98,19 @@ public:
  * Table of hardware configurations
  */
 
-#if defined(STM32L053xx)
+#if defined(STM32L010xB)
+constexpr int maxPorts = 2;
+static const STM32SerialAltFunc::Span lpuart1AfSpans[]=
+    {{0,6,6},{0,13,4},{1,1,6},{1,12,4},{1,13,2},{2,0,4},{2,4,6},{2,10,2},{0,0,0}};
+static const STM32SerialAltFunc::Span usart2AfSpans[]={{0,0,4}};
+static const STM32SerialHW ports[maxPorts] = {
+    { LPUART1, LPUART1_IRQn, {lpuart1AfSpans}, true, STM32Bus::APB1, RCC_APB1ENR_LPUART1EN,
+      { DMA1_Channel2, DMA1_Channel2_3_IRQn,     STM32SerialDMAHW::Channel2, 5,
+        DMA1_Channel6, DMA1_Channel4_5_6_7_IRQn, STM32SerialDMAHW::Channel6, 5 } },
+    { USART2, USART2_IRQn, {usart2AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+};
+#elif defined(STM32L053xx)
 constexpr int maxPorts = 3;
 static const STM32SerialAltFunc::Span usart1AfSpans[]={{1,0,4},{0,0,0}};
 static const STM32SerialAltFunc::Span usart2AfSpans[]={{0,0,4}};
