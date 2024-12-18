@@ -26,84 +26,9 @@
  ***************************************************************************/
 
 #include "stm32f2_f4_i2c.h"
-#include <miosix.h>
-#include <kernel/scheduler/scheduler.h>
+#include <interfaces/interrupts.h>
 
 using namespace miosix;
-
-static volatile bool error;     ///< Set to true by IRQ on error
-static Thread *waiting=nullptr; ///< Thread waiting for an operation to complete
-
-/**
- * DMA I2C rx end of transfer actual implementation
- */
-void I2C1rxDmaHandlerImpl()
-{
-    DMA1->LIFCR=DMA_LIFCR_CTCIF0
-              | DMA_LIFCR_CTEIF0
-              | DMA_LIFCR_CDMEIF0
-              | DMA_LIFCR_CFEIF0;
-    if(waiting==nullptr) return;
-    waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
-    waiting=nullptr;
-}
-
-/**
- * DMA I2C tx end of transfer
- */
-void I2C1txDmaHandlerImpl()
-{
-    DMA1->HIFCR=DMA_HIFCR_CTCIF7
-              | DMA_HIFCR_CTEIF7
-              | DMA_HIFCR_CDMEIF7
-              | DMA_HIFCR_CFEIF7;
-    //We can't just wake the thread because the I2C is double buffered, and this
-    //interrupt is fired at the same time as the second last byte is starting
-    //to be sent out of the bus. If we return now, the main code would send a
-    //stop condiotion too soon, and the last byte would never be sent. Instead,
-    //we change from DMA mode to IRQ mode, so when the second last byte is sent,
-    //that interrupt is fired and the last byte is sent out.
-    //Note that since no thread is awakened from this IRQ, there's no need for
-    //the saveContext(), restoreContext() and __attribute__((naked))
-    I2C1->CR2 &= ~I2C_CR2_DMAEN;
-    I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN;
-}
-
-/**
- * I2C address sent interrupt actual implementation
- */
-void I2C1HandlerImpl()
-{
-    //When called to resolve the last byte not sent issue, clearing
-    //I2C_CR2_ITBUFEN prevents this interrupt being re-entered forever, as
-    //it does not send another byte to the I2C, so the interrupt would remain
-    //pending. When called after the start bit has been sent, clearing
-    //I2C_CR2_ITEVTEN prevents the same infinite re-enter as this interrupt
-    //does not start an address transmission, which is necessary to stop
-    //this interrupt from being pending
-    I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
-    if(waiting==nullptr) return;
-    waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
-    waiting=nullptr;
-}
-
-/**
- * I2C error interrupt actual implementation
- */
-void I2C1errHandlerImpl()
-{
-    I2C1->SR1=0; //Clear error flags
-    error=true;
-    if(waiting==nullptr) return;
-    waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
-    waiting=nullptr;
-}
 
 namespace miosix {
 
@@ -113,9 +38,6 @@ namespace miosix {
 
 I2C1Master::I2C1Master(GpioPin sda, GpioPin scl, int frequency)
 {
-    if(checkMultipleInstances) errorHandler(UNEXPECTED);
-    checkMultipleInstances=true;
-
     //I2C devices are connected to APB1, whose frequency is the system clock
     //divided by a value set in the PPRE1 bits of RCC->CFGR
     const int ppre1=(RCC->CFGR & RCC_CFGR_PPRE1)>>10;
@@ -137,25 +59,12 @@ I2C1Master::I2C1Master(GpioPin sda, GpioPin scl, int frequency)
         RCC_SYNC();
     }
     
-    IRQregisterIrq(DMA1_Stream7_IRQn,I2C1txDmaHandlerImpl);
-    NVIC_SetPriority(DMA1_Stream7_IRQn,10);//Low priority for DMA
-    NVIC_ClearPendingIRQ(DMA1_Stream7_IRQn);//DMA1 stream 7 channel 1 = I2C1 TX 
-    NVIC_EnableIRQ(DMA1_Stream7_IRQn);
-    
-    IRQregisterIrq(DMA1_Stream0_IRQn,I2C1rxDmaHandlerImpl);
-    NVIC_SetPriority(DMA1_Stream0_IRQn,10);//Low priority for DMA
-    NVIC_ClearPendingIRQ(DMA1_Stream0_IRQn);//DMA1 stream 0 channel 1 = I2C1 RX 
-    NVIC_EnableIRQ(DMA1_Stream0_IRQn);
-    
-    IRQregisterIrq(I2C1_EV_IRQn,I2C1HandlerImpl);
-    NVIC_SetPriority(I2C1_EV_IRQn,10);//Low priority for I2C
-    NVIC_ClearPendingIRQ(I2C1_EV_IRQn);
-    NVIC_EnableIRQ(I2C1_EV_IRQn);
-    
-    IRQregisterIrq(I2C1_ER_IRQn,I2C1errHandlerImpl);
-    NVIC_SetPriority(I2C1_ER_IRQn,10);
-    NVIC_ClearPendingIRQ(I2C1_ER_IRQn);
-    NVIC_EnableIRQ(I2C1_ER_IRQn);
+    bool fail=false;
+    if(!IRQregisterIrq(DMA1_Stream7_IRQn,&I2C1Master::I2C1txDmaHandlerImpl,this)) fail=true;
+    if(!IRQregisterIrq(DMA1_Stream0_IRQn,&I2C1Master::I2C1rxDmaHandlerImpl,this)) fail=true;
+    if(!IRQregisterIrq(I2C1_EV_IRQn,&I2C1Master::I2C1HandlerImpl,this)) fail=true;
+    if(!IRQregisterIrq(I2C1_ER_IRQn,&I2C1Master::I2C1errHandlerImpl,this)) fail=true;
+    if(fail) errorHandler(UNEXPECTED);
 
     I2C1->CR1=I2C_CR1_SWRST;
     I2C1->CR1=0;
@@ -298,17 +207,16 @@ I2C1Master::~I2C1Master()
     I2C1->CR1=I2C_CR1_SWRST;
     I2C1->CR1=0;
 
-    NVIC_DisableIRQ(DMA1_Stream7_IRQn);
-    NVIC_DisableIRQ(DMA1_Stream0_IRQn);
-    NVIC_DisableIRQ(I2C1_EV_IRQn);
-    NVIC_DisableIRQ(I2C1_ER_IRQn);
+    IRQunregisterIrq(DMA1_Stream7_IRQn);
+    IRQunregisterIrq(DMA1_Stream0_IRQn);
+    IRQunregisterIrq(I2C1_EV_IRQn);
+    IRQunregisterIrq(I2C1_ER_IRQn);
 
     {
         FastInterruptDisableLock dLock;
         RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
         RCC_SYNC();
     }
-    checkMultipleInstances=false;
 }
 
 bool I2C1Master::start(unsigned char address)
@@ -420,6 +328,56 @@ void I2C1Master::stop()
     while(I2C1->SR2 & I2C_SR2_MSL) ; //Wait for stop bit sent
 }
 
-bool I2C1Master::checkMultipleInstances=false;
+void I2C1Master::I2C1rxDmaHandlerImpl()
+{
+    DMA1->LIFCR=DMA_LIFCR_CTCIF0
+              | DMA_LIFCR_CTEIF0
+              | DMA_LIFCR_CDMEIF0
+              | DMA_LIFCR_CFEIF0;
+    if(waiting==nullptr) return;
+    waiting->IRQwakeup();
+    waiting=nullptr;
+}
+
+void I2C1Master::I2C1txDmaHandlerImpl()
+{
+    DMA1->HIFCR=DMA_HIFCR_CTCIF7
+              | DMA_HIFCR_CTEIF7
+              | DMA_HIFCR_CDMEIF7
+              | DMA_HIFCR_CFEIF7;
+    //We can't just wake the thread because the I2C is double buffered, and this
+    //interrupt is fired at the same time as the second last byte is starting
+    //to be sent out of the bus. If we return now, the main code would send a
+    //stop condiotion too soon, and the last byte would never be sent. Instead,
+    //we change from DMA mode to IRQ mode, so when the second last byte is sent,
+    //that interrupt is fired and the last byte is sent out.
+    I2C1->CR2 &= ~I2C_CR2_DMAEN;
+    I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN;
+}
+
+void I2C1Master::I2C1HandlerImpl()
+{
+    //When called to resolve the last byte not sent issue, clearing
+    //I2C_CR2_ITBUFEN prevents this interrupt being re-entered forever, as
+    //it does not send another byte to the I2C, so the interrupt would remain
+    //pending. When called after the start bit has been sent, clearing
+    //I2C_CR2_ITEVTEN prevents the same infinite re-enter as this interrupt
+    //does not start an address transmission, which is necessary to stop
+    //this interrupt from being pending
+    I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN);
+    if(waiting==nullptr) return;
+    waiting->IRQwakeup();
+    waiting=nullptr;
+}
+
+void I2C1Master::I2C1errHandlerImpl()
+{
+    I2C1->SR1=0; //Clear error flags
+    error=true;
+    if(waiting==nullptr) return;
+    waiting->IRQwakeup();
+    waiting=nullptr;
+}
 
 } //namespace miosix
+

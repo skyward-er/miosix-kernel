@@ -63,7 +63,7 @@
 #include "util/crc16.h"
 
 #if defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)
-#include <kernel/scheduler/scheduler.h>
+#include <interfaces/interrupts.h>
 #include <cache/cortexMx_cache.h>
 #endif //_ARCH_CORTEXM7_STM32F7/H7
 
@@ -4144,7 +4144,7 @@ void testCacheAndDMA()
         FastInterruptDisableLock dLock;
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         RCC_SYNC();
-        IRQregisterIrq(DMA2_Stream0_IRQn,&dma2s0irq);
+        if(!IRQregisterIrq(DMA2_Stream0_IRQn,&dma2s0irq)) errorHandler(UNEXPECTED);
     }
 
     //Testing cache-aligned transactions

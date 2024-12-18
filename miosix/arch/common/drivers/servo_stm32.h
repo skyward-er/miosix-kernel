@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef SERVO_STM32_H
-#define	SERVO_STM32_H
+#pragma once
 
 #include "miosix.h"
 
@@ -180,7 +179,12 @@ private:
      * Wait until the timer overflows from 0xffff to 0. Can only be called with
      * interrupts disabled
      */
-    static void IRQwaitForTimerOverflow(FastInterruptDisableLock& dLock);
+    void IRQwaitForTimerOverflow(FastInterruptDisableLock& dLock);
+
+    /**
+     * Timer interrupt handler
+     */
+    void interruptHandler();
     
     float minWidth, maxWidth; ///< Minimum and maximum pulse widths
     float a, b;               ///< Precomputed coefficients
@@ -189,8 +193,7 @@ private:
         STOPPED,  ///< Timer is stopped
         STARTED   ///< Timer is started
     } status;
+    Thread *waiting=nullptr;
 };
 
 } //namespace miosix
-
-#endif //SERVO_STM32_H

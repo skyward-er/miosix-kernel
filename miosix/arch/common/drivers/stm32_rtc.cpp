@@ -28,7 +28,7 @@
 #include "stm32_rtc.h"
 #include <miosix.h>
 #include <sys/ioctl.h>
-#include <kernel/scheduler/scheduler.h>
+#include <interfaces/interrupts.h>
 
 #ifndef WITH_RTC_AS_OS_TIMER
 
@@ -137,9 +137,6 @@ void RTCIrqImpl()
         if(waiting && IRQgetTick()>=irqTime)
         {
             waiting->IRQwakeup();
-            if(waiting->IRQgetPriority()>
-                Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    IRQinvokeScheduler();
             waiting=nullptr;
         }
     }
@@ -307,9 +304,7 @@ Rtc::Rtc() : tc(getTickFrequency())
         RTC->PRLH=0;
         RTC->PRLL=1;
     }
-    IRQregisterIrq(RTC_IRQn,&RTCIrqImpl);
-    NVIC_SetPriority(RTC_IRQn,5);
-    NVIC_EnableIRQ(RTC_IRQn);
+    if(!IRQregisterIrq(RTC_IRQn,&RTCIrqImpl)) errorHandler(UNEXPECTED);
 }
 
 } //namespace miosix

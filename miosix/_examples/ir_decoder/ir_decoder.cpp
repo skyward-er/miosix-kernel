@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "e20/e20.h"
 #include "miosix.h"
-#include "kernel/scheduler/scheduler.h"
+#include "interfaces/interrupts.h"
 
 using namespace std;
 using namespace miosix;
@@ -34,30 +34,21 @@ void stop()
 
 FixedEventQueue<100,12> queue;
 
-void __attribute__((used)) tim3impl()
+void tim3impl()
 {
-    bool hppw=false;
     if(TIM3->SR & TIM_SR_UIF)
     {
-        queue.IRQpost(bind(stop),hppw);
+        queue.IRQpost(bind(stop));
     } else {
         if(TIM3->CR1 & TIM_CR1_CEN)
         {
-            queue.IRQpost(bind(timestamp,TIM3->CCR1),hppw);
+            queue.IRQpost(bind(timestamp,TIM3->CCR1));
         } else {
             TIM3->CR1|=TIM_CR1_CEN; //Start timer at first edge
-            queue.IRQpost(bind(start),hppw);
+            queue.IRQpost(bind(start));
         }
     }
     TIM3->SR=0; //Clear interrupt flag
-    if(hppw) Scheduler::IRQfindNextThread();
-}
-
-void __attribute__((naked)) TIM3_IRQHandler()
-{
-    saveContext();
-    asm volatile("bl _Z8tim3implv");
-    restoreContext();
 }
 
 int main()
@@ -66,6 +57,7 @@ int main()
         FastInterruptDisableLock dLock;
         RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
         RCC_SYNC();
+        if(!IRQregisterIrq(TIM3_IRQn,&tim3impl)) errorHandler(UNEXPECTED);
     }
     TIM3->CNT=0;
     TIM3->PSC=84-1; //Prescaler clocked at 84MHz, timer incremented every 1us
@@ -81,7 +73,5 @@ int main()
     TIM3->CR1=TIM_CR1_OPM; //One pulse mode, timer not started yet
     timerIn::mode(Mode::ALTERNATE);
     timerIn::alternateFunction(2);
-    NVIC_SetPriority(TIM3_IRQn,8);
-    NVIC_EnableIRQ(TIM3_IRQn);
     queue.run();
 }

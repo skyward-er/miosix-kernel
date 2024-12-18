@@ -146,7 +146,7 @@ private:
     static void IRQrecalculateAlfa();
 
     /**
-     * Called by IRQfindNextThread(), this function is where the control based
+     * Called by IRQrunScheduler(), this function is where the control based
      * scheduling algorithm is run. It is called once per round.
      */
     static void IRQrunRegulator(bool allReadyThreadsSaturated);

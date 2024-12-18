@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include <miosix.h>
 #include <interfaces/gpio.h>
 
 namespace miosix {
@@ -155,7 +156,28 @@ private:
      */
     void stop();
 
-    static bool checkMultipleInstances;
+    /**
+     * DMA I2C rx end of transfer actual implementation
+     */
+    void I2C1rxDmaHandlerImpl();
+
+    /**
+     * DMA I2C tx end of transfer
+     */
+    void I2C1txDmaHandlerImpl();
+
+    /**
+     * I2C address sent interrupt actual implementation
+     */
+    void I2C1HandlerImpl();
+
+    /**
+     * I2C error interrupt actual implementation
+     */
+    void I2C1errHandlerImpl();
+
+    volatile bool error;     ///< Set to true by IRQ on error
+    miosix::Thread *waiting=nullptr; ///< Thread waiting for an operation to complete
 };
 
 } //namespace miosix

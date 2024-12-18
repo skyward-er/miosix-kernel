@@ -66,7 +66,7 @@ EFM32Serial::EFM32Serial(int id, int baudrate, GpioPin tx, GpioPin rx)
             default:
                 errorHandler(UNEXPECTED);
         }
-        if(IRQregisterIrq(irqn,&EFM32Serial::IRQinterruptHandler,this)==false)
+        if(!IRQregisterIrq(irqn,&EFM32Serial::IRQinterruptHandler,this))
             errorHandler(UNEXPECTED);
     }
     

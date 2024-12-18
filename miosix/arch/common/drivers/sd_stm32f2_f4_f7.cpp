@@ -28,8 +28,8 @@
 #include "sd_stm32f2_f4_f7.h"
 #include "interfaces/bsp.h"
 #include "interfaces/arch_registers.h"
+#include "interfaces/interrupts.h"
 #include "cache/cortexMx_cache.h"
-#include "kernel/scheduler/scheduler.h"
 #include "interfaces/delays.h"
 #include "kernel/kernel.h"
 #include "board_settings.h" //For sdVoltage and SD_ONE_BIT_DATABUS definitions
@@ -148,9 +148,7 @@ void SDDMAirqImpl()
     
     if(!waiting) return;
     waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
-    waiting=0;
+    waiting=nullptr;
 }
 
 /**
@@ -175,9 +173,7 @@ void SDirqImpl()
     
     if(!waiting) return;
     waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
-    waiting=0;
+    waiting=nullptr;
 }
 
 /*
@@ -1263,18 +1259,14 @@ static void initSDIOPeripheral()
         #endif
     }
 
+    bool fail=false;
     #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
-    IRQregisterIrq(DMA2_Stream0_IRQn,SDDMAirqImpl);
-    NVIC_SetPriority(DMA2_Stream0_IRQn,15);//Low priority for DMA
-    NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+    if(!IRQregisterIrq(DMA2_Stream0_IRQn,SDDMAirqImpl)) fail=true;
     #else
-    IRQregisterIrq(DMA2_Stream3_IRQn,SDDMAirqImpl);
-    NVIC_SetPriority(DMA2_Stream3_IRQn,15);//Low priority for DMA
-    NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+    if(!IRQregisterIrq(DMA2_Stream3_IRQn,SDDMAirqImpl)) fail=true;
     #endif
-    IRQregisterIrq(SDIO_IRQn,SDirqImpl);
-    NVIC_SetPriority(SDIO_IRQn,15);//Low priority for SDIO
-    NVIC_EnableIRQ(SDIO_IRQn);
+    if(!IRQregisterIrq(SDIO_IRQn,SDirqImpl)) fail=true;
+    if(fail) errorHandler(UNEXPECTED);
     
     SDIO->POWER=0; //Power off state
     delayUs(1);

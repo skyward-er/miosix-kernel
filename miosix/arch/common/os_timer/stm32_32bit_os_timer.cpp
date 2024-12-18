@@ -147,10 +147,9 @@ public:
         // Interrupts: counter overflow, Compare/Capture on channel 1
         T::get()->CR1=TIM_CR1_URS;
         T::get()->DIER=TIM_DIER_UIE | TIM_DIER_CC1IE;
-        IRQregisterIrq(T::getIRQn(),&TimerAdapter<STM32Timer<T>, 32>::IRQhandler,
-                       static_cast<TimerAdapter<STM32Timer<T>, 32>*>(this));
-        NVIC_SetPriority(T::getIRQn(),3); //High priority (Max=0, min=15)
-        NVIC_EnableIRQ(T::getIRQn());
+        if(!IRQregisterIrq(T::getIRQn(),&TimerAdapter<STM32Timer<T>, 32>::IRQhandler,
+                       static_cast<TimerAdapter<STM32Timer<T>, 32>*>(this)))
+            errorHandler(UNEXPECTED);
         // Configure channel 1 as:
         // Output channel (CC1S=0)
         // No preload(OC1PE=0), hence CCR1 can be written at any time

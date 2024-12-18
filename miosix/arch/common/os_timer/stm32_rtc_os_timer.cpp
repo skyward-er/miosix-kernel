@@ -189,11 +189,9 @@ public:
             RTC->CNTH=0; RTC->CNTL=0;
             RTC->ALRH=0xffff; RTC->ALRL=0xffff;
         }
-        IRQregisterIrq(RTC_IRQn,&TimerAdapter<STM32F1RTC_Timer,32,1>::IRQhandler,
-                       static_cast<TimerAdapter<STM32F1RTC_Timer,32,1>*>(this));
-        //High priority for RTC (Max=0, min=15)
-        NVIC_SetPriority(RTC_IRQn,3);
-        NVIC_EnableIRQ(RTC_IRQn);
+        if(!IRQregisterIrq(RTC_IRQn,&TimerAdapter<STM32F1RTC_Timer,32,1>::IRQhandler,
+                       static_cast<TimerAdapter<STM32F1RTC_Timer,32,1>*>(this)))
+            errorHandler(UNEXPECTED);
 
         // We can't stop the RTC during debugging, so debugging won't be easy.
         // Actually, we can't stop the RTC at all once we start it...

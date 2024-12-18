@@ -51,10 +51,10 @@
  * The IRQ must be "naked" to prevent the compiler from generating context save.
  *
  * A note on the dmb instruction, without it a race condition was observed
- * between pauseKernel() and IRQfindNextThread(). pauseKernel() uses an strex
+ * between pauseKernel() and IRQrunScheduler(). pauseKernel() uses an strex
  * instruction to store a value in the global variable kernel_running which is
- * tested by the context switch code in IRQfindNextThread(). Without the memory
- * barrier IRQfindNextThread() would occasionally read the previous value and
+ * tested by the context switch code in IRQrunScheduler(). Without the memory
+ * barrier IRQrunScheduler() would occasionally read the previous value and
  * perform a context switch while the kernel was paused, leading to deadlock.
  * The failure was only observed within the exception_test() in the testsuite
  * running on the stm32f429zi_stm32f4discovery.
@@ -97,10 +97,10 @@
  * The IRQ must be "naked" to prevent the compiler from generating context save.
  * 
  * A note on the dmb instruction, without it a race condition was observed
- * between pauseKernel() and IRQfindNextThread(). pauseKernel() uses an strex
+ * between pauseKernel() and IRQrunScheduler(). pauseKernel() uses an strex
  * instruction to store a value in the global variable kernel_running which is
- * tested by the context switch code in IRQfindNextThread(). Without the memory
- * barrier IRQfindNextThread() would occasionally read the previous value and
+ * tested by the context switch code in IRQrunScheduler(). Without the memory
+ * barrier IRQrunScheduler() would occasionally read the previous value and
  * perform a context switch while the kernel was paused, leading to deadlock.
  * The failure was only observed within the exception_test() in the testsuite
  * running on the stm32f429zi_stm32f4discovery.

@@ -111,18 +111,14 @@ int main()
 // Interrupt handlers to be forwarded to TinyUSB
 //
 
-__attribute__((naked)) void OTG_FS_IRQHandler(void)
+void OTG_FS_IRQHandler()
 {
-    saveContext();
     tud_int_handler(0);
-    restoreContext();
 }
 
-__attribute__((naked)) void OTG_HS_IRQHandler(void)
+void OTG_HS_IRQHandler()
 {
-    saveContext();
     tud_int_handler(1);
-    restoreContext();
 }
 
 //

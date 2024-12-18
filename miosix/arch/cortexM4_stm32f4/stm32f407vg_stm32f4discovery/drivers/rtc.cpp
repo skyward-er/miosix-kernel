@@ -28,7 +28,6 @@
 #include "rtc.h"
 #include <miosix.h>
 #include <sys/ioctl.h>
-#include <kernel/scheduler/scheduler.h>
 #include <kernel/kernel.h>
 #include <kernel/logging.h>
 #include "interfaces/bsp.h"
@@ -41,7 +40,8 @@ namespace miosix {
 //
 // class Rtc
 //
-void IRQrtcInit() {
+void IRQrtcInit()
+{
     Rtc::instance(); // create the singleton
 }
 
@@ -215,7 +215,6 @@ Rtc::Rtc() :
     RTC->CR &= ~(RTC_CR_FMT); // Use 24-hour format
     RTC->ISR &= ~(RTC_ISR_INIT);
     prescaler_s = 0x00000000 |  (RTC->PRER & RTC_PRER_PREDIV_S);
-    // NVIC_SetPriority(RTC_WKUP_IRQn,10);
     // NVIC_EnableIRQ(RTC_WKUP_IRQn);
 }
 

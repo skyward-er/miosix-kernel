@@ -28,9 +28,9 @@
 #include "sd_stm32f1.h"
 #include "interfaces/bsp.h"
 #include "interfaces/arch_registers.h"
+#include "interfaces/interrupts.h"
 #include "interfaces/delays.h"
 #include "kernel/kernel.h"
-#include "kernel/scheduler/scheduler.h"
 #include "board_settings.h" //For sdVoltage
 #include <cstdio>
 #include <cstring>
@@ -79,7 +79,7 @@ static unsigned int sdioFlags;      ///< \internal SDIO status flags
  * \internal
  * DMA2 Channel4 interrupt handler actual implementation
  */
-void __attribute__((used)) DMA2channel4irqImpl()
+void DMA2channel4irqImpl()
 {
     dmaFlags=DMA2->ISR;
     if(dmaFlags & DMA_ISR_TEIF4) transferError=true;
@@ -88,16 +88,14 @@ void __attribute__((used)) DMA2channel4irqImpl()
     
     if(!waiting) return;
     waiting->IRQwakeup();
-	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		IRQinvokeScheduler();
-    waiting=0;
+    waiting=nullptr;
 }
 
 /**
  * \internal
  * DMA2 Channel4 interrupt handler actual implementation
  */
-void __attribute__((used)) SDIOirqImpl()
+void SDIOirqImpl()
 {
     sdioFlags=SDIO->STA;
     if(sdioFlags & (SDIO_STA_STBITERR | SDIO_STA_RXOVERR  |
@@ -108,9 +106,7 @@ void __attribute__((used)) SDIOirqImpl()
     
     if(!waiting) return;
     waiting->IRQwakeup();
-	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		IRQinvokeScheduler();
-    waiting=0;
+    waiting=nullptr;
 }
 #endif //SD_DMA
 
@@ -1423,12 +1419,10 @@ static void initSDIOPeripheral()
         sdCMD::mode(Mode::ALTERNATE);
     }
     #ifdef SD_DMA
-    IRQregisterIrq(DMA2_Channel4_5_IRQn,DMA2channel4irqImpl);
-    NVIC_SetPriority(DMA2_Channel4_5_IRQn,15);//Low priority for DMA
-    NVIC_EnableIRQ(DMA2_Channel4_5_IRQn);
-    IRQregisterIrq(SDIO_IRQn,SDIOirqImpl);
-    NVIC_SetPriority(SDIO_IRQn,15);//Low priority for SDIO
-    NVIC_EnableIRQ(SDIO_IRQn);
+    bool fail=false;
+    if(!IRQregisterIrq(DMA2_Channel4_5_IRQn,DMA2channel4irqImpl)) fail=true;
+    if(!IRQregisterIrq(SDIO_IRQn,SDIOirqImpl)) fail=true;
+    if(fail) errorHandler(UNEXPECTED);
     #endif //SD_DMA
 
     SDIO->POWER=0; //Power off state

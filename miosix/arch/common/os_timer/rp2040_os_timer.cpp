@@ -95,7 +95,8 @@ void IRQosTimerInit()
     resets_hw->reset&= ~RESETS_RESET_TIMER_BITS;
     while((resets_hw->reset_done & RESETS_RESET_TIMER_BITS)==0) ;
     //Enable timer interrupt
-    IRQregisterIrq(TIMER_IRQ_0_IRQn, &IRQtimerInterruptHandler);
+    if(!IRQregisterIrq(TIMER_IRQ_0_IRQn, &IRQtimerInterruptHandler))
+        errorHandler(UNEXPECTED);
     timer_hw->inte=TIMER_INTE_ALARM_0_BITS;
     //Toggle debug sleep mode. Works around a bug where the timer does not
     //start counting if it was reset while it was paused due to debug mode.

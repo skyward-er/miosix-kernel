@@ -259,7 +259,7 @@ Rtc::Rtc() : tc(frequency)
     //COMP0 -> used for wait and trigger
     //COMP1 -> reserved for VHT resync and Power manager
     //NOTE: interrupt not yet enabled as we're not setting RTC->IEN
-    IRQregisterIrq(RTC_IRQn,&Rtc::IRQinterruptHandler);
+    if(!IRQregisterIrq(RTC_IRQn,&Rtc::IRQinterruptHandler)) errorHandler(UNEXPECTED);
     
     RTC->IEN |= RTC_IEN_OF;
     

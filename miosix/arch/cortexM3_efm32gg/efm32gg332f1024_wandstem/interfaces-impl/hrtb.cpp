@@ -811,9 +811,11 @@ HRTB::HRTB() {
 
     // Priority 8, this is very important, it MUST be a lower priority than RTC priority
     NVIC_SetPriority(TIMER2_IRQn,8);
-    IRQregisterIrq(TIMER1_IRQn,&cstirqhnd1);
-    IRQregisterIrq(TIMER2_IRQn,&cstirqhnd2);
-    IRQregisterIrq(TIMER3_IRQn,&cstirqhnd3);
+    bool fail=false;
+    if(!IRQregisterIrq(TIMER1_IRQn,&cstirqhnd1)) fail=true;
+    if(!IRQregisterIrq(TIMER2_IRQn,&cstirqhnd2)) fail=true;
+    if(!IRQregisterIrq(TIMER3_IRQn,&cstirqhnd3)) fail=true;
+    if(fail) errorHandler(UNEXPECTED);
     
     tc=new TimeConversion(HRTB::freq);
     //Start timers

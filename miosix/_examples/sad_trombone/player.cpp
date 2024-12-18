@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cstring>
-#include "miosix/kernel/scheduler/scheduler.h"
+#include "interfaces/interrupts.h"
 #include "util/software_i2c.h"
 #include "adpcm.h"
 #include "player.h"
@@ -104,42 +104,20 @@ static void dmaRefill()
 
 #ifdef _BOARD_STM32VLDISCOVERY
 /**
- * DMA end of transfer interrupt
- */
-void __attribute__((naked)) DMA1_Channel3_IRQHandler()
-{
-	saveContext();
-	asm volatile("bl _Z17DACdmaHandlerImplv");
-	restoreContext();
-}
-
-/**
  * DMA end of transfer interrupt actual implementation
  */
-void __attribute__((used)) DACdmaHandlerImpl()
+void DACdmaHandlerImpl()
 {
 	DMA1->IFCR=DMA_IFCR_CGIF3;
 	bq->bufferEmptied();
 	IRQdmaRefill();
 	waiting->IRQwakeup();
-	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		Scheduler::IRQfindNextThread();
 }
 #else //Assuming stm32f4discovery
 /**
- * DMA end of transfer interrupt
- */
-void __attribute__((naked)) DMA1_Stream5_IRQHandler()
-{
-    saveContext();
-	asm volatile("bl _Z17I2SdmaHandlerImplv");
-	restoreContext();
-}
-
-/**
  * DMA end of transfer interrupt actual implementation
  */
-void __attribute__((used)) I2SdmaHandlerImpl()
+void I2SdmaHandlerImpl()
 {
 	DMA1->HIFCR=DMA_HIFCR_CTCIF5  |
                 DMA_HIFCR_CTEIF5  |
@@ -148,8 +126,6 @@ void __attribute__((used)) I2SdmaHandlerImpl()
 	bq->bufferEmptied();
 	IRQdmaRefill();
 	waiting->IRQwakeup();
-	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		Scheduler::IRQfindNextThread();
 }
 
 static void cs43l22send(unsigned char index, unsigned char data)
@@ -297,14 +273,12 @@ void Player::play(Sound& sound)
         RCC_SYNC();
 		RCC->APB1ENR |= RCC_APB1ENR_DACEN | RCC_APB1ENR_TIM6EN;
         RCC_SYNC();
+		//Configure DAC
+		DAC->CR=DAC_CR_DMAEN1 | DAC_CR_TEN1 | DAC_CR_EN1;
+		//Configure DMA
+		if(!IRQregisterIrq(DMA1_Channel3_IRQn,&DACdmaHandlerImpl))
+			errorHandler(UNEXPECTED);
 	}
-
-	//Configure DAC
-	DAC->CR=DAC_CR_DMAEN1 | DAC_CR_TEN1 | DAC_CR_EN1;
-
-	//Configure DMA
-	NVIC_SetPriority(DMA1_Channel3_IRQn,2);//High priority for DMA
-	NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 	//Configure TIM6
 	DBGMCU->CR |= DBGMCU_CR_DBG_TIM6_STOP; //TIM6 stops while debugging
@@ -340,12 +314,15 @@ void Player::play(Sound& sound)
 	atomicTestAndWaitUntil(enobuf,true); //Play last buffer
 
     //Shutdown
-	NVIC_DisableIRQ(DMA1_Channel3_IRQn);
-	TIM6->CR1=0;
-	DMA1_Channel3->CCR=0;
-	DAC->CR=0;
-	dacPin::mode(Mode::INPUT_PULL_UP_DOWN);
-	dacPin::pulldown();
+	{
+		FastInterruptDisableLock dLock;
+		IRQunregisterIrq(DMA1_Channel3_IRQn);
+		TIM6->CR1=0;
+		DMA1_Channel3->CCR=0;
+		DAC->CR=0;
+		dacPin::mode(Mode::INPUT_PULL_UP_DOWN);
+		dacPin::pulldown();
+	}
     delete bq;
 }
 #else //Assuming stm32f4discovery
@@ -375,6 +352,8 @@ void Player::play(Sound& sound)
         //Enable audio PLL (settings for 44100Hz audio)
         RCC->PLLI2SCFGR=(2<<28) | (271<<6);
         RCC->CR |= RCC_CR_PLLI2SON;
+        if(!IRQregisterIrq(DMA1_Stream5_IRQn,I2SdmaHandlerImpl))
+            errorHandler(UNEXPECTED);
     }
     //Wait for PLL to lock
     while((RCC->CR & RCC_CR_PLLI2SRDY)==0) ;
@@ -399,9 +378,6 @@ void Player::play(Sound& sound)
 	SPI3->I2SCFGR=SPI_I2SCFGR_I2SMOD    //I2S mode selected
                 | SPI_I2SCFGR_I2SE      //I2S Enabled
                 | SPI_I2SCFGR_I2SCFG_1; //Master transmit
-
-    NVIC_SetPriority(DMA1_Stream5_IRQn,2);//High priority for DMA
-	NVIC_EnableIRQ(DMA1_Stream5_IRQn);    
 
     //Leading blank audio, so as to be sure audio is played from the start
     memset(getWritableBuffer(),0,bufferSize*sizeof(unsigned short));
@@ -439,11 +415,11 @@ void Player::play(Sound& sound)
 	atomicTestAndWaitUntil(enobuf,true); //Continue sending MCLK for some time
 
     reset::low(); //Keep in reset state
-    NVIC_DisableIRQ(DMA1_Stream5_IRQn);
     SPI3->I2SCFGR=0;
     {
-		FastInterruptDisableLock dLock;
+        FastInterruptDisableLock dLock;
         RCC->CR &= ~RCC_CR_PLLI2SON;
+        IRQunregisterIrq(DMA1_Stream5_IRQn);
     }
     delete bq;
 }

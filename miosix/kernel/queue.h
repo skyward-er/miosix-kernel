@@ -160,9 +160,8 @@ public:
      * preemption, and threads won't immediately wakeup.
      * \param elem element to add. The element has been added only if the
      * return value is true
-     * \param hppw is set to `true' if a scheduler update is necessary to
-     * wake up a formerly sleeping thread with `Scheduler::IRQfindNextThread()`.
-     * Otherwise it is not modified.
+     * \param hppw is set to `true' if the operation work up a higher priority
+     * thread, otherwise it is not modified.
      * \return true if the queue was not full.
      * \note This method is meant as a non-blocking version of put() to use
      * in an IRQ context.

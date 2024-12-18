@@ -2,16 +2,14 @@
 #include "sd_stm32l4.h"
 #include "interfaces/bsp.h"
 #include "interfaces/arch_registers.h"
+#include "interfaces/interrupts.h"
 #include "cache/cortexMx_cache.h"
-#include "kernel/scheduler/scheduler.h"
 #include "interfaces/delays.h"
 #include "kernel/kernel.h"
 #include "board_settings.h" //For sdVoltage and SD_ONE_BIT_DATABUS definitions
 #include <cstdio>
 #include <cstring>
 #include <errno.h>
-
-
 
 //Note: enabling debugging might cause deadlock when using sleep() or reboot()
 //The bug won't be fixed because debugging is only useful for driver development
@@ -22,16 +20,12 @@
 //#define DBGERR iprintf
 #define DBGERR(x,...) do {} while(0)
 
-
-
 namespace miosix {
 
 static volatile bool transferError; ///< \internal DMA or SDIO transfer error
 static Thread *waiting;             ///< \internal Thread waiting for transfer
 static unsigned int dmaFlags;       ///< \internal DMA status flags
 static unsigned int sdioFlags;      ///< \internal SDIO status flags
-
-
 
 /**
  * \internal
@@ -51,9 +45,7 @@ void SDMMCirqImpl()
     
     if(!waiting) return;
     waiting->IRQwakeup();
-	if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-		IRQinvokeScheduler();
-    waiting=0;
+    waiting=nullptr;
 }
 
 /*
@@ -892,9 +884,7 @@ static void initSDIOPeripheral()
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(12);
     }
-    IRQregisterIrq(SDMMC1_IRQn,&SDMMCirqImpl);
-    NVIC_SetPriority(SDMMC1_IRQn,15);//Low priority for SDIO
-    NVIC_EnableIRQ(SDMMC1_IRQn);
+    if(!IRQregisterIrq(SDMMC1_IRQn,&SDMMCirqImpl)) errorHandler(UNEXPECTED);
     
     SDMMC1->POWER=0; //Power off state
     delayUs(1);
@@ -1157,6 +1147,6 @@ SDIODriver::SDIODriver() : Device(Device::BLOCK)
 
 
     DBG("SDIO init: Success\n");
+}
 
-}
-}
+} //namespace miosix

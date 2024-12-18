@@ -26,7 +26,7 @@
  ***************************************************************************/
  
 #include "servo_stm32.h"
-#include "kernel/scheduler/scheduler.h"
+#include "interfaces/interrupts.h"
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -38,20 +38,6 @@ typedef Gpio<GPIOB_BASE,6> servo1out;
 typedef Gpio<GPIOB_BASE,7> servo2out;
 typedef Gpio<GPIOB_BASE,8> servo3out;
 typedef Gpio<GPIOB_BASE,9> servo4out;
-static Thread *waiting=0;
-
-/**
- * Timer 4 interrupt handler actual implementation
- */
-void tim4impl()
-{
-    TIM4->SR=0; //Clear interrupt flag
-    if(waiting==0) return;
-    waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
-    waiting=0;
-}
 
 namespace miosix {
 
@@ -289,9 +275,8 @@ SynchronizedServo::SynchronizedServo() : status(STOPPED)
     TIM4->CCR4=0;
     // Configure interrupt on timer overflow
     TIM4->DIER=TIM_DIER_UIE;
-    IRQregisterIrq(TIM4_IRQn,tim4impl);
-    NVIC_SetPriority(TIM4_IRQn,13); //Low priority for timer IRQ
-    NVIC_EnableIRQ(TIM4_IRQn);
+    if(!IRQregisterIrq(TIM4_IRQn,&SynchronizedServo::interruptHandler,this))
+        errorHandler(UNEXPECTED);
     // Set default parameters
     setFrequency(50);
     setMinPulseWidth(1000);
@@ -333,15 +318,15 @@ unsigned int SynchronizedServo::getPrescalerInputFrequency()
 void SynchronizedServo::IRQwaitForTimerOverflow(FastInterruptDisableLock& dLock)
 {
     waiting=Thread::IRQgetCurrentThread();
-    do {
-        Thread::IRQwait();
-        {
-            FastInterruptEnableLock eLock(dLock);
-            Thread::yield();
-        }
-    } while(waiting);
+    while(waiting) Thread::IRQenableIrqAndWait(dLock);
+}
+
+void SynchronizedServo::interruptHandler()
+{
+    TIM4->SR=0; //Clear interrupt flag
+    if(waiting==nullptr) return;
+    waiting->IRQwakeup();
+    waiting=nullptr;
 }
 
 } //namespace miosix
-
- 

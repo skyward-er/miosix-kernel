@@ -28,8 +28,8 @@
 #include "sd_stm32f2_f4_f7.h"
 #include "interfaces/bsp.h"
 #include "interfaces/arch_registers.h"
+#include "interfaces/interrupts.h"
 #include "cache/cortexMx_cache.h"
-#include "kernel/scheduler/scheduler.h"
 #include "interfaces/delays.h"
 #include "kernel/kernel.h"
 #include "board_settings.h" //For sdVoltage and SD_ONE_BIT_DATABUS definitions
@@ -61,30 +61,17 @@
 
 constexpr int ICR_FLAGS_CLR=0x5ff;
 
-
-/**
- * \internal
- * SDMMC interrupt handler
- */
-#if SD_SDMMC==1
-void __attribute__((naked)) SDMMC1_IRQHandler()
-#elif SD_SDMMC==2
-void __attribute__((naked)) SDMMC2_IRQHandler()
-#endif
-{
-    saveContext();
-    asm volatile("bl _ZN6miosix9SDirqImplEv");
-    restoreContext();
-}
-
 namespace miosix {
 
 static volatile bool transferError; ///< \internal DMA or SDMMC transfer error
 static Thread *waiting;             ///< \internal Thread waiting for transfer
 static unsigned int sdmmcFlags;      ///< \internal SDMMC status flags
 
-
-void __attribute__((used)) SDirqImpl()
+/**
+ * \internal
+ * SDMMC interrupt handler
+ */
+void SDirqImpl()
 {
     sdmmcFlags=SDMMC->STA;
     if(sdmmcFlags & (SDMMC_STA_RXOVERR  |
@@ -95,9 +82,7 @@ void __attribute__((used)) SDirqImpl()
 
     if(!waiting) return;
     waiting->IRQwakeup();
-    if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        Scheduler::IRQfindNextThread();
-    waiting=0;
+    waiting=nullptr;
 }
 
 /*
@@ -991,8 +976,7 @@ static void initSDMMCPeripheral()
         #endif
     }
 
-    NVIC_SetPriority(SDMMC_IRQn,15);//Low priority for SDMMC
-    NVIC_EnableIRQ(SDMMC_IRQn);
+    if(!IRQregisterIrq(SDMMC_IRQn,SDirqImpl)) errorHandler(UNEXPECTED);
     
     SDMMC->POWER=0; //Power off state
     delayUs(1);

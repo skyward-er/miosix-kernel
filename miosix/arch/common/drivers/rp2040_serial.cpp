@@ -184,8 +184,7 @@ void RP2040PL011Serial::commonInit(int number, int baudrate)
         default:
             errorHandler(UNEXPECTED);
     }
-    // UART IRQ saves context: its priority must be 3 (see portability.cpp)
-    if(IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this)==false)
+    if(!IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this))
         errorHandler(UNEXPECTED);
     uart->ifls = (2<<UART_UARTIFLS_RXIFLSEL_LSB) | (2<<UART_UARTIFLS_TXIFLSEL_LSB);
     enableAllInterrupts();

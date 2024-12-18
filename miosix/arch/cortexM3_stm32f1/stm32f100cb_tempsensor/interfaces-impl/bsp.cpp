@@ -37,6 +37,7 @@
 #include "interfaces/delays.h"
 #include "interfaces/poweroff.h"
 #include "interfaces/arch_registers.h"
+#include "interfaces/interrupts.h"
 #include "config/miosix_settings.h"
 #include "filesystem/file_access.h"
 #include "filesystem/console/console_device.h"
@@ -54,7 +55,7 @@ static unsigned char digits[4]={0};
 void TIM3_IRQHandler()
 {
     TIM3->SR=0; //Clear IRQ flag
-	static int i=0;
+    static int i=0;
     GPIOB->ODR=(0x0f00 & ~(1<<(i+8))) | digits[i];
     if(++i>=4) i=0;
 }
@@ -73,8 +74,8 @@ static void initDisplay()
     TIM3->PSC=0;
     TIM3->ARR=60000; //24MHz/60000=400Hz 
     TIM3->CR1=TIM_CR1_CEN;
-    NVIC_SetPriority(TIM3_IRQn,15); //Lowest priority for timer IRQ
-    NVIC_EnableIRQ(TIM3_IRQn);
+    FastInterruptDisableLock dLock;
+    if(!IRQregisterIrq(TIM3_IRQn,&TIM3_IRQHandler)) errorHandler(UNEXPECTED);
 }
 
 void clearDisplay()

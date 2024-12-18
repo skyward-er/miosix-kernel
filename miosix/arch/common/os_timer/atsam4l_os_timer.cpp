@@ -169,8 +169,9 @@ public:
         TC1->TC_CHANNEL[0].TC_CMR = TC_CMR_WAVE | TC_CMR_CAPTURE_TCCLKS(0); //CLOCK=GCLK8
         TC1->TC_CHANNEL[0].TC_IER = TC_IER_CPCS | TC_IER_COVFS;
         
-        IRQregisterIrq(TC10_IRQn,&TimerAdapter<ATSAM_TC1_Timer,16>::IRQhandler,
-                       static_cast<TimerAdapter<ATSAM_TC1_Timer, 16>*>(this));
+        if(!IRQregisterIrq(TC10_IRQn,&TimerAdapter<ATSAM_TC1_Timer,16>::IRQhandler,
+                       static_cast<TimerAdapter<ATSAM_TC1_Timer, 16>*>(this)))
+            errorHandler(UNEXPECTED);
     }
 };
 
@@ -277,10 +278,12 @@ public:
         while(AST->AST_SR & AST_SR_BUSY) ;
         AST->AST_WER=AST_WER_ALARM0 | AST_WER_OVF;
         
-        IRQregisterIrq(AST_ALARM_IRQn,&TimerAdapter<ATSAM_AST_Timer,32,2>::IRQhandler,
-                       static_cast<TimerAdapter<ATSAM_AST_Timer,32,2>*>(this));
-        IRQregisterIrq(AST_OVF_IRQn,&TimerAdapter<ATSAM_AST_Timer,32,2>::IRQhandler,
-                       static_cast<TimerAdapter<ATSAM_AST_Timer,32,2>*>(this));
+        bool fail=false;
+        if(!IRQregisterIrq(AST_ALARM_IRQn,&TimerAdapter<ATSAM_AST_Timer,32,2>::IRQhandler,
+                       static_cast<TimerAdapter<ATSAM_AST_Timer,32,2>*>(this))) fail=true;
+        if(!IRQregisterIrq(AST_OVF_IRQn,&TimerAdapter<ATSAM_AST_Timer,32,2>::IRQhandler,
+                       static_cast<TimerAdapter<ATSAM_AST_Timer,32,2>*>(this))) fail=true;
+        if(fail) errorHandler(UNEXPECTED);
     }
 };
 

@@ -32,10 +32,9 @@
 #include "stm32f1_f2_f4_serial.h"
 #include "stm32_serial_common.h"
 #include "kernel/sync.h"
-#include "kernel/scheduler/scheduler.h"
 #include "filesystem/ioctl.h"
 #include "cache/cortexMx_cache.h"
-#include "interfaces/gpio.h"
+#include "interfaces/interrupts.h"
 
 using namespace std;
 
@@ -350,9 +349,6 @@ void STM32SerialBase::rxWakeup()
     if(rxWaiting)
     {
         rxWaiting->IRQwakeup();
-        if(rxWaiting->IRQgetPriority()>
-            Thread::IRQgetCurrentThread()->IRQgetPriority())
-                IRQinvokeScheduler();
         rxWaiting=nullptr;
     }
 }
@@ -405,9 +401,8 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
 {
     InterruptDisableLock dLock;
     port->IRQenable();
-    IRQregisterIrq(port->getIRQn(),&STM32Serial::IRQhandleInterrupt,this);
-    NVIC_SetPriority(port->getIRQn(),15);//Lowest priority for serial
-    NVIC_EnableIRQ(port->getIRQn());
+    if(!IRQregisterIrq(port->getIRQn(),&STM32Serial::IRQhandleInterrupt,this))
+        errorHandler(UNEXPECTED);
     STM32SerialBase::commonInit(id,baudrate,tx,rx,rts,cts);
     //Enabled, 8 data bit, no parity, interrupt on character rx
     port->get()->CR1 = USART_CR1_UE     //Enable port
@@ -475,8 +470,6 @@ STM32Serial::~STM32Serial()
     {
         InterruptDisableLock dLock;
         port->get()->CR1=0;
-        NVIC_DisableIRQ(port->getIRQn());
-        NVIC_ClearPendingIRQ(port->getIRQn());
         IRQunregisterIrq(port->getIRQn());
         port->IRQdisable();
     }
@@ -507,21 +500,18 @@ void STM32DMASerial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
     if(!dma.get()) errorHandler(UNEXPECTED);
     InterruptDisableLock dLock;
 
+    bool fail=false;
     dma.IRQenable();
-    IRQregisterIrq(dma.getTxIRQn(),&STM32DMASerial::IRQhandleDmaTxInterrupt,this);
-    NVIC_SetPriority(dma.getTxIRQn(),15);
-    NVIC_EnableIRQ(dma.getTxIRQn());
-    //Higher priority to ensure IRQhandleDmaRxInterrupt() is called before
-    //IRQhandleInterrupt(), so that idle is set correctly
-    IRQregisterIrq(dma.getRxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this);
-    NVIC_SetPriority(dma.getRxIRQn(),14);
-    NVIC_EnableIRQ(dma.getRxIRQn());
+    if(!IRQregisterIrq(dma.getTxIRQn(),&STM32DMASerial::IRQhandleDmaTxInterrupt,this)) fail=true;
+    if(!IRQregisterIrq(dma.getRxIRQn(),&STM32DMASerial::IRQhandleDmaRxInterrupt,this)) fail=true;
     dma.IRQinit();
 
     port->IRQenable();
-    IRQregisterIrq(port->getIRQn(),&STM32DMASerial::IRQhandleInterrupt,this);
-    NVIC_SetPriority(port->getIRQn(),15);//Lowest priority for serial
-    NVIC_EnableIRQ(port->getIRQn());
+    //Lower priority to ensure IRQhandleDmaRxInterrupt() is called before
+    //IRQhandleInterrupt(), so that idle is set correctly
+    NVIC_SetPriority(port->getIRQn(),defaultIrqPriority+1);
+    if(!IRQregisterIrq(port->getIRQn(),&STM32DMASerial::IRQhandleInterrupt,this)) fail=true;
+    if(fail) errorHandler(UNEXPECTED);
 
     STM32SerialBase::commonInit(id,baudrate,tx,rx,rts,cts);
 
@@ -613,8 +603,6 @@ void STM32DMASerial::IRQhandleDmaTxInterrupt()
     dmaTxInProgress=false;
     if(txWaiting==nullptr) return;
     txWaiting->IRQwakeup();
-    if(txWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-        IRQinvokeScheduler();
     txWaiting=nullptr;
 }
 
@@ -702,14 +690,8 @@ STM32DMASerial::~STM32DMASerial()
         port->get()->CR1=0;
         IRQstopDmaRead();
         auto dma=port->getDma();
-        NVIC_DisableIRQ(dma.getTxIRQn());
-        NVIC_ClearPendingIRQ(dma.getTxIRQn());
         IRQunregisterIrq(dma.getTxIRQn());
-        NVIC_DisableIRQ(dma.getRxIRQn());
-        NVIC_ClearPendingIRQ(dma.getRxIRQn());
         IRQunregisterIrq(dma.getRxIRQn());
-        NVIC_DisableIRQ(port->getIRQn());
-        NVIC_ClearPendingIRQ(port->getIRQn());
         IRQunregisterIrq(port->getIRQn());
         port->IRQdisable();
     }
