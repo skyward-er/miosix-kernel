@@ -25,9 +25,6 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef PLL_H
-#define PLL_H
+#pragma once
 
 void startPll();
-
-#endif //PLL_H
