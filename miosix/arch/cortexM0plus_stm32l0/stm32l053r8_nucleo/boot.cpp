@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2017-2021 by Terraneo Federico                          *
+ *   Copyright (C) 2024 by Daniele Cattaneo                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,52 +25,58 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#pragma once
+#include "interfaces/arch_registers.h"
 
-#include "interfaces/gpio.h"
-
-/**
- * \internal
- * Versioning for board_settings.h for out of git tree projects
- */
-#define BOARD_SETTINGS_VERSION 300
+extern "C" void SystemInit();
 
 namespace miosix {
 
-/**
- * \addtogroup Settings
- * \{
- */
+void IRQsetupClockTree()
+{
+    //TODO: shouldn't we select voltage range 1 too? Don't have this board so can't test
+    static_assert(HSE_VALUE==8000000,"Unsupported HSE oscillator frequency");
+    static_assert(SYSCLK_FREQ_32MHz==32000000,"Unsupported target SYSCLK");
 
-/// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB) but the
-/// STM32L053 only has 8KB of RAM so the stack is only 1.5KB.
-const unsigned int MAIN_STACK_SIZE=1024+512;
+    // Check if PLL is used as system clock
+    if ((RCC->CFGR & RCC_CFGR_SWS) == RCC_CFGR_SWS_PLL)
+    {
+        // Select HSI as system clock
+        RCC->CFGR = (RCC->CFGR & (uint32_t)~RCC_CFGR_SW) | RCC_CFGR_SW_HSI;
+        while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) {}
+    }
+    // Disable PLL
+    RCC->CR &= (uint32_t)~RCC_CR_PLLON;
+    while(RCC->CR & RCC_CR_PLLRDY) {}
 
-/// Serial port
-/// Serial ports 1 to 3 are available
-const unsigned int defaultSerial=2;
-const unsigned int defaultSerialSpeed=115200;
-const bool defaultSerialFlowctrl=false;
-const bool defaultSerialDma=false; // Not supported for serial 2
-// Default serial 1 pins (uncomment when using serial 1)
-//using defaultSerialTxPin = Gpio<GPIOA_BASE,9>;
-//using defaultSerialRxPin = Gpio<GPIOA_BASE,10>;
-//using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
-//using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
-// Default serial 2 pins (uncomment when using serial 2)
-using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
-using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
-using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
-using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
-// Default serial 3 pins (uncomment when using serial 3/LPUART)
-//using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
-//using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
-//using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
-//using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
+    // Enable HSE with bypass
+    RCC->CR |= RCC_CR_HSEON | RCC_CR_HSEBYP;
+    while((RCC->CR & RCC_CR_HSERDY) == 0) {}
 
-/**
- * \}
- */
+    // Set flash latency to 1 wait state
+    FLASH->ACR |= FLASH_ACR_LATENCY;
 
-} //namespace miosix
+    // Set PLL multiplier to 12 (HSI is 8MHz, gives 96MHz) and divider by 3
+    // 96MHz is needed for the 48MHz output to work correctly (it is hardcoded
+    // to divide by 2)
+    RCC->CFGR = (RCC->CFGR & ~(RCC_CFGR_PLLMUL | RCC_CFGR_PLLDIV))
+                | (RCC_CFGR_PLLMUL12 | RCC_CFGR_PLLDIV3);
+    // Set PLL source
+    RCC->CFGR = (RCC->CFGR & ~(RCC_CFGR_PLLSRC)) | RCC_CFGR_PLLSRC_HSE;
+    // Enable PLL
+    RCC->CR |= RCC_CR_PLLON;
+    while ((RCC->CR & RCC_CR_PLLRDY) == 0) {}
+
+    // Set PLL as system clock
+    RCC->CFGR |= RCC_CFGR_SW_PLL;
+    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) {}
+}
+
+void IRQmemoryAndClockInit()
+{
+    // For L0 microcontrollers SystemInit is basically empty,
+    // but we call it anyway for good measure.
+    SystemInit();
+    IRQsetupClockTree();
+}
+
+} // namespace miosix

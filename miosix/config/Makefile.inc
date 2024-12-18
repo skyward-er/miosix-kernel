@@ -3208,13 +3208,13 @@ else ifeq ($(ARCH),cortexM0plus_stm32l0)
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
-        ARCH_SRC :=                                                 \
-        $(BOARD_INC)/core/stage_1_boot.cpp                          \
+        ARCH_SRC :=                          \
+        $(BOARD_INC)/boot.cpp                \
         $(BOARD_INC)/interfaces-impl/bsp.cpp
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -DBOARD_STM32L053R8_NUCLEO -DSTM32L053xx
-        CXXFLAGS_BASE += -DBOARD_STM32L053R8_NUCLEO -DSTM32L053xx
+        CFLAGS_BASE   += -DBOARD_STM32L053R8_NUCLEO
+        CXXFLAGS_BASE += -DBOARD_STM32L053R8_NUCLEO
 
         ## Clock frequency
         ## External clock is 8Mhz provided from MCO output of ST-LINK. Actual
@@ -3261,7 +3261,8 @@ else ifeq ($(ARCH),cortexM0plus_stm32l0)
     arch/common/os_timer/stm32_16bit_os_timer.cpp            \
     arch/common/sleep/cortexMx_sleep.cpp                     \
     arch/common/drivers/stm32_gpio.cpp                       \
-    arch/common/drivers/serial_stm32.cpp                     \
+    arch/common/drivers/stm32f7_serial.cpp                   \
+    arch/common/drivers/stm32_serial_common.cpp              \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/CMSIS/Device/ST/STM32L0xx/Source/Templates/system_stm32l0xx.c
 
