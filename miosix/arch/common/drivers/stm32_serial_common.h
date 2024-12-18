@@ -65,7 +65,11 @@
         #define DMA_HAS_CSELR
     #endif
     #define DMA_STM32F1
-    #define ALTFUNC_STM32F2
+    #if defined(STM32F072xB)
+        #define ALTFUNC_STM32F2_SPLIT
+    #else
+        #define ALTFUNC_STM32F2
+    #endif
 #elif defined(_ARCH_CORTEXM4_STM32L4)
     #define BUS_HAS_AHB12
     #define BUS_HAS_APB1L1H2

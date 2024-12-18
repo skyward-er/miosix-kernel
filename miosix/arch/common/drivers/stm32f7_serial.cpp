@@ -133,6 +133,21 @@ static const STM32SerialHW ports[maxPorts] = {
     { USART2, USART2_IRQn, {1}, false, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
       { 0 } }, // No DMA support yet because of merged IRQ channels
 };
+#elif defined(STM32F072xB)
+constexpr int maxPorts = 4;
+static const STM32SerialAltFunc::Span usart12AfSpans[]={{1,0,1},{0,0,0}};
+static const STM32SerialAltFunc::Span usart3AfSpans[]={{2,0,4},{3,8,1},{0,0,0}};
+static const STM32SerialAltFunc::Span usart4AfSpans[]={{2,0,4},{0,0,0}};
+static const STM32SerialHW ports[maxPorts] = {
+    { USART1, USART1_IRQn, {usart12AfSpans}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+    { USART2, USART2_IRQn, {usart12AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_USART2EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+    { USART3, USART3_4_IRQn, {usart3AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_USART3EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+    { USART4, USART3_4_IRQn, {usart4AfSpans}, false, STM32Bus::APB1, RCC_APB1ENR_USART4EN,
+      { 0 } }, // No DMA support yet because of merged IRQ channels
+};
 #elif defined(STM32F303xC)
 constexpr int maxPorts = 5;
 static const STM32SerialHW ports[maxPorts] = {

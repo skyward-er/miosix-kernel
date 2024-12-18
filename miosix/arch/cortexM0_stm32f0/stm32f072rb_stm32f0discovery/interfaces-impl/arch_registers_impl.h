@@ -1,6 +1,7 @@
 #pragma once
 
 //Always include stm32f0xx.h before core_cm0.h, there's some nasty dependency
+#define STM32F072xB
 #include "CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h"
 #include "CMSIS/Include/core_cm0.h"
 #include "CMSIS/Device/ST/STM32F0xx/Include/system_stm32f0xx.h"
@@ -13,3 +14,6 @@
 //CPU level alone, the bus matrices and peripherals themselves may also reorder
 //accesses as a side-effect of how they work.
 #define RCC_SYNC()
+
+//Peripheral interrupt start from 0 and the last one is 31, so there are 32
+#define MIOSIX_NUM_PERIPHERAL_IRQ 32

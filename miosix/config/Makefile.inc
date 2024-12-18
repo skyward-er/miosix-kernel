@@ -2808,13 +2808,13 @@ else ifeq ($(ARCH),cortexM0_stm32f0)
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
         ARCH_SRC :=                                   \
-        $(BOARD_INC)/core/stage_1_boot.cpp            \
+        $(BOARD_INC)/boot.cpp                         \
         $(BOARD_INC)/interfaces-impl/bsp.cpp          \
         arch/common/os_timer/stm32_32bit_os_timer.cpp
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -D_BOARD_STM32F072RB_DISCO -DSTM32F072xB
-        CXXFLAGS_BASE += -D_BOARD_STM32F072RB_DISCO -DSTM32F072xB
+        CFLAGS_BASE   += -D_BOARD_STM32F072RB_DISCO
+        CXXFLAGS_BASE += -D_BOARD_STM32F072RB_DISCO
 
         ## Select clock frequency
         CLOCK_FREQ := -DSYSCLK_FREQ_32MHz=32000000 -DRUN_WITH_HSI
