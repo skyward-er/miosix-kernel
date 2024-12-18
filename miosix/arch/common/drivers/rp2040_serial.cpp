@@ -164,7 +164,7 @@ RP2040PL011Serial::~RP2040PL011Serial()
 {
     //Disable UART operation
     uart->cr = 0;
-    IRQunregisterIrq(irqn);
+    IRQunregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this);
 }
 
 void RP2040PL011Serial::commonInit(int number, int baudrate)
@@ -184,8 +184,7 @@ void RP2040PL011Serial::commonInit(int number, int baudrate)
         default:
             errorHandler(UNEXPECTED);
     }
-    if(!IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this))
-        errorHandler(UNEXPECTED);
+    IRQregisterIrq(irqn, &RP2040PL011Serial::IRQhandleInterrupt, this);
     uart->ifls = (2<<UART_UARTIFLS_RXIFLSEL_LSB) | (2<<UART_UARTIFLS_TXIFLSEL_LSB);
     enableAllInterrupts();
     //Setup baud rate

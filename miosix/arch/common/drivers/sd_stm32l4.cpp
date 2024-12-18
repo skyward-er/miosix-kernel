@@ -883,8 +883,8 @@ static void initSDIOPeripheral()
         sdCLK::alternateFunction(12);
         sdCMD::mode(Mode::ALTERNATE);
         sdCMD::alternateFunction(12);
+        IRQregisterIrq(SDMMC1_IRQn,SDMMCirqImpl);
     }
-    if(!IRQregisterIrq(SDMMC1_IRQn,&SDMMCirqImpl)) errorHandler(UNEXPECTED);
     
     SDMMC1->POWER=0; //Power off state
     delayUs(1);

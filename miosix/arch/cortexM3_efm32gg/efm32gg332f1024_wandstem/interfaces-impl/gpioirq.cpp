@@ -77,10 +77,8 @@ void registerGpioIrq(GpioPin pin, GpioIrqEdge edge, function<void ()> callback)
         {
             first=true;
             GPIO->INSENSE |= GPIO_INSENSE_INT | GPIO_INSENSE_PRS;
-            bool fail=false;
-            if(!IRQregisterIrq(GPIO_EVEN_IRQn,&IRQGpioEvenInterruptHandler)) fail=true;
-            if(!IRQregisterIrq(GPIO_ODD_IRQn,&IRQGpioOddInterruptHandler)) fail=true;
-            if(fail) errorHandler(UNEXPECTED);
+            IRQregisterIrq(GPIO_EVEN_IRQn,&IRQGpioEvenInterruptHandler);
+            IRQregisterIrq(GPIO_ODD_IRQn,&IRQGpioOddInterruptHandler);
         }
         
         if(callbacks[number])

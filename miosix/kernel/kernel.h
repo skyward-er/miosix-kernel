@@ -700,6 +700,8 @@ public:
 
     /**
      * Wakeup a thread.
+     * This function causes a context switch if the woken thread priorirty is
+     * higher than the currently running thread.
      * <br>CANNOT be called when the kernel is paused.
      */
     void wakeup()
@@ -711,12 +713,19 @@ public:
 
     /**
      * Wakeup a thread.
+     * This function does NOT cause a context switch if the woken thread
+     * priority is higher than the currently running one, as this would be
+     * unsafe in this context.
      * <br>Can only be called when the kernel is paused.
      */
     void PKwakeup();
 
     /**
      * Wakeup a thread.
+     * Starting from Miosix 3 this function causes the scheduler interrupt to
+     * become pending if the woken thread priorirty is higher than the currently
+     * running thread. A context switch will thus occur as soon as interrupts
+     * are enabled again.
      * <br>Can only be called inside an IRQ or when interrupts are disabled.
      */
     void IRQwakeup();

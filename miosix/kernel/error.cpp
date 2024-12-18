@@ -70,6 +70,9 @@ void errorHandler(Error e)
         case INTERRUPTS_ENABLED_AT_BOOT:
             IRQerrorLog("\r\n***Interrupts enabled at boot\r\n");
             break;
+        case INTERRUPT_REGISTRATION_ERROR:
+            IRQerrorLog("\r\n***Interrupt registration error\r\n");
+            break;
         default:
             break;
     }

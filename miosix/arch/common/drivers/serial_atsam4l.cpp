@@ -60,8 +60,7 @@ ATSAMSerial::ATSAMSerial(int id, int baudrate)
         //TODO: USART2 hardcoded
         PM->PM_UNLOCK = PM_UNLOCK_KEY(0xaa) | PM_UNLOCK_ADDR(PM_PBAMASK_OFFSET);
         PM->PM_PBAMASK |= PM_PBAMASK_USART2;
-        if(!IRQregisterIrq(USART2_IRQn,&ATSAMSerial::IRQhandleInterrupt,this))
-            errorHandler(UNEXPECTED);
+        IRQregisterIrq(USART2_IRQn,&ATSAMSerial::IRQhandleInterrupt,this);
     }
 
     unsigned int div=(SystemCoreClock+baudrate/2)/baudrate;
@@ -203,7 +202,7 @@ ATSAMSerial::~ATSAMSerial()
     
     InterruptDisableLock dLock;
     //TODO: USART2 hardcoded
-    IRQunregisterIrq(USART2_IRQn);
+    IRQunregisterIrq(USART2_IRQn,&ATSAMSerial::IRQhandleInterrupt,this);
     PM->PM_UNLOCK = PM_UNLOCK_KEY(0xaa) | PM_UNLOCK_ADDR(PM_PBAMASK_OFFSET);
     PM->PM_PBAMASK &= ~PM_PBAMASK_USART2;
 }

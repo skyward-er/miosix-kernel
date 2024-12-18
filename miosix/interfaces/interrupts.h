@@ -74,24 +74,28 @@ namespace miosix {
  * \param arg optional void* argument. This argument is stored in the interrupt
  * handling logic and passed as-is whenever the interrupt handler is called.
  * If omitted, the handler function is called with nullptr as argument.
- * \return true if the interrupt was succesfully registered, false otherwise.
- * An interrupt handler can only be registered if no other handler is registered
- * for the same id.
+ *
+ * \note This function calls errorHandler() causing a reboot if attempting to
+ * register an already registered interrupt. If your driver can tolerate failing
+ * to register an interrupt you should call IRQisIrqRegistered() to test whether
+ * an interrupt is already registered for that id before calling IRQregisterIrq()
  */
-bool IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg=nullptr) noexcept;
+void IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg=nullptr) noexcept;
 
 /**
  * Register an interrupt handler.
  * \param id platform-dependent id of the peripheral for which the handler has
  * to be registered.
  * \param handler pointer to the handler function of type void (*)()
- * \return true if the interrupt was succesfully registered, false otherwise.
- * An interrupt handler can only be registered if no other handler is registered
- * for the same id.
+ *
+ * \note This function calls errorHandler() causing a reboot if attempting to
+ * register an already registered interrupt. If your driver can tolerate failing
+ * to register an interrupt you should call IRQisIrqRegistered() to test whether
+ * an interrupt is already registered for that id before calling IRQregisterIrq()
  */
-inline bool IRQregisterIrq(unsigned int id, void (*handler)()) noexcept
+inline void IRQregisterIrq(unsigned int id, void (*handler)()) noexcept
 {
-    return IRQregisterIrq(id,reinterpret_cast<void (*)(void*)>(handler));
+    IRQregisterIrq(id,reinterpret_cast<void (*)(void*)>(handler));
 }
 
 /**
@@ -101,23 +105,64 @@ inline bool IRQregisterIrq(unsigned int id, void (*handler)()) noexcept
  * \param mfn member function pointer to the class method to be registered as
  * interrupt handler. The method shall take no paprameters.
  * \param object class intance whose methos shall be called as interrupt hanlder.
- * \return true if the interrupt was succesfully registered, false otherwise.
- * An interrupt handler can only be registered if no other handler is registered
- * for the same id.
+ *
+ * \note This function calls errorHandler() causing a reboot if attempting to
+ * register an already registered interrupt. If your driver can tolerate failing
+ * to register an interrupt you should call IRQisIrqRegistered() to test whether
+ * an interrupt is already registered for that id before calling IRQregisterIrq()
  */
 template<typename T>
-inline bool IRQregisterIrq(unsigned int id, void (T::*mfn)(), T *object) noexcept
+inline void IRQregisterIrq(unsigned int id, void (T::*mfn)(), T *object) noexcept
 {
     auto result=unmember(mfn,object);
-    return IRQregisterIrq(id,std::get<0>(result),std::get<1>(result));
+    IRQregisterIrq(id,std::get<0>(result),std::get<1>(result));
 }
 
 /**
  * Unregister an interrupt handler.
  * \param id platform-dependent id of the peripheral for which the handler has
  * to be unregistered.
+ * \param handler pointer to the handler function of type void (*)(void*)
+ * \param arg optional void* argument. This argument is stored in the interrupt
+ * handling logic and passed as-is whenever the interrupt handler is called.
+ * If omitted, the handler function is called with nullptr as argument.
+ *
+ * \note This function calls errorHandler() causing a reboot if attempting to
+ * unregister a different interrupt than the currently registered one
  */
-void IRQunregisterIrq(unsigned int id) noexcept;
+void IRQunregisterIrq(unsigned int id, void (*handler)(void*), void *arg=nullptr) noexcept;
+
+/**
+ * Unregister an interrupt handler.
+ * \param id platform-dependent id of the peripheral for which the handler has
+ * to be registered.
+ * \param handler pointer to the handler function of type void (*)()
+ *
+ * \note This function calls errorHandler() causing a reboot if attempting to
+ * unregister a different interrupt than the currently registered one
+ */
+inline void IRQunregisterIrq(unsigned int id, void (*handler)()) noexcept
+{
+    IRQunregisterIrq(id,reinterpret_cast<void (*)(void*)>(handler));
+}
+
+/**
+ * Unregister an interrupt handler.
+ * \param id platform-dependent id of the peripheral for which the handler has
+ * to be registered.
+ * \param mfn member function pointer to the class method to be registered as
+ * interrupt handler. The method shall take no paprameters.
+ * \param object class intance whose methos shall be called as interrupt hanlder.
+ *
+ * \note This function calls errorHandler() causing a reboot if attempting to
+ * unregister a different interrupt than the currently registered one
+ */
+template<typename T>
+inline void IRQunregisterIrq(unsigned int id, void (T::*mfn)(), T *object) noexcept
+{
+    auto result=unmember(mfn,object);
+    IRQunregisterIrq(id,std::get<0>(result),std::get<1>(result));
+}
 
 /**
  * Check whether an interrupt handler is currently registered.

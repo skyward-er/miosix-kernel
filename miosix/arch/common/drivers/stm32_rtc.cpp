@@ -304,7 +304,7 @@ Rtc::Rtc() : tc(getTickFrequency())
         RTC->PRLH=0;
         RTC->PRLL=1;
     }
-    if(!IRQregisterIrq(RTC_IRQn,&RTCIrqImpl)) errorHandler(UNEXPECTED);
+    IRQregisterIrq(RTC_IRQn,RTCIrqImpl);
 }
 
 } //namespace miosix

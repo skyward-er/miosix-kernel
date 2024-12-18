@@ -57,7 +57,7 @@ int main()
         FastInterruptDisableLock dLock;
         RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
         RCC_SYNC();
-        if(!IRQregisterIrq(TIM3_IRQn,&tim3impl)) errorHandler(UNEXPECTED);
+        IRQregisterIrq(TIM3_IRQn,tim3impl);
     }
     TIM3->CNT=0;
     TIM3->PSC=84-1; //Prescaler clocked at 84MHz, timer incremented every 1us

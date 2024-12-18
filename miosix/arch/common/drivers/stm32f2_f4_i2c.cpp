@@ -59,12 +59,10 @@ I2C1Master::I2C1Master(GpioPin sda, GpioPin scl, int frequency)
         RCC_SYNC();
     }
     
-    bool fail=false;
-    if(!IRQregisterIrq(DMA1_Stream7_IRQn,&I2C1Master::I2C1txDmaHandlerImpl,this)) fail=true;
-    if(!IRQregisterIrq(DMA1_Stream0_IRQn,&I2C1Master::I2C1rxDmaHandlerImpl,this)) fail=true;
-    if(!IRQregisterIrq(I2C1_EV_IRQn,&I2C1Master::I2C1HandlerImpl,this)) fail=true;
-    if(!IRQregisterIrq(I2C1_ER_IRQn,&I2C1Master::I2C1errHandlerImpl,this)) fail=true;
-    if(fail) errorHandler(UNEXPECTED);
+    IRQregisterIrq(DMA1_Stream7_IRQn,&I2C1Master::I2C1txDmaHandlerImpl,this);
+    IRQregisterIrq(DMA1_Stream0_IRQn,&I2C1Master::I2C1rxDmaHandlerImpl,this);
+    IRQregisterIrq(I2C1_EV_IRQn,&I2C1Master::I2C1HandlerImpl,this);
+    IRQregisterIrq(I2C1_ER_IRQn,&I2C1Master::I2C1errHandlerImpl,this);
 
     I2C1->CR1=I2C_CR1_SWRST;
     I2C1->CR1=0;
@@ -207,10 +205,10 @@ I2C1Master::~I2C1Master()
     I2C1->CR1=I2C_CR1_SWRST;
     I2C1->CR1=0;
 
-    IRQunregisterIrq(DMA1_Stream7_IRQn);
-    IRQunregisterIrq(DMA1_Stream0_IRQn);
-    IRQunregisterIrq(I2C1_EV_IRQn);
-    IRQunregisterIrq(I2C1_ER_IRQn);
+    IRQunregisterIrq(DMA1_Stream7_IRQn,&I2C1Master::I2C1txDmaHandlerImpl,this);
+    IRQunregisterIrq(DMA1_Stream0_IRQn,&I2C1Master::I2C1rxDmaHandlerImpl,this);
+    IRQunregisterIrq(I2C1_EV_IRQn,&I2C1Master::I2C1HandlerImpl,this);
+    IRQunregisterIrq(I2C1_ER_IRQn,&I2C1Master::I2C1errHandlerImpl,this);
 
     {
         FastInterruptDisableLock dLock;

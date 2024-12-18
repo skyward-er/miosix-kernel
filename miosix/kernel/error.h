@@ -25,8 +25,7 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#ifndef ERROR_H
-#define	ERROR_H
+#pragma once
 
 namespace miosix {
 
@@ -64,7 +63,11 @@ enum Error
 
     /// Interrupts are wrongly enabled during boot
     /// Error is UNRECOVERABLE
-    INTERRUPTS_ENABLED_AT_BOOT
+    INTERRUPTS_ENABLED_AT_BOOT,
+
+    /// Attempting to register an already registered interrupt or unregistering
+    /// the wrong interrupt. Error is UNRECOVERABLE
+    INTERRUPT_REGISTRATION_ERROR
 };
 
 /**
@@ -78,5 +81,3 @@ enum Error
 void errorHandler(Error e);
 
 } //namespace miosix
-
-#endif	//ERROR_H

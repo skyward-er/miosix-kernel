@@ -275,8 +275,7 @@ SynchronizedServo::SynchronizedServo() : status(STOPPED)
     TIM4->CCR4=0;
     // Configure interrupt on timer overflow
     TIM4->DIER=TIM_DIER_UIE;
-    if(!IRQregisterIrq(TIM4_IRQn,&SynchronizedServo::interruptHandler,this))
-        errorHandler(UNEXPECTED);
+    IRQregisterIrq(TIM4_IRQn,&SynchronizedServo::interruptHandler,this);
     // Set default parameters
     setFrequency(50);
     setMinPulseWidth(1000);

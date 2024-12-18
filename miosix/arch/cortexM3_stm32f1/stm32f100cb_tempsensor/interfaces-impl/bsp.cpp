@@ -75,7 +75,7 @@ static void initDisplay()
     TIM3->ARR=60000; //24MHz/60000=400Hz 
     TIM3->CR1=TIM_CR1_CEN;
     FastInterruptDisableLock dLock;
-    if(!IRQregisterIrq(TIM3_IRQn,&TIM3_IRQHandler)) errorHandler(UNEXPECTED);
+    IRQregisterIrq(TIM3_IRQn,TIM3_IRQHandler);
 }
 
 void clearDisplay()

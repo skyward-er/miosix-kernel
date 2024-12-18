@@ -254,19 +254,21 @@ void IRQinitIrqTable() noexcept
     }
 }
 
-bool IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexcept
+void IRQregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexcept
 {
-    if(id>=numInterrupts) return false;
-    if(irqForwardingTable[id].handler!=unexpectedInterrupt) return false;
+    if(id>=numInterrupts || irqForwardingTable[id].handler!=unexpectedInterrupt)
+        errorHandler(INTERRUPT_REGISTRATION_ERROR);
     irqForwardingTable[id].handler=handler;
     irqForwardingTable[id].arg=arg;
     NVIC_EnableIRQ(static_cast<IRQn_Type>(id));
-    return true;
 }
 
-void IRQunregisterIrq(unsigned int id) noexcept
+void IRQunregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexcept
 {
-    if(id>=numInterrupts) return;
+    if(id>=numInterrupts
+    || irqForwardingTable[id].handler!=handler
+    || irqForwardingTable[id].arg!=arg)
+        errorHandler(INTERRUPT_REGISTRATION_ERROR);
     irqForwardingTable[id].handler=unexpectedInterrupt;
     irqForwardingTable[id].arg=nullptr;
     NVIC_DisableIRQ(static_cast<IRQn_Type>(id));

@@ -4144,7 +4144,7 @@ void testCacheAndDMA()
         FastInterruptDisableLock dLock;
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         RCC_SYNC();
-        if(!IRQregisterIrq(DMA2_Stream0_IRQn,&dma2s0irq)) errorHandler(UNEXPECTED);
+        IRQregisterIrq(DMA2_Stream0_IRQn,dma2s0irq);
     }
 
     //Testing cache-aligned transactions
@@ -4190,7 +4190,7 @@ void testCacheAndDMA()
 
     {
         FastInterruptDisableLock dLock;
-        IRQunregisterIrq(DMA2_Stream0_IRQn);
+        IRQunregisterIrq(DMA2_Stream0_IRQn,dma2s0irq);
     }
     pass();
 }

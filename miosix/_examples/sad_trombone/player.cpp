@@ -276,8 +276,7 @@ void Player::play(Sound& sound)
 		//Configure DAC
 		DAC->CR=DAC_CR_DMAEN1 | DAC_CR_TEN1 | DAC_CR_EN1;
 		//Configure DMA
-		if(!IRQregisterIrq(DMA1_Channel3_IRQn,&DACdmaHandlerImpl))
-			errorHandler(UNEXPECTED);
+		IRQregisterIrq(DMA1_Channel3_IRQn,DACdmaHandlerImpl);
 	}
 
 	//Configure TIM6
@@ -316,7 +315,7 @@ void Player::play(Sound& sound)
     //Shutdown
 	{
 		FastInterruptDisableLock dLock;
-		IRQunregisterIrq(DMA1_Channel3_IRQn);
+		IRQunregisterIrq(DMA1_Channel3_IRQn,DACdmaHandlerImpl);
 		TIM6->CR1=0;
 		DMA1_Channel3->CCR=0;
 		DAC->CR=0;
@@ -352,8 +351,7 @@ void Player::play(Sound& sound)
         //Enable audio PLL (settings for 44100Hz audio)
         RCC->PLLI2SCFGR=(2<<28) | (271<<6);
         RCC->CR |= RCC_CR_PLLI2SON;
-        if(!IRQregisterIrq(DMA1_Stream5_IRQn,I2SdmaHandlerImpl))
-            errorHandler(UNEXPECTED);
+        IRQregisterIrq(DMA1_Stream5_IRQn,I2SdmaHandlerImpl);
     }
     //Wait for PLL to lock
     while((RCC->CR & RCC_CR_PLLI2SRDY)==0) ;
@@ -419,7 +417,7 @@ void Player::play(Sound& sound)
     {
         FastInterruptDisableLock dLock;
         RCC->CR &= ~RCC_CR_PLLI2SON;
-        IRQunregisterIrq(DMA1_Stream5_IRQn);
+        IRQunregisterIrq(DMA1_Stream5_IRQn,I2SdmaHandlerImpl);
     }
     delete bq;
 }

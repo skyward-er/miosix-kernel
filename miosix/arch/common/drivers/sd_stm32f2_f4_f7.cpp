@@ -1259,14 +1259,12 @@ static void initSDIOPeripheral()
         #endif
     }
 
-    bool fail=false;
     #if (defined(_ARCH_CORTEXM7_STM32F7) || defined(_ARCH_CORTEXM7_STM32H7)) && SD_SDMMC==2
-    if(!IRQregisterIrq(DMA2_Stream0_IRQn,SDDMAirqImpl)) fail=true;
+    IRQregisterIrq(DMA2_Stream0_IRQn,SDDMAirqImpl);
     #else
-    if(!IRQregisterIrq(DMA2_Stream3_IRQn,SDDMAirqImpl)) fail=true;
+    IRQregisterIrq(DMA2_Stream3_IRQn,SDDMAirqImpl);
     #endif
-    if(!IRQregisterIrq(SDIO_IRQn,SDirqImpl)) fail=true;
-    if(fail) errorHandler(UNEXPECTED);
+    IRQregisterIrq(SDIO_IRQn,SDirqImpl);
     
     SDIO->POWER=0; //Power off state
     delayUs(1);

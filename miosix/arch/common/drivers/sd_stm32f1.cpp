@@ -1419,10 +1419,8 @@ static void initSDIOPeripheral()
         sdCMD::mode(Mode::ALTERNATE);
     }
     #ifdef SD_DMA
-    bool fail=false;
-    if(!IRQregisterIrq(DMA2_Channel4_5_IRQn,DMA2channel4irqImpl)) fail=true;
-    if(!IRQregisterIrq(SDIO_IRQn,SDIOirqImpl)) fail=true;
-    if(fail) errorHandler(UNEXPECTED);
+    IRQregisterIrq(DMA2_Channel4_5_IRQn,DMA2channel4irqImpl);
+    IRQregisterIrq(SDIO_IRQn,SDIOirqImpl);
     #endif //SD_DMA
 
     SDIO->POWER=0; //Power off state

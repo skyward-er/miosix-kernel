@@ -976,7 +976,7 @@ static void initSDMMCPeripheral()
         #endif
     }
 
-    if(!IRQregisterIrq(SDMMC_IRQn,SDirqImpl)) errorHandler(UNEXPECTED);
+    IRQregisterIrq(SDMMC_IRQn,SDirqImpl);
     
     SDMMC->POWER=0; //Power off state
     delayUs(1);
