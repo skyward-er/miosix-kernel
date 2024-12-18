@@ -173,7 +173,7 @@ static const STM32SerialHW ports[maxPorts] = {
 #elif defined(STM32F745xx) || defined(STM32F746xx)
 constexpr int maxPorts = 8;
 static const STM32SerialAltFunc::Span af7Spans[]={{0,0,7}};
-static const STM32SerialAltFunc::Span af8Spans[]={{0,0,7}};
+static const STM32SerialAltFunc::Span af8Spans[]={{0,0,8}};
 static const STM32SerialAltFunc::Span uart5AfSpans[]={{3,12,7},{0,0,8}};
 static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, {af7Spans}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
@@ -211,7 +211,7 @@ static const STM32SerialHW ports[maxPorts] = {
 };
 #elif defined(STM32F765xx) || defined(STM32F767xx) || defined(STM32F769xx)
 static const STM32SerialAltFunc::Span af7Spans[]={{0,0,7}};
-static const STM32SerialAltFunc::Span af8Spans[]={{0,0,7}};
+static const STM32SerialAltFunc::Span af8Spans[]={{0,0,8}};
 static const STM32SerialAltFunc::Span uart1AfSpans[]={{1,14,7},{0,0,4}};
 static const STM32SerialAltFunc::Span uart4AfSpans[]={{0,11,8},{0,15,6},{0,0,8}};
 static const STM32SerialAltFunc::Span uart5AfSpans[]={{1,12,7},{2,8,8},{0,0,7}};
@@ -308,10 +308,12 @@ static const STM32SerialHW ports[maxPorts] = {
 };
 #elif defined(STM32H755xx)
 static const STM32SerialAltFunc::Span af7Spans[]={{0,0,7}};
-static const STM32SerialAltFunc::Span af8Spans[]={{0,0,7}};
+static const STM32SerialAltFunc::Span af8Spans[]={{0,0,8}};
 static const STM32SerialAltFunc::Span uart1AfSpans[]={{1,14,7},{0,0,4}};
 static const STM32SerialAltFunc::Span uart4AfSpans[]={{0,11,8},{0,15,6},{0,0,8}};
-static const STM32SerialAltFunc::Span uart5AfSpans[]={{1,12,7},{2,8,8},{0,0,7}};
+static const STM32SerialAltFunc::Span uart5AfSpans[]={{2,8,14},{0,0,8}};
+static const STM32SerialAltFunc::Span uart7AfSpans[]={{4,0,11},{0,0,7}};
+static const STM32SerialAltFunc::Span lpuart1AfSpans[]={{1,0,3},{0,0,8}};
 constexpr int maxPorts = 9;
 static const STM32SerialHW ports[maxPorts] = {
     { USART1, USART1_IRQn, {uart1AfSpans}, false, STM32Bus::APB2, RCC_APB2ENR_USART1EN,
@@ -334,11 +336,11 @@ static const STM32SerialHW ports[maxPorts] = {
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream7, DMA1_Stream7_IRQn, STM32SerialDMAHW::Stream7, {0+7, 66},
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, {0+0, 65} } },
-    { USART6, USART6_IRQn, {af8Spans}, false, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
+    { USART6, USART6_IRQn, {af7Spans}, false, STM32Bus::APB2, RCC_APB2ENR_USART6EN,
       { DMA2, STM32Bus::AHB1, RCC_AHB1ENR_DMA2EN,
         DMA2_Stream6, DMA2_Stream6_IRQn, STM32SerialDMAHW::Stream6, {8+6, 72},
         DMA2_Stream1, DMA2_Stream1_IRQn, STM32SerialDMAHW::Stream1, {8+1, 71} } },
-    { UART7 , UART7_IRQn , {af8Spans}, false, STM32Bus::APB1L, RCC_APB1LENR_UART7EN,
+    { UART7 , UART7_IRQn , {uart7AfSpans}, false, STM32Bus::APB1L, RCC_APB1LENR_UART7EN,
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream1, DMA1_Stream1_IRQn, STM32SerialDMAHW::Stream1, {0+1, 80},
         DMA1_Stream3, DMA1_Stream3_IRQn, STM32SerialDMAHW::Stream3, {0+3, 79} } },
@@ -346,7 +348,7 @@ static const STM32SerialHW ports[maxPorts] = {
       { DMA1, STM32Bus::AHB1, RCC_AHB1ENR_DMA1EN,
         DMA1_Stream0, DMA1_Stream0_IRQn, STM32SerialDMAHW::Stream0, {0+0, 82},
         DMA1_Stream6, DMA1_Stream6_IRQn, STM32SerialDMAHW::Stream6, {0+6, 81} } },
-    { LPUART1, LPUART1_IRQn, {af8Spans}, true, STM32Bus::APB4, RCC_APB4ENR_LPUART1EN,
+    { LPUART1, LPUART1_IRQn, {lpuart1AfSpans}, true, STM32Bus::APB4, RCC_APB4ENR_LPUART1EN,
       { 0 } },
 };
 #else
