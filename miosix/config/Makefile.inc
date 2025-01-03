@@ -119,9 +119,9 @@ ifeq ($(OPT_BOARD),stm32f103ze_stm3210e-eval)
     ## (see the XRAM flag below)
     LINKER_SCRIPT_PATH := arch/cortexM3_stm32f1/stm32f103ze_stm3210e-eval/
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_rom.ld
-    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_xram.ld
+    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_xram.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_xram_processes.ld
-    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_all_in_xram.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_512k+64k_all_in_xram.ld
 
     ## Enable/disable initialization of external RAM at boot. Three options:
     ## __ENABLE_XRAM : If you want the heap in xram (with an appropriate linker
@@ -130,8 +130,8 @@ ifeq ($(OPT_BOARD),stm32f103ze_stm3210e-eval)
     ## in xram (with an appropriate linker script selected above)
     ## none selected : don't use xram (with an appropriate linker script
     ## selected above)
-    #XRAM := -D__ENABLE_XRAM
-    XRAM := -D__ENABLE_XRAM -D__CODE_IN_XRAM
+    XRAM := -D__ENABLE_XRAM
+    #XRAM := -D__ENABLE_XRAM -D__CODE_IN_XRAM
 
     ## Select clock frequency
     ## Not defining any of these results in the internal 8MHz clock to be used
@@ -218,8 +218,8 @@ ifeq ($(OPT_BOARD),stm32f207ig_stm3220g-eval)
     ## Warning! enable external ram if you use a linker script that requires it
     ## (see the XRAM flag below)
     LINKER_SCRIPT_PATH := arch/cortexM3_stm32f2/stm32f207ig_stm3220g-eval/
-    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_rom.ld
-    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_rom.ld
+    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_all_in_xram.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram_processes.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram-data-bss-heap.ld
