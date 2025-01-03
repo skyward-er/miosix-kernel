@@ -11,3 +11,6 @@
 #else
 #error "Unknown board variant"
 #endif
+
+//Peripheral interrupt start from 0 and the last one is 25, so there are 26
+#define MIOSIX_NUM_PERIPHERAL_IRQ 26

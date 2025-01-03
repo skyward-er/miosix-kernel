@@ -41,3 +41,6 @@
 #define PDBG_PEVC (1<<2)
 #define PDBG_AST  (1<<1)
 #define PDBG_WDT  (1<<0)
+
+//Atmel provides a constant with the number of peripheral interrupts, so use it
+#define MIOSIX_NUM_PERIPHERAL_IRQ PERIPH_COUNT_IRQn

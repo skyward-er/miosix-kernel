@@ -175,13 +175,6 @@ typedef enum IRQn
   LCDCA_IRQn               = 79, /**< 79 SAM4LC8B LCD Controller (LCDCA) */
 
   PERIPH_COUNT_IRQn        = 80, /**< Number of peripheral IDs */
-
-  /*
-   * Peripheral interrupt start form 0 and the last one is 79, so there are 80
-   * NOTE: The atmel header already profide PERIPH_COUNT_IRQn but this name
-   * is not consistent between vendors.
-   */
-  MIOSIX_NUM_PERIPHERAL_IRQ = 80
 } IRQn_Type;
 
 typedef struct _DeviceVectors

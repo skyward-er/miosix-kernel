@@ -28,3 +28,6 @@
 #pragma once
 
 #include "CMSIS/Device/SiliconLabs/EFM32GG/Include/efm32gg332f1024.h"
+
+//Peripheral interrupt start from 0 and the last one is 38, so there are 39
+#define MIOSIX_NUM_PERIPHERAL_IRQ 39

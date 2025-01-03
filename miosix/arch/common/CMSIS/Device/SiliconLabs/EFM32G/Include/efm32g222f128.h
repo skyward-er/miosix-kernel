@@ -86,11 +86,6 @@ typedef enum IRQn
   VCMP_IRQn             = 26, /*!< 16+26 EFM32 VCMP Interrupt */
   MSC_IRQn              = 28, /*!< 16+28 EFM32 MSC Interrupt */
   AES_IRQn              = 29, /*!< 16+29 EFM32 AES Interrupt */
-
-  /*
-   * Peripheral interrupt start form 0 and the last one is 29, so there are 30
-   */
-  MIOSIX_NUM_PERIPHERAL_IRQ = 30
 } IRQn_Type;
 
 #define __FPU_PRESENT 0

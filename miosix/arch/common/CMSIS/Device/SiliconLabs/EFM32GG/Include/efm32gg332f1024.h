@@ -96,11 +96,6 @@ typedef enum IRQn
   MSC_IRQn              = 35, /*!< 16+35 EFM32 MSC Interrupt */
   AES_IRQn              = 36, /*!< 16+36 EFM32 AES Interrupt */
   EMU_IRQn              = 38, /*!< 16+38 EFM32 EMU Interrupt */
-
-  /*
-   * Peripheral interrupt start form 0 and the last one is 38, so there are 39
-   */
-  MIOSIX_NUM_PERIPHERAL_IRQ = 39
 } IRQn_Type;
 
 #define __FPU_PRESENT 0
