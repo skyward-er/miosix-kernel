@@ -87,7 +87,13 @@ void IRQkernelBootEntryPoint()
         unsigned char *edata=&_edata;
         unsigned char *bss_start=&_bss_start;
         unsigned char *bss_end=&_bss_end;
+        #ifndef __CODE_IN_XRAM
         memcpy(data, etext, edata-data);
+        #else //__CODE_IN_XRAM
+        (void)etext; //Avoid unused variable warning
+        (void)data;
+        (void)edata;
+        #endif //__CODE_IN_XRAM
         memset(bss_start, 0, bss_end-bss_start);
 
         IRQinitIrqTable();

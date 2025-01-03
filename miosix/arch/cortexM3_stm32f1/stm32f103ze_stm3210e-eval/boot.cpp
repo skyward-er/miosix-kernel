@@ -36,12 +36,4 @@ void IRQmemoryAndClockInit()
     SystemInit();
 }
 
-/**
- * ?
- */
-extern "C" void SystemInit_ExtMemCtl_Dummy() 
-{
-	//Do nothing
-}
-
 } // namespace miosix

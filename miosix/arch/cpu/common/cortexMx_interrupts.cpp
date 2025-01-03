@@ -226,12 +226,14 @@ __attribute__((section(".isr_vector"))) extern const InterruptTable hardwareInte
 
 void IRQinitIrqTable() noexcept
 {
+    //Cortex M0 non-plus do not have a VTOR register
     #if __CORTEX_M != 0 || (defined (__VTOR_PRESENT) && (__VTOR_PRESENT == 1U))
+    //Can't set VTOR to point to XRAM
+    #ifndef __CODE_IN_XRAM
     //NOTE: the bootoader in some MCUs such as ATSam4l does not relocate the
     //vector table offset to the one in the firmware, so we force it here.
     SCB->VTOR=reinterpret_cast<unsigned int>(&hardwareInterruptTable);
-    #else
-    //Cortex M0 non-plus do not have a VTOR register
+    #endif
     #endif
 
     //Quirk: static_cast<IRQn_Type>(-5) is sometimes defined as SVCall_IRQn and
