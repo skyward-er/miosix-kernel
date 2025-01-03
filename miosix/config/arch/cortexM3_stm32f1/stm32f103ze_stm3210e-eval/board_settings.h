@@ -59,7 +59,11 @@ const unsigned int MAIN_STACK_SIZE=4*1024;
 const unsigned int defaultSerial=1;
 const unsigned int defaultSerialSpeed=115200;
 const bool defaultSerialFlowctrl=false;
+#ifndef __ENABLE_XRAM
 const bool defaultSerialDma=true;
+#else //__ENABLE_XRAM
+const bool defaultSerialDma=false; //STM32F1 can't DMA to XRAM due to HW bug
+#endif //__ENABLE_XRAM
 // Default serial 1 pins (uncomment when using serial 1)
 using defaultSerialTxPin = Gpio<GPIOA_BASE,9>;
 using defaultSerialRxPin = Gpio<GPIOA_BASE,10>;
