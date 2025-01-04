@@ -182,7 +182,6 @@ ifeq ($(OPT_BOARD),stm32f407vg_stm32f4discovery)
     ##    to configure the kernel with "#define WITH_PROCESSES"
     LINKER_SCRIPT_PATH := arch/cortexM4_stm32f4/stm32f407vg_stm32f4discovery/
     LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_rom.ld
-    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_ram.ld
     #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+192k_rom_processes.ld
 
     ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
