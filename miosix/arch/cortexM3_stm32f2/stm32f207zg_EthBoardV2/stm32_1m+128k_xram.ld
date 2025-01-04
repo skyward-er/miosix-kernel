@@ -1,14 +1,14 @@
 /*
- * C++ enabled linker script for stm32 (1M FLASH, 128K RAM) + 512KB XRAM
+ * C++ enabled linker script for stm32 (1M FLASH, 128K RAM) + 2MB xram
  * Developed by TFT: Terraneo Federico Technologies
  * Optimized for use with the Miosix kernel
  */
 
 /*
  * This linker script puts:
- * - read only data and code (.text, .rodata, .eh_*) in xram
- * - stacks, heap and sections .data and .bss in the internal ram
- * It is most useful for debugging, since powercycling the board will erase code
+ * - read only data and code (.text, .rodata, .eh_*) in flash
+ * - stack for interrupt handling, sections .data and .bss in the internal ram
+ * - heap and stack of threads in the external ram
  */
 
 /*
@@ -40,8 +40,9 @@ _main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
 _main_stack_top  = 0x20000000 + _main_stack_size;
 ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
-/* end of the heap on 128KB microcontrollers */
-_heap_end = 0x20020000;                            /* end of available ram  */
+/* Mapping the heap into external RAM  (512KB) */
+_end = 0x60000000;
+_heap_end = 0x60080000;
 
 /* identify the Entry Point  */
 ENTRY(_ZN6miosix13Reset_HandlerEv)
@@ -49,13 +50,13 @@ ENTRY(_ZN6miosix13Reset_HandlerEv)
 /* specify the memory areas  */
 MEMORY
 {
-    xram(rx) : ORIGIN = 0x60000000, LENGTH = 512K
+    flash(rx)   : ORIGIN = 0x08000000, LENGTH = 1M
 
     /*
      * Note, the ram starts at 0x20000000 but it is necessary to add the size
      * of the main stack, so it is 0x20000200.
      */
-    ram(wx)  : ORIGIN = 0x20000200, LENGTH = 128K-0x200
+    ram(wx)     : ORIGIN = 0x20000200, LENGTH =  128K-0x200
 }
 
 /* now define the output sections  */
@@ -131,14 +132,14 @@ SECTIONS
         KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
         KEEP (*(SORT(.dtors.*)))
         KEEP (*crtend.o(.dtors))
-    } > xram
+    } > flash
 
     /* .ARM.exidx is sorted, so has to go in its own output section.  */
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > xram
+    } > flash
     __exidx_end = .;
 
 	/* .data section: global variables go to ram, but also store a copy to
@@ -151,7 +152,7 @@ SECTIONS
         *(.gnu.linkonce.d.*)
         . = ALIGN(8);
         _edata = .;
-    } > ram AT > xram
+    } > ram AT > flash
     _etext = LOADADDR(.data);
 
     /* .bss section: uninitialized global variables go to ram */
@@ -165,6 +166,6 @@ SECTIONS
     } > ram
     _bss_end = .;
 
-    _end = .;
-    PROVIDE(end = .);
+    /*_end = .;*/
+    /*PROVIDE(end = .);*/
 }

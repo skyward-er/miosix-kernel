@@ -241,24 +241,27 @@ endif
 ##
 ifeq ($(OPT_BOARD),stm32f207zg_ethboard_v2)
 
-    ## Linker script type, there are two options
-    ## 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
-    ##    the most common choice, available for all microcontrollers
-    ## 2) Code in external RAM, stack + heap in internal RAM
-    ##    (file *_code_in_xram.ld) useful for debugging. Code runs
-    ##    *very* slow compared to FLASH. Works only with a booloader that
-    ##    forwards interrrupts @ 0x60000000 (see miosix/_tools/bootloaders for
-    ##    one).
-    ##    You must -D__CODE_IN_XRAM below.
+    ## Linker script type
+    ## 1) Code in FLASH, all kernel data in internal RAM, external RAM reserved
+    ##    for the process pool (file *_xram_processes.ld) to configure the
+    ##    kernel with "#define WITH_PROCESSES"
+    ## 2) Code in FLASH .data .bss and interrupt stack in internal RAM, heap in
+    ##    external RAM (file *_xram.ld). Kernel runs slower but has more RAM
+    ## 3) Code + stack + heap in external RAM, (file *_all_in_xram.ld)
+    ##    useful for debugging code. Code runs *very* slow compared to FLASH.
+    ##    Works only with a booloader that forwards interrrupts @ 0x6000000
+    ##    (see miosix/_tools/bootloaders for one). The microcontroller must have
+    ##    an external memory interface. You must -D__CODE_IN_XRAM below.
     LINKER_SCRIPT_PATH := arch/cortexM3_stm32f2/stm32f207zg_EthBoardV2/
-    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_rom.ld
-    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_code_in_xram.ld
+    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram_processes.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_xram.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)stm32_1m+128k_all_in_xram.ld
 
-    ## XRAM is always enabled on this board, even if the _rom linker script
-    ## does not make explicit use of it.
+    ## XRAM is always enabled on this board, if you don't want the kernel to
+    ## use it select the xram_processes linker script
     ## Uncommenting __CODE_IN_XRAM (with an appropriate linker script selected
     ## above) allows to run code from external RAM, useful for debugging
-    XRAM := -D__CODE_IN_XRAM
+    #XRAM := -D__CODE_IN_XRAM
 
 endif
 
@@ -2068,7 +2071,7 @@ else ifeq ($(ARCH),cortexM3_stm32f2)
         ## The command must provide a way to program the board, or print an
         ## error message saying that 'make program' is not supported for that
         ## board.
-        ifeq ($(LINKER_SCRIPT),$(LINKER_SCRIPT_PATH)stm32_1m+128k_code_in_xram.ld)
+        ifeq ($(LINKER_SCRIPT),$(LINKER_SCRIPT_PATH)stm32_1m+128k_all_in_xram.ld)
             PROG ?= $(KPATH)/_tools/bootloaders/stm32/pc_loader/pc_loader \
                     /dev/ttyUSB0 main.bin
         else

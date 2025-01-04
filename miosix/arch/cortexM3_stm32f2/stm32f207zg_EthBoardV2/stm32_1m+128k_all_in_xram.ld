@@ -1,47 +1,27 @@
 /*
- * C++ enabled linker script for stm32 (1M FLASH, 128K RAM)
+ * C++ enabled linker script for stm32 (1M FLASH, 128K RAM) + 2MB xram
  * Developed by TFT: Terraneo Federico Technologies
  * Optimized for use with the Miosix kernel
  */
 
 /*
  * This linker script puts:
- * - read only data and code (.text, .rodata, .eh_*) in flash
- * - stacks, heap and sections .data and .bss in the internal ram
- * - the external ram (if available) is not used.
+ * - all (code, .data, .bss, stacks, heap) in the external ram.
+ * It is most useful for debugging, since powercycling the board will erase code
  */
 
 /*
  * The main stack is used for interrupt handling by the kernel.
- *
- * *** Readme ***
- * This linker script places the main stack (used by the kernel for interrupts)
- * at the bottom of the ram, instead of the top. This is done for two reasons:
- *
- * - as an optimization for microcontrollers with little ram memory. In fact
- *   the implementation of malloc from newlib requests memory to the OS in 4KB
- *   block (except the first block that can be smaller). This is probably done
- *   for compatibility with OSes with an MMU and paged memory. To see why this
- *   is bad, consider a microcontroller with 8KB of ram: when malloc finishes
- *   up the first 4KB it will call _sbrk_r asking for a 4KB block, but this will
- *   fail because the top part of the ram is used by the main stack. As a
- *   result, the top part of the memory will not be used by malloc, even if
- *   available (and it is nearly *half* the ram on an 8KB mcu). By placing the
- *   main stack at the bottom of the ram, the upper 4KB block will be entirely
- *   free and available as heap space.
- *
- * - In case of main stack overflow the cpu will fault because access to memory
- *   before the beginning of the ram faults. Instead with the default stack
- *   placement the main stack will silently collide with the heap.
- * Note: if increasing the main stack size also increase the ORIGIN value in
- * the MEMORY definitions below accordingly.
+ * In this linker script the main stack is placed at the top of the ram since:
+ * - having 2MB of ram makes the "stack at bottom of ram" optimization useless
+ * - the interrupt vectors are forwarded at the bottom of the ram
  */
-_main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
-_main_stack_top  = 0x20000000 + _main_stack_size;
+_main_stack_size   = 0x00000200;  /* main   stack size = 512Bytes */
 ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
-/* end of the heap on 128KB microcontrollers */
-_heap_end = 0x20020000;                            /* end of available ram  */
+/* end of the stack */
+_main_stack_top = 0x60080000;                     /* placed at the top of ram */
+_heap_end = _main_stack_top - _main_stack_size;
 
 /* identify the Entry Point  */
 ENTRY(_ZN6miosix13Reset_HandlerEv)
@@ -49,13 +29,7 @@ ENTRY(_ZN6miosix13Reset_HandlerEv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)   : ORIGIN = 0,          LENGTH = 1M
-
-    /*
-     * Note, the ram starts at 0x20000000 but it is necessary to add the size
-     * of the main stack, so it is 0x20000200.
-     */
-    ram(wx)     : ORIGIN = 0x20000200, LENGTH =  128K-0x200
+    ram(wx)     : ORIGIN = 0x60000000, LENGTH = 512K
 }
 
 /* now define the output sections  */
@@ -131,14 +105,14 @@ SECTIONS
         KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
         KEEP (*(SORT(.dtors.*)))
         KEEP (*crtend.o(.dtors))
-    } > flash
+    } > ram
 
     /* .ARM.exidx is sorted, so has to go in its own output section.  */
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > flash
+    } > ram
     __exidx_end = .;
 
 	/* .data section: global variables go to ram, but also store a copy to
@@ -151,7 +125,7 @@ SECTIONS
         *(.gnu.linkonce.d.*)
         . = ALIGN(8);
         _edata = .;
-    } > ram AT > flash
+    } > ram
     _etext = LOADADDR(.data);
 
     /* .bss section: uninitialized global variables go to ram */
