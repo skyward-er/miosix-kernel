@@ -1597,7 +1597,8 @@ else ifeq ($(ARCH),cortexM4_stm32f4)
         ## The command must provide a way to program the board, or print an
         ## error message saying that 'make program' is not supported for that
         ## board.
-        PROG ?= stm32flash -w $(if $(ROMFS_DIR), image.bin, main.bin) -v /dev/ttyUSB0
+        PROG ?= st-flash --connect-under-reset --reset write \
+                $(if $(ROMFS_DIR), image.bin, main.bin) 0x08000000make
         
     ##-------------------------------------------------------------------------
     ## BOARD: stm32f429zi_stm32f4discovery

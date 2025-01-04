@@ -60,15 +60,15 @@ const bool defaultSerialDma=true;
 //using defaultSerialRtsPin = Gpio<GPIOA_BASE,12>;
 //using defaultSerialCtsPin = Gpio<GPIOA_BASE,11>;
 // Default serial 2 pins (uncomment when using serial 2)
-using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
-using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
-using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
-using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
+//using defaultSerialTxPin = Gpio<GPIOA_BASE,2>;
+//using defaultSerialRxPin = Gpio<GPIOA_BASE,3>;
+//using defaultSerialRtsPin = Gpio<GPIOA_BASE,1>;
+//using defaultSerialCtsPin = Gpio<GPIOA_BASE,0>;
 // Default serial 3 pins (uncomment when using serial 3)
-//using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
-//using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
-//using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
-//using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
+using defaultSerialTxPin = Gpio<GPIOB_BASE,10>;
+using defaultSerialRxPin = Gpio<GPIOB_BASE,11>;
+using defaultSerialRtsPin = Gpio<GPIOB_BASE,14>;
+using defaultSerialCtsPin = Gpio<GPIOB_BASE,13>;
 
 //SD card driver
 static const unsigned char sdVoltage=30; //Board powered @ 3.0V
