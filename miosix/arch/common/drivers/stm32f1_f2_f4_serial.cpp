@@ -256,7 +256,8 @@ void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
         //Quirk: stm32f1 rx pin has to be in input mode, while stm32f2 and up
         //want it in ALTERNATE mode. Go figure...
         tx.mode(Mode::ALTERNATE);
-        rx.mode(Mode::INPUT);
+        rx.mode(Mode::INPUT_PULL_UP_DOWN);
+        rx.pullup(); //Pullup: prevent spurious rx if unconnected
         if(flowControl)
         {
             rts.mode(Mode::ALTERNATE);
@@ -264,7 +265,7 @@ void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
         }
     #else
         port->getAltFunc().set(tx);
-        port->getAltFunc().set(rx);
+        port->getAltFunc().set(rx,true); //Pullup: prevent spurious rx if unconnected
         if(flowControl)
         {
             port->getAltFunc().set(rts);

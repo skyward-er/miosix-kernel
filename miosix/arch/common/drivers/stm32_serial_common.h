@@ -242,11 +242,12 @@ struct STM32SerialAltFunc
 
 struct STM32SerialAltFunc
 {
-    void set(GpioPin& pin) const
+    void set(GpioPin& pin, bool pullUp=false) const
     {
         //First we set the AF then the mode to avoid glitches
         pin.alternateFunction(af);
-        pin.mode(Mode::ALTERNATE);
+        if(pullUp) pin.mode(Mode::ALTERNATE_PULL_UP);
+        else pin.mode(Mode::ALTERNATE);
     }
     unsigned char af;
 };
@@ -278,7 +279,7 @@ struct STM32SerialAltFunc
     };
     const Span *spans;
 
-    void set(GpioPin& pin) const;
+    void set(GpioPin& pin, bool pullUp=false) const;
 private:
     inline unsigned char lookup(GpioPin& gpio) const;
 };

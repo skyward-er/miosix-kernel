@@ -31,11 +31,12 @@ using namespace miosix;
 
 #if defined(ALTFUNC_STM32F2_SPLIT)
 
-void STM32SerialAltFunc::set(GpioPin& pin) const
+void STM32SerialAltFunc::set(GpioPin& pin, bool pullUp) const
 {
     //First we set the AF then the mode to avoid glitches
     pin.alternateFunction(lookup(pin));
-    pin.mode(Mode::ALTERNATE);
+    if(pullUp) pin.mode(Mode::ALTERNATE_PULL_UP);
+    else pin.mode(Mode::ALTERNATE);
 }
 
 inline unsigned char STM32SerialAltFunc::lookup(GpioPin& gpio) const

@@ -428,7 +428,7 @@ void STM32SerialBase::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
                     GpioPin rts, GpioPin cts)
 {
     port->getAltFunc().set(tx);
-    port->getAltFunc().set(rx);
+    port->getAltFunc().set(rx,true); //Pullup: prevent spurious rx if unconnected
     if(flowControl)
     {
         port->getAltFunc().set(rts);
