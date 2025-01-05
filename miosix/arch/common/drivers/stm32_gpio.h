@@ -45,6 +45,8 @@ enum class Mode
     OPEN_DRAIN             = 0b01100, ///Open Drain Output       (MODE=01 TYPE=1 PUP=00)
     OPEN_DRAIN_PULL_UP     = 0b01101, ///Open Drain Output PU    (MODE=01 TYPE=1 PUP=01)
     ALTERNATE              = 0b10000, ///Alternate function      (MODE=10 TYPE=0 PUP=00)
+    ALTERNATE_PULL_UP      = 0b10001, ///Alternate PullUp        (MODE=10 TYPE=0 PUP=01)
+    ALTERNATE_PULL_DOWN    = 0b10010, ///Alternate PullDown      (MODE=10 TYPE=0 PUP=10)
     ALTERNATE_OD           = 0b10100, ///Alternate Open Drain    (MODE=10 TYPE=1 PUP=00)
     ALTERNATE_OD_PULL_UP   = 0b10101, ///Alternate Open Drain PU (MODE=10 TYPE=1 PUP=01)
 };
