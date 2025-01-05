@@ -35,7 +35,7 @@
 #OPT_BOARD := stm32f100rc_solertegiard
 #OPT_BOARD := stm32f205rc_skyward_stormtrooper
 #OPT_BOARD := stm32f401vc_stm32f4discovery
-#OPT_BOARD := stm32f103c8_breakout
+#OPT_BOARD := stm32f103c8_bluepill
 #OPT_BOARD := stm32f100c8_microboard
 #OPT_BOARD := stm32f469ni_stm32f469i-disco
 #OPT_BOARD := stm32f429zi_skyward_homeone
@@ -420,16 +420,16 @@ endif
 # No options
 
 ##---------------------------------------------------------------------------
-## stm32f103c8_breakout
+## stm32f103c8_bluepill
 ##
-ifeq ($(OPT_BOARD),stm32f103c8_breakout)
+ifeq ($(OPT_BOARD),stm32f103c8_bluepill)
     
     ## Select clock frequency
-    CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000
+    #CLOCK_FREQ := -DSYSCLK_FREQ_24MHz=24000000
     #CLOCK_FREQ := -DSYSCLK_FREQ_36MHz=36000000
     #CLOCK_FREQ := -DSYSCLK_FREQ_48MHz=48000000
     #CLOCK_FREQ := -DSYSCLK_FREQ_56MHz=56000000
-    #CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
+    CLOCK_FREQ := -DSYSCLK_FREQ_72MHz=72000000
 
 endif
 
@@ -906,7 +906,7 @@ else ifeq ($(OPT_BOARD),stm32f205rc_skyward_stormtrooper)
     ARCH := cortexM3_stm32f2
 else ifeq ($(OPT_BOARD),stm32f401vc_stm32f4discovery)
     ARCH := cortexM4_stm32f4
-else ifeq ($(OPT_BOARD),stm32f103c8_breakout)
+else ifeq ($(OPT_BOARD),stm32f103c8_bluepill)
     ARCH := cortexM3_stm32f1
 else ifeq ($(OPT_BOARD),stm32f100c8_microboard)
     ARCH := cortexM3_stm32f1
@@ -1334,12 +1334,12 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         PROG ?= stm32flash -w $(if $(ROMFS_DIR), image.bin, main.bin) -v /dev/ttyUSB0
         
     ##-------------------------------------------------------------------------
-    ## BOARD: stm32f103c8_breakout
+    ## BOARD: stm32f103c8_bluepill
     ##
-    else ifeq ($(OPT_BOARD),stm32f103c8_breakout)
+    else ifeq ($(OPT_BOARD),stm32f103c8_bluepill)
 
         ## Base directory with header files for this board
-        BOARD_INC := arch/cortexM3_stm32f1/stm32f103c8_breakout
+        BOARD_INC := arch/cortexM3_stm32f1/stm32f103c8_bluepill
 
         ## Select linker script
         LINKER_SCRIPT := $(BOARD_INC)/stm32_64k+20k_rom.ld
@@ -1352,8 +1352,8 @@ else ifeq ($(ARCH),cortexM3_stm32f1)
         arch/common/drivers/servo_stm32.cpp
 
         ## Add a #define to allow querying board name
-        CFLAGS_BASE   += -D_BOARD_STM32F103C8_BREAKOUT
-        CXXFLAGS_BASE += -D_BOARD_STM32F103C8_BREAKOUT
+        CFLAGS_BASE   += -D_BOARD_STM32F103C8_BLUEPILL
+        CXXFLAGS_BASE += -D_BOARD_STM32F103C8_BLUEPILL
        
         ## Select programmer command line
         ## This is the program that is invoked when the user types

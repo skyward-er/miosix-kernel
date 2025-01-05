@@ -51,26 +51,13 @@ typedef Gpio<GPIOC_BASE,13> _led;
 
 inline void ledOn()
 {
-    _led::high();
+    _led::low();
 }
 
 inline void ledOff()
 {
-    _led::low();
+    _led::high();
 }
-
-///\internal Pin connected to SD card detect
-//TODO: no filesystem typedef Gpio<GPIOA_BASE,8> sdCardDetect;
-
-/**
- * Polls the SD card sense GPIO
- * \return true if there is an uSD card in the socket.
- */
-/*TODO: no filesystem
-inline bool sdCardSense()
-{
-    return sdCardDetect::value()==0;
-}*/
 
 /**
 \}
