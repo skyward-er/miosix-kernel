@@ -459,6 +459,7 @@ static void test_2()
         bool failed=false;
         #ifdef SCHED_TYPE_EDF
         t2_p_v1->wakeup();
+        Thread::yield();
         #endif
         {
             PauseKernelLock pk;
