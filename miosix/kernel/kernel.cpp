@@ -492,30 +492,32 @@ Priority Thread::getPriority()
 void Thread::setPriority(Priority pr)
 {
     if(pr.validate()==false) return;
-    PauseKernelLock lock;
+    {
+        PauseKernelLock lock;
 
-    Thread *running=PKgetCurrentThread();
-    //If thread is locking at least one mutex
-    if(running->mutexLocked!=nullptr)
-    {   
-        //savedPriority always changes, since when all mutexes are unlocked
-        //setPriority() must become effective
-        if(running->savedPriority==pr) return;
-        running->savedPriority=pr;
-        //Calculate new priority of thread, which is
-        //max(savedPriority, inheritedPriority)
-        Mutex *walk=running->mutexLocked;
-        while(walk!=nullptr)
+        Thread *running=PKgetCurrentThread();
+        //If thread is locking at least one mutex
+        if(running->mutexLocked!=nullptr)
         {
-            if(walk->waiting.empty()==false)
-                pr=std::max(pr,walk->waiting.front()->PKgetPriority());
-            walk=walk->next;
+            //savedPriority always changes, since when all mutexes are unlocked
+            //setPriority() must become effective
+            if(running->savedPriority==pr) return;
+            running->savedPriority=pr;
+            //Calculate new priority of thread, which is
+            //max(savedPriority, inheritedPriority)
+            Mutex *walk=running->mutexLocked;
+            while(walk!=nullptr)
+            {
+                if(walk->waiting.empty()==false)
+                    pr=std::max(pr,walk->waiting.front()->PKgetPriority());
+                walk=walk->next;
+            }
         }
+
+        //If old priority == desired priority, nothing to do.
+        if(pr==running->PKgetPriority()) return;
+        Scheduler::PKsetPriority(running,pr);
     }
-    
-    //If old priority == desired priority, nothing to do.
-    if(pr==running->PKgetPriority()) return;
-    Scheduler::PKsetPriority(running,pr);
     #ifdef SCHED_TYPE_EDF
     if(isKernelRunning()) yield(); //Another thread might have a closer deadline
     #endif //SCHED_TYPE_EDF
