@@ -91,7 +91,7 @@ namespace fault {
 enum FaultType
 {
     NONE=0,          //Not a fault
-    STACKOVERFLOW=1  //Stack overflow
+    STACKOVERFLOW=1, //Stack overflow
     MP=2,            //Process attempted data access outside its memory
     MP_NOADDR=3,     //Process attempted data access outside its memory (missing addr)
     MP_XN=4,         //Process attempted code access outside its memory

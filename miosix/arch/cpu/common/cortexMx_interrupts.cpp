@@ -28,6 +28,7 @@
 #include "util/util.h"
 #include "kernel/logging.h"
 #include "kernel/kernel.h"
+#include "kernel/process.h"
 #include "kernel/scheduler/scheduler.h"
 #include "kernel/boot.h"
 #include "config/miosix_settings.h"

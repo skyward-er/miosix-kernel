@@ -32,6 +32,7 @@
 #error "If your code depends on a private header, it IS broken."
 #endif //COMPILING_MIOSIX
 
+#include <cstddef>
 #include <utility>
 #include "config/miosix_settings.h"
 

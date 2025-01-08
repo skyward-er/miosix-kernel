@@ -413,6 +413,9 @@ class Mutex;
 class ConditionVariable;
 #ifdef WITH_PROCESSES
 class ProcessBase;
+class Process;
+class FaultData;
+class SyscallParameters;
 #endif //WITH_PROCESSES
 
 /**
