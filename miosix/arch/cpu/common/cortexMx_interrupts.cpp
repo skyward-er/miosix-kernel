@@ -403,15 +403,22 @@ void NMI_Handler()
     IRQsystemReboot();
 }
 
+#ifdef WITH_PROCESSES
+void __attribute__((naked)) HardFault_Handler()
+{
+    saveContext();
+    asm volatile("bl _ZN6miosix13hardfaultImplEv");
+    restoreContext();
+}
+
+void __attribute__((noinline)) hardfaultImpl()
+{
+    if(Thread::IRQreportFault(FaultData(fault::HARDFAULT,getProgramCounter())))
+        return;
+#else //WITH_PROCESSES
 void HardFault_Handler()
 {
-    #ifdef WITH_PROCESSES
-    if(Thread::IRQreportFault(FaultData(fault::HARDFAULT,getProgramCounter())))
-    {
-        IRQinvokeScheduler();
-        return;
-    }
-    #endif //WITH_PROCESSES
+#endif //WITH_PROCESSES
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected HardFault @ ");
     printUnsignedInt(getProgramCounter());
@@ -429,7 +436,18 @@ void HardFault_Handler()
 // Cortex M0/M0+ architecture does not have these interrupt handlers
 #if __CORTEX_M != 0
 
+#ifdef WITH_PROCESSES
+void __attribute__((naked)) MemManage_Handler()
+{
+    saveContext();
+    asm volatile("bl _ZN6miosix13memManageImplEv");
+    restoreContext();
+}
+
+void __attribute__((noinline)) memManageImpl()
+#else //WITH_PROCESSES
 void MemManage_Handler()
+#endif //WITH_PROCESSES
 {
     #if defined(WITH_PROCESSES) || defined(WITH_ERRLOG)
     unsigned int cfsr=SCB->CFSR;
@@ -442,7 +460,6 @@ void MemManage_Handler()
     if(Thread::IRQreportFault(FaultData(id,getProgramCounter(),arg)))
     {
         SCB->SHCSR &= ~(1<<13); //Clear MEMFAULTPENDED bit
-        IRQinvokeScheduler();
         return;
     }
     #endif //WITH_PROCESSES
@@ -466,7 +483,18 @@ void MemManage_Handler()
     IRQsystemReboot();
 }
 
+#ifdef WITH_PROCESSES
+void __attribute__((naked)) BusFault_Handler()
+{
+    saveContext();
+    asm volatile("bl _ZN6miosix12busFaultImplEv");
+    restoreContext();
+}
+
+void __attribute__((noinline)) busFaultImpl()
+#else //WITH_PROCESSES
 void BusFault_Handler()
+#endif //WITH_PROCESSES
 {
     #if defined(WITH_PROCESSES) || defined(WITH_ERRLOG)
     unsigned int cfsr=SCB->CFSR;
@@ -504,7 +532,18 @@ void BusFault_Handler()
     IRQsystemReboot();
 }
 
+#ifdef WITH_PROCESSES
+void __attribute__((naked)) UsageFault_Handler()
+{
+    saveContext();
+    asm volatile("bl _ZN6miosix14usageFaultImplEv");
+    restoreContext();
+}
+
+void __attribute__((noinline)) usageFaultImpl()
+#else //WITH_PROCESSES
 void UsageFault_Handler()
+#endif //WITH_PROCESSES
 {
     #if defined(WITH_PROCESSES) || defined(WITH_ERRLOG)
     unsigned int cfsr=SCB->CFSR;
@@ -521,7 +560,6 @@ void UsageFault_Handler()
     if(Thread::IRQreportFault(FaultData(id,getProgramCounter())))
     {
         SCB->SHCSR &= ~(1<<12); //Clear USGFAULTPENDED bit
-        IRQinvokeScheduler();
         return;
     }
     #endif //WITH_PROCESSES
@@ -555,10 +593,16 @@ void DebugMon_Handler()
 
 #endif //__CORTEX_M != 0
 
-void SVC_Handler()
+#ifdef WITH_PROCESSES
+void __attribute__((naked)) SVC_Handler()
 {
-    #ifdef WITH_PROCESSES
-    // WARNING: Temporary fix. Rationale:
+    saveContext();
+    asm volatile("bl _ZN6miosix7svcImplEv");
+    restoreContext();
+}
+
+void __attribute__((noinline)) svcImpl()
+{
     // This fix is intended to avoid kernel or process faulting due to
     // another process actions. Consider the case in which a process statically
     // allocates a big array such that there is no space left for saving
@@ -583,25 +627,27 @@ void SVC_Handler()
             return;
         }
     }
-    Thread::IRQstackOverflowCheck(); //BUG! here we check the stack but we haven't saved the context!
+    Thread::IRQstackOverflowCheck();
 
-    //If processes are enabled, check the content of r3. If zero then it
-    //it is a simple yield, otherwise handle the syscall
+    //Miosix on ARM uses r3 for the syscall number.
     //Note that it is required to use ctxsave and not cur->ctxsave because
     //at this time we do not know if the active context is user or kernel
     unsigned int threadSp=ctxsave[0];
     unsigned int *processStack=reinterpret_cast<unsigned int*>(threadSp);
-    if(processStack[3]!=static_cast<unsigned int>(Syscall::YIELD))
-        Thread::IRQhandleSvc(processStack[3]);
-    IRQinvokeScheduler(); //TODO: is it right to invoke the scheduler always? Check
-    #else //WITH_PROCESSES
+    if(processStack[3]==static_cast<unsigned int>(Syscall::YIELD))
+        Scheduler::IRQrunScheduler();
+    else Thread::IRQhandleSvc(processStack[3]);
+}
+#else //WITH_PROCESSES
+void SVC_Handler()
+{
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected SVC @ ");
     printUnsignedInt(getProgramCounter());
     #endif //WITH_ERRLOG
     IRQsystemReboot();
-    #endif //WITH_PROCESSES
 }
+#endif //WITH_PROCESSES
 
 /**
  * \internal
@@ -618,8 +664,9 @@ void __attribute__((noinline)) pendsvImpl()
 
 void __attribute__((naked)) PendSV_Handler()
 {
-    //In Miosix 3.0, this is the only interrupt from where it is possible to
-    //perform a context switch. If there is the need to perform a context switch
+    //In Miosix 3.0, a context switch is possible only from this interrupt,
+    //unless processes are enabled in which case also fault handlers and the SVC
+    //handler can do so. If there is the need to perform a context switch
     //from within another interrupt, such as if a peripheral driver interrupt
     //has woken up a thread whose priority is higher than the one that was
     //running when the interrupt occurred, the interrupt must call
