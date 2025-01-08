@@ -320,10 +320,10 @@ private:
  */
 enum class Syscall
 {
-    // Yield. Can be called both by kernel threads and process threads both in
-    // userspace and kernelspace mode. It causes the scheduler to switch to
-    // another thread. It is the only SVC that is available also when processes
-    // are disabled in miosix_config.h. No parameters, no return value.
+    // Yield. It causes the scheduler to switch to another thread, if available.
+    // No parameters, no return value. In Miosix v2.xx it was also used by
+    //kernel threads to invoke the scheduler as the underlying implementation of
+    //Thread::yield() but use by kernel threads is discontinued.
     YIELD=0,
     // Back to userspace. It is used by process threads running in kernelspace
     // mode to return to userspace mode after completing an SVC. If called by a
