@@ -64,6 +64,11 @@ static void IRQconfigureCacheability(unsigned int region, unsigned int base,
 
 void IRQconfigureCache(const unsigned int *xramBase, unsigned int xramSize)
 {
+    // NOTE: using regions 0 to 3 for the kernel because in the ARM MPU in case
+    // of overlapping regions the one with the highest number takes priority.
+    // The lower regions are used by the kernel and by default forbid access to
+    // unprivileged code, while the higher numbered ones are used by processes
+    // to override the default deny policy for the process-specific memory.
     IRQconfigureCacheability(0,0x00000000,0x20000000);
     IRQconfigureCacheability(1,0x20000000,0x20000000);
     if(xramSize)

@@ -124,6 +124,11 @@ MPUConfiguration::MPUConfiguration(const unsigned int *elfBase, unsigned int elf
         const unsigned int *imageBase, unsigned int imageSize)
 {
     #if __MPU_PRESENT==1
+    // NOTE: using regions 6 and 7 for processes because in the ARM MPU in case
+    // of overlapping regions the one with the highest number takes priority.
+    // The lower regions are used by the kernel and by default forbid access to
+    // unprivileged code, thus we need higher numbered ones for processes to
+    // override the default deny policy for the process-specific memory.
     // NOTE: The ARM documentation is unclear about the effect of the shareable
     // bit on a single core architecture. Experimental evidence on an STM32F476
     // shows that setting it in IRQconfigureCache for the internal RAM region
@@ -131,15 +136,15 @@ MPUConfiguration::MPUConfiguration(const unsigned int *elfBase, unsigned int elf
     // For this reason, all regions are marked as not shareable
     regValues[0]=(reinterpret_cast<unsigned int>(elfBase) & (~0x1f))
                | MPU_RBAR_VALID_Msk | 6; //Region 6
-    regValues[2]=(reinterpret_cast<unsigned int>(imageBase) & (~0x1f))
-               | MPU_RBAR_VALID_Msk | 7; //Region 7
     regValues[1]=2<<MPU_RASR_AP_Pos //Privileged: RW, unprivileged: RO
-               | MPU_RASR_C_Msk
+               | MPU_RASR_C_Msk     //Cacheable, write through
                | 1 //Enable bit
                | sizeToMpu(elfSize)<<1;
+    regValues[2]=(reinterpret_cast<unsigned int>(imageBase) & (~0x1f))
+               | MPU_RBAR_VALID_Msk | 7; //Region 7
     regValues[3]=3<<MPU_RASR_AP_Pos //Privileged: RW, unprivileged: RW
-               | MPU_RASR_XN_Msk
-               | MPU_RASR_C_Msk
+               | MPU_RASR_XN_Msk    //Not executable
+               | MPU_RASR_C_Msk     //Cacheable, write through
                | 1 //Enable bit
                | sizeToMpu(imageSize)<<1;
     #else //__MPU_PRESENT==1
