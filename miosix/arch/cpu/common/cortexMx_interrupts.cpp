@@ -460,6 +460,8 @@ void MemManage_Handler()
     if(Thread::IRQreportFault(FaultData(id,getProgramCounter(),arg)))
     {
         SCB->SHCSR &= ~(1<<13); //Clear MEMFAULTPENDED bit
+        //Clear MMARVALID, MLSPERR, MSTKERR, MUNSTKERR, DACCVIOL, IACCVIOL
+        SCB->CFSR = 0x000000bb;
         return;
     }
     #endif //WITH_PROCESSES
@@ -506,7 +508,8 @@ void BusFault_Handler()
     if(Thread::IRQreportFault(FaultData(id,getProgramCounter(),arg)))
     {
         SCB->SHCSR &= ~(1<<14); //Clear BUSFAULTPENDED bit
-        IRQinvokeScheduler();
+        //Clear BFARVALID, LSPERR, STKERR, UNSTKERR, IMPRECISERR, PRECISERR, IBUSERR
+        SCB->CFSR = 0x0000bf00;
         return;
     }
     #endif //WITH_PROCESSES
@@ -560,6 +563,8 @@ void UsageFault_Handler()
     if(Thread::IRQreportFault(FaultData(id,getProgramCounter())))
     {
         SCB->SHCSR &= ~(1<<12); //Clear USGFAULTPENDED bit
+        //Clear DIVBYZERO, UNALIGNED, UNDEFINSTR, INVSTATE, INVPC, NOCP
+        SCB->CFSR = 0x030f0000;
         return;
     }
     #endif //WITH_PROCESSES
