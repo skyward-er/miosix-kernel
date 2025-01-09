@@ -120,6 +120,9 @@ inline void MPUConfiguration::IRQenable()
     MPU->RASR=regValues[1];
     MPU->RBAR=regValues[2];
     MPU->RASR=regValues[3];
+    // Set bit 0 of CONTROL register to switch thread mode to unprivileged. When
+    // we'll return from the interrupt the MPU will check the access permissions
+    // for unprivileged processes which only allow access to regions 6 and 7
     __set_CONTROL(3);
     #endif //__MPU_PRESENT==1
 }
@@ -127,6 +130,11 @@ inline void MPUConfiguration::IRQenable()
 inline void MPUConfiguration::IRQdisable()
 {
     #if __MPU_PRESENT==1
+    // Clear bit 0 of CONTROL register to switch thread mode to privileged. When
+    // we'll return from the interrupt the MPU will check the access permissions
+    // for privileged processes which includes the default memory map as we set
+    // MPU_CTRL_PRIVDEFENA at boot plus additional regions to set constraints
+    // such as cacheability. Thus we never truly disable the MPU.
     __set_CONTROL(2);
     #endif //__MPU_PRESENT==1
 }
