@@ -136,7 +136,9 @@ inline void MPUConfiguration::IRQdisable()
 inline void IRQenableMPUatBoot()
 {
     #if __MPU_PRESENT==1
-    MPU->CTRL=MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk;
+    MPU->CTRL = MPU_CTRL_HFNMIENA_Msk
+              | MPU_CTRL_PRIVDEFENA_Msk
+              | MPU_CTRL_ENABLE_Msk;
     #endif //__MPU_PRESENT==1
 }
 
