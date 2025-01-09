@@ -92,7 +92,7 @@ public:
      * \param n which pin (0 to 15)
      */
     GpioPin(unsigned int p, unsigned char n)
-        : p(reinterpret_cast<GPIO_TypeDef*>(p)), n(n) {}
+        : p(pack(p, n)) {}
         
     /**
      * Set the GPIO to the desired mode (INPUT, OUTPUT, ...)
@@ -105,7 +105,7 @@ public:
      */
     void high()
     {
-        p->BSRR= 1<<n;
+        getPortDevice()->BSRR= 1<<getNumber();
     }
 
     /**
@@ -113,7 +113,7 @@ public:
      */
     void low()
     {
-        p->BRR= 1<<n;
+        getPortDevice()->BRR= 1<<getNumber();
     }
 
     /**
@@ -122,7 +122,7 @@ public:
      */
     int value()
     {
-        return (p->IDR & 1<<n) ? 1 : 0;
+        return (getPortDevice()->IDR & (1<<getNumber())) ? 1 : 0;
     }
 
     /**
@@ -144,16 +144,30 @@ public:
     /**
      * \return the pin port. One of the constants PORTA_BASE, PORTB_BASE, ...
      */
-    unsigned int getPort() const { return reinterpret_cast<unsigned int>(p); }
+    unsigned int getPort() const { return p & ~0xF; }
     
     /**
      * \return the pin number, from 0 to 15
      */
-    unsigned char getNumber() const { return n; }
+    unsigned char getNumber() const
+    {
+        return static_cast<unsigned char>(p & 0xF);
+    }
 
 private:
-    GPIO_TypeDef *p; //Pointer to the port
-    unsigned char n; //Number of the GPIO within the port
+    inline GPIO_TypeDef *getPortDevice() const
+    {
+        return reinterpret_cast<GPIO_TypeDef *>(getPort());
+    }
+    
+    static inline unsigned long pack(unsigned long p, unsigned long n)
+    {
+        //We use the fact that GPIO device pointers are always 16-byte aligned
+        //to binpack the port number together with the pointer
+        return p | n;
+    }
+
+    unsigned long p;
 };
 
 /**

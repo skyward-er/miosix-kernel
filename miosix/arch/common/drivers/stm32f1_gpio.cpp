@@ -5,13 +5,15 @@ namespace miosix {
 
 void GpioPin::mode(Mode m)
 {
+    unsigned char n=getNumber();
+    GPIO_TypeDef *d=getPortDevice();
     if(n<8)
     {
-        p->CRL &= ~(0xf<<(n*4));
-        p->CRL |= toUint(m)<<(n*4);
+        d->CRL &= ~(0xf<<(n*4));
+        d->CRL |= toUint(m)<<(n*4);
     } else {
-        p->CRH &= ~(0xf<<((n-8)*4));
-        p->CRH |= toUint(m)<<((n-8)*4);
+        d->CRH &= ~(0xf<<((n-8)*4));
+        d->CRH |= toUint(m)<<((n-8)*4);
     }
 }
 
