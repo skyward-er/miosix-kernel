@@ -36,8 +36,11 @@ _main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
 _main_stack_top  = 0x20000000 + _main_stack_size;
 ASSERT(_main_stack_size % 8 == 0, "MAIN stack size error");
 
-/* end of the heap on 264KB microcontrollers */
-_heap_end = 0x20042000;                            /* end of available ram  */
+/* Mapping the heap into the bottom 128KB of the RAM */
+_heap_end = 0x20020000;
+/* Mapping the process pool into the upper 136KB of the RAM */
+_process_pool_start = _heap_end;
+_process_pool_end = 0x20042000;                    /* end of available ram  */
 
 ENTRY(_ZN6miosix13Reset_HandlerEv)
 
@@ -49,7 +52,7 @@ MEMORY
      * Note, the ram starts at 0x20000000 but it is necessary to add the size
      * of the main stack, so it is 0x20000200.
      */
-    ram(wx)   : ORIGIN = 0x20000000+_main_stack_size, LENGTH = 264k-_main_stack_size
+    ram(wx)   : ORIGIN = 0x20000000+_main_stack_size, LENGTH = 128k-_main_stack_size
 }
 
 /* now define the output sections  */

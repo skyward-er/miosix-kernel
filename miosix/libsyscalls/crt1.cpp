@@ -432,6 +432,8 @@ pid_t wait(int *status)
     return waitpid(-1,status,0);
 }
 
+#if __CORTEX_M != 0
+
 static int __LDREXW(volatile int *addr)
 {
     int result;
@@ -460,6 +462,20 @@ static int atomicCompareAndSwap(volatile int *p, int prev, int next)
     asm volatile("":::"memory");
     return result;
 }
+
+#else //__CORTEX_M != 0
+
+inline int atomicCompareAndSwap(volatile int *p, int prev, int next)
+{
+    //FIXME: not atomic at all, we can't even disable interrupts in a process
+    //we'll need a syscall to let the kernel do this operation atomically
+    int result = *p;
+    if(*p == prev) *p = next;
+    asm volatile("":::"memory");
+    return result;
+}
+
+#endif //__CORTEX_M != 0
 
 static void enterCriticalSection(pthread_mutex_t *m)
 {

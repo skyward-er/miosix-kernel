@@ -812,6 +812,14 @@ ifeq ($(OPT_BOARD),rp2040_raspberry_pi_pico)
     #BOARD_VARIANT := BOARD_VARIANT_PICO
     BOARD_VARIANT := BOARD_VARIANT_PICO_W
 
+    ## Linker script type, there are two options
+    ## 1) Code in FLASH, stack + heap in internal RAM (file *_rom.ld)
+    ## 2) Same as 1) but space has been reserved for a process pool, allowing
+    ##    to configure the kernel with "#define WITH_PROCESSES"
+    LINKER_SCRIPT_PATH := arch/cortexM0plus_rp2040/rp2040_raspberry_pi_pico/
+    LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)rp2040_2M+264k_rom.ld
+    #LINKER_SCRIPT := $(LINKER_SCRIPT_PATH)rp2040_2M+264k_processes.ld
+
 endif
 
 ##---------------------------------------------------------------------------
@@ -3325,7 +3333,7 @@ else ifeq ($(ARCH),cortexM0plus_rp2040)
         BOARD_INC := arch/cortexM0plus_rp2040/rp2040_raspberry_pi_pico
 
         ## Select linker script
-        LINKER_SCRIPT := $(BOARD_INC)/rp2040_2M+264k_rom.ld
+        #LINKER_SCRIPT := already selected in board options
 
         ## Select architecture specific files
         ## These are the files in arch/<arch name>/<board name>
@@ -3352,8 +3360,8 @@ else ifeq ($(ARCH),cortexM0plus_rp2040)
 
     ## Select compiler
     PREFIX := arm-miosix-eabi-
-    ## This architecture does not support processes
-    #POSTLD :=
+    ## This architecture supports processes
+    POSTLD := mx-postlinker
 
     CPU_INC := arch/cpu/armv6m
     ## Select appropriate compiler flags for both ASM/C/C++/linker
