@@ -617,29 +617,29 @@ int Thread::getStackSize()
     return getCurrentThread()->stacksize;
 }
 
-void Thread::IRQstackOverflowCheck()
+bool Thread::IRQstackOverflowCheck()
 {
     const unsigned int watermarkSize=WATERMARK_LEN/sizeof(unsigned int);
     #ifdef WITH_PROCESSES
     if(const_cast<Thread*>(runningThread)->flags.isInUserspace())
     {
         bool overflow=false;
-        for(unsigned int i=0;i<watermarkSize;i++)
-            if(runningThread->userWatermark[i]!=WATERMARK_FILL) overflow=true;
         if(runningThread->userCtxsave[stackPtrOffsetInCtxsave] <
             reinterpret_cast<unsigned int>(runningThread->userWatermark+watermarkSize))
             overflow=true;
+        if(overflow==false)
+            for(unsigned int i=0;i<watermarkSize;i++)
+                if(runningThread->userWatermark[i]!=WATERMARK_FILL) overflow=true;
         if(overflow) IRQreportFault(FaultData(fault::STACKOVERFLOW,0));
-    } else {
+        return overflow;
+    }
     #endif //WITH_PROCESSES
-    for(unsigned int i=0;i<watermarkSize;i++)
-        if(runningThread->watermark[i]!=WATERMARK_FILL) errorHandler(STACK_OVERFLOW);
     if(runningThread->ctxsave[stackPtrOffsetInCtxsave] <
         reinterpret_cast<unsigned int>(runningThread->watermark+watermarkSize))
         errorHandler(STACK_OVERFLOW);
-    #ifdef WITH_PROCESSES
-    }
-    #endif //WITH_PROCESSES
+    for(unsigned int i=0;i<watermarkSize;i++)
+        if(runningThread->watermark[i]!=WATERMARK_FILL) errorHandler(STACK_OVERFLOW);
+    return false;
 }
 
 #ifdef WITH_PROCESSES

@@ -618,7 +618,11 @@ void __attribute__((noinline)) svcImpl()
             return;
         }
     }
-    Thread::IRQstackOverflowCheck();
+    // NOTE: Do not process the syscall if a stack overflow was detected, since
+    // the process will segfault anyway. Moreover, the stack overflow check code
+    // switches the thread context to the kernelspace one and attempting to
+    // extract the syscall number from ctxsave will return garbage!
+    if(Thread::IRQstackOverflowCheck()) return;
 
     //Miosix on ARM uses r3 for the syscall number.
     //Note that it is required to use ctxsave and not cur->ctxsave because

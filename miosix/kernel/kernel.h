@@ -888,10 +888,19 @@ public:
 
     /**
      * \internal
-     * Used before every context switch to check if the stack of the thread
-     * being preempted has overflowed
+     * To be used in interrupts where a context switch can occur to check if the
+     * stack of the thread being preempted has overflowed.
+     * Note that since Miosix 3 all peripheral interrupts no longer perform a
+     * full context save/restore thus you cannot call this functions from such
+     * interrupts.
+     * \return On a platform without processes this function returns false if no
+     * stack overflow was detected or causes a reboot if a stack overflow was
+     * detected. Basically, it never returns true. On a platform with processes
+     * return true if the stack overflow check failed for a thread running in
+     * userspace. If the overflow check failed for a kernel thread or a thread
+     * running in kernelspace this function causes a reboot.
      */
-    static void IRQstackOverflowCheck();
+    static bool IRQstackOverflowCheck();
     
     #ifdef WITH_PROCESSES
 
