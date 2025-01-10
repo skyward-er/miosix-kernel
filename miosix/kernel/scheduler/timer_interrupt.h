@@ -45,7 +45,6 @@ extern bool IRQwakeThreads(long long currentTime);///\internal Do not use outsid
  */
 inline bool IRQtimerInterrupt(long long currentTime)
 {
-    Thread::IRQstackOverflowCheck();
     bool hptw = IRQwakeThreads(currentTime);
     if(currentTime >= Scheduler::IRQgetNextPreemption() || hptw)
     {
