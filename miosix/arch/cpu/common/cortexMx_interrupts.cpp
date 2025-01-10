@@ -134,18 +134,13 @@ template<unsigned N, fnptr... args>
 struct TableGenerator
 {
     typedef typename TableGenerator<N-1, &irqProxy<N-1>, args...>::type type;
-    static const type table;
 };
 
 template<fnptr... args>
 struct TableGenerator<0, args...>
 {
     typedef InterruptProxyTable<args...> type;
-    static const type table;
 };
-
-template<unsigned N, fnptr... args>
-const typename TableGenerator<N, args...>::type TableGenerator<N, args...>::table;
 
 /**
  * \internal
@@ -157,11 +152,9 @@ struct InterruptTable
     constexpr InterruptTable(char* stackptr, fnptr i1, fnptr i2, fnptr i3,
                              fnptr i4, fnptr i5, fnptr i6, fnptr i7,
                              fnptr i8, fnptr i9, fnptr i10, fnptr i11,
-                             fnptr i12, fnptr i13, fnptr i14, fnptr i15,
-                             TableGenerator<numInterrupts>::type interruptProxyTable)
+                             fnptr i12, fnptr i13, fnptr i14, fnptr i15)
     : stackptr(stackptr), i1(i1), i2(i2), i3(i3), i4(i4), i5(i5), i6(i6), i7(i7),
-      i8(i8), i9(i9), i10(i10), i11(i11), i12(i12), i13(i13), i14(i14), i15(i15),
-      interruptProxyTable(interruptProxyTable) {}
+      i8(i8), i9(i9), i10(i10), i11(i11), i12(i12), i13(i13), i14(i14), i15(i15) {}
 
     // The first entries of the interrupt table are the stack pointer, reset
     // vector and "system" interrupt entries. We don't make these run-time
@@ -196,7 +189,7 @@ __attribute__((section(".isr_vector"))) extern const InterruptTable hardwareInte
         DebugMon_Handler,    // Debug Monitor Handler
         nullptr,             // Reserved
         PendSV_Handler,      // PendSV Handler
-        nullptr,             // SysTick Handler (Miosix does not use it)
+        nullptr              // SysTick Handler (Miosix does not use it)
     #else //__CORTEX_M != 0
         &_main_stack_top,    // Stack pointer
         Reset_Handler,       // Reset Handler
@@ -213,12 +206,8 @@ __attribute__((section(".isr_vector"))) extern const InterruptTable hardwareInte
         nullptr,             // Reserved
         nullptr,             // Reserved
         PendSV_Handler,      // PendSV Handler
-        nullptr,             // SysTick Handler (Miosix does not use it)
+        nullptr              // SysTick Handler (Miosix does not use it)
     #endif //__CORTEX_M != 0
-    // The rest of the interrupt table, the one for peripheral interrupts is
-    // generated programmatically using template metaprogramming to produce the
-    // proxy functions that allow dynamically registering interrupts.
-    TableGenerator<numInterrupts>::table
 );
 
 //
