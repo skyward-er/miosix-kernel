@@ -299,16 +299,17 @@ void *Process::start(void *)
         unsigned int entry=proc->program.getEntryPoint();
         Thread::setupUserspaceContext(entry,proc->argc,proc->argvSp,proc->envp,
             proc->image.getProcessBasePointer(),proc->image.getMainStackSize());
-        SvcResult svcResult=Resume;
+        SvcResult svcResult;
         do {
             SyscallParameters sp=Thread::switchToUserspace();
 
             bool fault=proc->fault.faultHappened();
-            //Handle svc only if no fault occurred
-            if(fault==false) svcResult=proc->handleSvc(sp);
+            if(fault) svcResult=Segfault;
+            else svcResult=proc->handleSvc(sp); //Handle svc only if no fault
 
             if(Thread::testTerminate() || svcResult==Exit) running=false;
-            if(fault || svcResult==Segfault)
+            //Segfault either because fault==true or handleSvc returned Segfault
+            if(svcResult==Segfault)
             {
                 running=false;
                 proc->exitCode=SIGSEGV; //Segfault
