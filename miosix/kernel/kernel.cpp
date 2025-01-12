@@ -617,57 +617,72 @@ int Thread::getStackSize()
     return getCurrentThread()->stacksize;
 }
 
-bool Thread::IRQstackOverflowCheck()
+void Thread::IRQstackOverflowCheck()
 {
+    Thread *cur=const_cast<Thread*>(runningThread);
     const unsigned int watermarkSize=WATERMARK_LEN/sizeof(unsigned int);
     #ifdef WITH_PROCESSES
-    if(const_cast<Thread*>(runningThread)->flags.isInUserspace())
+    if(cur->flags.isInUserspace())
     {
         bool overflow=false;
-        if(runningThread->userCtxsave[STACK_OFFSET_IN_CTXSAVE] <
-            reinterpret_cast<unsigned int>(runningThread->userWatermark+watermarkSize))
+        if(cur->userCtxsave[STACK_OFFSET_IN_CTXSAVE] <
+            reinterpret_cast<unsigned int>(cur->userWatermark+watermarkSize))
             overflow=true;
         if(overflow==false)
             for(unsigned int i=0;i<watermarkSize;i++)
-                if(runningThread->userWatermark[i]!=WATERMARK_FILL) overflow=true;
-        if(overflow) IRQreportFault(FaultData(fault::STACKOVERFLOW,0));
-        return overflow;
+                if(cur->userWatermark[i]!=WATERMARK_FILL) overflow=true;
+        if(overflow) IRQreportFault(FaultData(fault::STACKOVERFLOW));
     }
     #endif //WITH_PROCESSES
-    if(runningThread->ctxsave[STACK_OFFSET_IN_CTXSAVE] <
-        reinterpret_cast<unsigned int>(runningThread->watermark+watermarkSize))
+    if(cur->ctxsave[STACK_OFFSET_IN_CTXSAVE] <
+        reinterpret_cast<unsigned int>(cur->watermark+watermarkSize))
         errorHandler(STACK_OVERFLOW);
     for(unsigned int i=0;i<watermarkSize;i++)
-        if(runningThread->watermark[i]!=WATERMARK_FILL) errorHandler(STACK_OVERFLOW);
-    return false;
+        if(cur->watermark[i]!=WATERMARK_FILL) errorHandler(STACK_OVERFLOW);
 }
 
 #ifdef WITH_PROCESSES
 
-void Thread::IRQhandleSvc(unsigned int svcNumber)
+void Thread::IRQhandleSvc()
 {
-    if(runningThread->proc==kernel) errorHandler(UNEXPECTED);
+    Thread *cur=const_cast<Thread*>(runningThread);
+    if(cur->proc==kernel) errorHandler(UNEXPECTED);
+    //We know it's not the kernel, so the cast is safe
+    auto *proc=static_cast<Process*>(cur->proc);
+    //Don't process syscall if fault happened, may return to userspace by mistake
+    if(proc->fault.IRQfaultHappened()) return;
+
+    //Note that it is required to use ctxsave and not runningThread->ctxsave
+    //because at this time we do not know if the active context is user or kernel
+    SyscallParameters params(const_cast<unsigned int*>(::ctxsave));
+    unsigned int svcNumber=params.getSyscallId();
+    if(svcNumber==static_cast<unsigned int>(Syscall::YIELD))
+    {
+        Scheduler::IRQrunScheduler();
+        return;
+    }
     if(svcNumber==static_cast<unsigned int>(Syscall::USERSPACE))
     {
-        const_cast<Thread*>(runningThread)->flags.IRQsetUserspace(true);
-        ::ctxsave=runningThread->userCtxsave;
-        //We know it's not the kernel, so the cast is safe
-        static_cast<Process*>(runningThread->proc)->mpu.IRQenable();
+        cur->flags.IRQsetUserspace(true);
+        ::ctxsave=cur->userCtxsave;
+        proc->mpu.IRQenable();
     } else {
-        const_cast<Thread*>(runningThread)->flags.IRQsetUserspace(false);
-        ::ctxsave=runningThread->ctxsave;
+        cur->flags.IRQsetUserspace(false);
+        ::ctxsave=cur->ctxsave;
         MPUConfiguration::IRQdisable();
     }
 }
 
 bool Thread::IRQreportFault(const FaultData& fault)
 {
-    if(const_cast<Thread*>(runningThread)->flags.isInUserspace()==false
-        || runningThread->proc==kernel) return false;
+    Thread *cur=const_cast<Thread*>(runningThread);
+    if(cur->flags.isInUserspace()==false || cur->proc==kernel) return false;
     //We know it's not the kernel, so the cast is safe
-    static_cast<Process*>(runningThread->proc)->fault=fault;
-    const_cast<Thread*>(runningThread)->flags.IRQsetUserspace(false);
-    ::ctxsave=runningThread->ctxsave;
+    auto *proc=static_cast<Process*>(cur->proc);
+    proc->fault=fault;
+    proc->fault.IRQtryAddProgramCounter(cur->userCtxsave,proc->mpu);
+    cur->flags.IRQsetUserspace(false);
+    ::ctxsave=cur->ctxsave;
     MPUConfiguration::IRQdisable();
     return true;
 }

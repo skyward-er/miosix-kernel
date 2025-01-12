@@ -299,24 +299,30 @@ static void printUnsignedInt(unsigned int x)
     formatHex(result+2,x,8);
     IRQerrorLog(result);
 }
-#endif //WITH_ERRLOG
 
-#if defined(WITH_PROCESSES) || defined(WITH_ERRLOG)
 /**
  * \internal
- * \return the program counter of the thread that was running when the exception
- * occurred.
+ * \return attempt to get the program counter of the thread that was running
+ * when the exception occurred.
  */
-static unsigned int getProgramCounter()
+static unsigned int tryGetKernelThreadProgramCounter()
 {
-    register unsigned int result;
-    // Get program counter when the exception was thrown from stack frame
-    asm volatile("mrs   %0,  psp    \n\t"
-                 "add   %0, %0, #24 \n\t"
-                 "ldr   %0, [%0]    \n\t":"=r"(result));
-    return result;
+    // Attempt to get program counter at the time the exception was thrown from
+    // stack frame. This can fail if the stack pointer itself is corrupted, in
+    // this case return 0xbadadd. Failing to validate the thread stack pointer
+    // before dereferencing it may cause further memory faults and a CPU lockup
+    unsigned int psp=__get_PSP();
+    // Miosix uses the stack-in-heap approach for kernel threads, so compare the
+    // stack pointer against the boundaries of the heap
+    extern char _end asm("_end"); //defined in the linker script
+    extern char _heap_end asm("_heap_end"); //defined in the linker script
+    const unsigned int off=24; //Offset in bytes of PC in the stack frame on ARM
+    if(psp<reinterpret_cast<unsigned int>(&_end)
+    || psp>reinterpret_cast<unsigned int>(&_heap_end)-off-sizeof(unsigned int))
+        return 0xbadadd;
+    return *reinterpret_cast<unsigned int *>(psp+off);
 }
-#endif //WITH_PROCESSES || WITH_ERRLOG
+#endif //WITH_ERRLOG
 
 //
 // Interrupt handlers
@@ -402,15 +408,14 @@ void __attribute__((naked)) HardFault_Handler()
 
 void __attribute__((noinline)) hardfaultImpl()
 {
-    if(Thread::IRQreportFault(FaultData(fault::HARDFAULT,getProgramCounter())))
-        return;
+    if(Thread::IRQreportFault(FaultData(fault::HARDFAULT))) return;
 #else //WITH_PROCESSES
 void HardFault_Handler()
 {
 #endif //WITH_PROCESSES
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected HardFault @ ");
-    printUnsignedInt(getProgramCounter());
+    printUnsignedInt(tryGetKernelThreadProgramCounter());
     #if __CORTEX_M != 0
     unsigned int hfsr=SCB->HFSR;
     if(hfsr & 0x40000000) //SCB_HFSR_FORCED
@@ -445,17 +450,29 @@ void MemManage_Handler()
     int id, arg=0;
     if(cfsr & 0x00000001) id=fault::MP_XN;
     else if(cfsr & 0x00000080) { id=fault::MP; arg=SCB->MMFAR; }
+    else if(cfsr & 0x00000010) { id=fault::MP_STACK; arg=ctxsave[STACK_OFFSET_IN_CTXSAVE]; }
     else id=fault::MP_NOADDR;
-    if(Thread::IRQreportFault(FaultData(id,getProgramCounter(),arg)))
+    if(Thread::IRQreportFault(FaultData(id,arg)))
     {
         //Clear MMARVALID, MLSPERR, MSTKERR, MUNSTKERR, DACCVIOL, IACCVIOL
         SCB->CFSR = 0x000000bb;
+        //Clear MEMFAULTPENDED bit. Corrupted thread stack pointer causes memory
+        //faults during exception stacking (MSTKERR bit), and if the core has an
+        //FPU and the thread was using the FPU registers attempting to save
+        //these registers causes a second memory fault (MSLPERR bit) which at
+        //least on an STM32H755 causes the memory fault interrupt to become both
+        //pending and active, thus it gets run twice. This is a problem since
+        //the first run reports the fault and switches the thread context from
+        //userspace to kernelspace, and then the second run finds the thread
+        //already in kernelspace and erroneously attributes the fault to code
+        //running in kernelspace triggering a reboot
+        SCB->SHCSR &= ~(1<<13);
         return;
     }
     #endif //WITH_PROCESSES
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected MemManage @ ");
-    printUnsignedInt(getProgramCounter());
+    printUnsignedInt(tryGetKernelThreadProgramCounter());
     if(cfsr & 0x00000080) //SCB_CFSR_MMARVALID
     {
         IRQerrorLog("Fault caused by attempted access to ");
@@ -493,16 +510,19 @@ void BusFault_Handler()
     int id, arg=0;
     if(cfsr & 0x00008000) { id=fault::BF; arg=SCB->BFAR; }
     else id=fault::BF_NOADDR;
-    if(Thread::IRQreportFault(FaultData(id,getProgramCounter(),arg)))
+    if(Thread::IRQreportFault(FaultData(id,arg)))
     {
         //Clear BFARVALID, LSPERR, STKERR, UNSTKERR, IMPRECISERR, PRECISERR, IBUSERR
         SCB->CFSR = 0x0000bf00;
+        //Clear BUSFAULTPENDED as a defensive measure against issues similar to
+        //the one described in MEMFAULTPENDED
+        SCB->SHCSR &= ~(1<<14);
         return;
     }
     #endif //WITH_PROCESSES
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected BusFault @ ");
-    printUnsignedInt(getProgramCounter());
+    printUnsignedInt(tryGetKernelThreadProgramCounter());
     if(cfsr & 0x00008000) //SCB_CFSR_BFARVALID
     {
         IRQerrorLog("Fault caused by attempted access to ");
@@ -547,16 +567,19 @@ void UsageFault_Handler()
     else if(cfsr & 0x00020000) id=fault::UF_EPSR;
     else if(cfsr & 0x00010000) id=fault::UF_UNDEF;
     else id=fault::UF_UNEXP;
-    if(Thread::IRQreportFault(FaultData(id,getProgramCounter())))
+    if(Thread::IRQreportFault(FaultData(id)))
     {
         //Clear DIVBYZERO, UNALIGNED, UNDEFINSTR, INVSTATE, INVPC, NOCP
         SCB->CFSR = 0x030f0000;
+        //Clear BUSFAULTPENDED as a defensive measure against issues similar to
+        //the one described in USGFAULTPENDED
+        SCB->SHCSR &= ~(1<<12);
         return;
     }
     #endif //WITH_PROCESSES
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected UsageFault @ ");
-    printUnsignedInt(getProgramCounter());
+    printUnsignedInt(tryGetKernelThreadProgramCounter());
     if(cfsr & 0x02000000) //SCB_CFSR_DIVBYZERO
         IRQerrorLog("Divide by zero\r\n");
     if(cfsr & 0x01000000) //SCB_CFSR_UNALIGNED
@@ -577,7 +600,7 @@ void DebugMon_Handler()
 {
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected DebugMon @ ");
-    printUnsignedInt(getProgramCounter());
+    printUnsignedInt(tryGetKernelThreadProgramCounter());
     #endif //WITH_ERRLOG
     IRQsystemReboot();
 }
@@ -594,51 +617,15 @@ void __attribute__((naked)) SVC_Handler()
 
 void __attribute__((noinline)) svcImpl()
 {
-    // This fix is intended to avoid kernel or process faulting due to
-    // another process actions. Consider the case in which a process statically
-    // allocates a big array such that there is no space left for saving
-    // context data. If the process issues a system call, in the following
-    // interrupt the context is saved, but since there is no memory available
-    // for all the context data, a mem manage interrupt is set to 'pending'. Then,
-    // a fake syscall is issued, based on the value read on the stack (which
-    // the process hasn't set due to the memory fault and is likely to be 0);
-    // this syscall is usually a yield (due to the value of 0 above),
-    // which can cause the scheduling of the kernel thread. At this point,
-    // the pending mem fault is issued from the kernel thread, causing the
-    // kernel fault and reboot. This is caused by the mem fault interrupt
-    // having less priority of the other interrupts.
-    // This fix checks if there is a mem fault interrupt pending, and, if so,
-    // it clears it and returns before calling the previously mentioned fake
-    // syscall.
-    if(SCB->SHCSR & (1<<13))
-    {
-        if(Thread::IRQreportFault(FaultData(fault::MP,0,0)))
-        {
-            SCB->SHCSR &= ~(1<<13); //Clear MEMFAULTPENDED bit
-            return;
-        }
-    }
-    // NOTE: Do not process the syscall if a stack overflow was detected, since
-    // the process will segfault anyway. Moreover, the stack overflow check code
-    // switches the thread context to the kernelspace one and attempting to
-    // extract the syscall number from ctxsave will return garbage!
-    if(Thread::IRQstackOverflowCheck()) return;
-
-    //Miosix on ARM uses r3 for the syscall number.
-    //Note that it is required to use ctxsave and not cur->ctxsave because
-    //at this time we do not know if the active context is user or kernel
-    unsigned int threadSp=ctxsave[0];
-    unsigned int *processStack=reinterpret_cast<unsigned int*>(threadSp);
-    if(processStack[3]==static_cast<unsigned int>(Syscall::YIELD))
-        Scheduler::IRQrunScheduler();
-    else Thread::IRQhandleSvc(processStack[3]);
+    Thread::IRQstackOverflowCheck();
+    Thread::IRQhandleSvc();
 }
 #else //WITH_PROCESSES
 void SVC_Handler()
 {
     #ifdef WITH_ERRLOG
     IRQerrorLog("\r\n***Unexpected SVC @ ");
-    printUnsignedInt(getProgramCounter());
+    printUnsignedInt(tryGetKernelThreadProgramCounter());
     #endif //WITH_ERRLOG
     IRQsystemReboot();
 }

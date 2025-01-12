@@ -893,14 +893,13 @@ public:
      * Note that since Miosix 3 all peripheral interrupts no longer perform a
      * full context save/restore thus you cannot call this functions from such
      * interrupts.
-     * \return On a platform without processes this function returns false if no
-     * stack overflow was detected or causes a reboot if a stack overflow was
-     * detected. Basically, it never returns true. On a platform with processes
-     * return true if the stack overflow check failed for a thread running in
-     * userspace. If the overflow check failed for a kernel thread or a thread
-     * running in kernelspace this function causes a reboot.
+     *
+     * If the overflow check failed for a kernel thread or a thread running in
+     * kernelspace this function causes a reboot. On a platform with processes
+     * this function calls IRQreportFault() if the stack overflow happened in
+     * userspace, causing the process to segfault.
      */
-    static bool IRQstackOverflowCheck();
+    static void IRQstackOverflowCheck();
     
     #ifdef WITH_PROCESSES
 
@@ -914,7 +913,7 @@ public:
      * Can only be called inside an IRQ, its use is to switch a thread between
      * userspace/kernelspace and back to perform context switches
      */
-    static void IRQhandleSvc(unsigned int svcNumber);
+    static void IRQhandleSvc();
     
     /**
      * \internal

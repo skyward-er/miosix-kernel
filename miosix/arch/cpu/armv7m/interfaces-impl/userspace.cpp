@@ -26,6 +26,7 @@
  ***************************************************************************/
 
 #include "interfaces_private/userspace.h"
+#include "interfaces/cpu_const.h"
 #include "kernel/error.h"
 #include <cstdio>
 #include <cstring>
@@ -83,8 +84,11 @@ void FaultData::print() const
         case MP_XN:
             iprintf("* Attempted instruction fetch @ 0x%x\n",pc);
             break;
+        case MP_STACK:
+            iprintf("* Invalid SP (0x%x) while entering IRQ\n",arg);
+            break;
         case UF_DIVZERO:
-            iprintf("* Dvide by zero (PC was 0x%x)\n",pc);
+            iprintf("* Divide by zero (PC was 0x%x)\n",pc);
             break;
         case UF_UNALIGNED:
             iprintf("* Unaligned memory access (PC was 0x%x)\n",pc);
@@ -114,6 +118,24 @@ void FaultData::print() const
             iprintf("* Busfault (PC was 0x%x)\n",pc);
             break;
     }
+}
+
+void FaultData::IRQtryAddProgramCounter(unsigned int *userCtxsave,
+    const MPUConfiguration& mpu)
+{
+    // ARM Cortex CPUs push the program counter on the stack. Thus we retrieve
+    // the stack pointer from userCtxsave and check it is not corrupted.
+    // We use mpu.withinForWriting even though the we're only reading from the
+    // stack frame since the stack pointer can't point to read-only memory, if
+    // it does it's corrupted. If the pointer checks out, we get the desired pc
+    const int pcOffsetInStackFrame=6;
+    auto *sp=reinterpret_cast<unsigned int*>(userCtxsave[STACK_OFFSET_IN_CTXSAVE]);
+    // NOTE: we check that (pcOffsetInStackFrame+1)*4 words are within the
+    // process address space instead of CTXSAVE_ON_STACK since in CPUs with
+    // FPU until a process uses FPU registers they are not saved, so it is
+    // possible that sp+CTXSAVE_ON_STACK coud overflow the process address space
+    if(mpu.withinForWriting(sp,(pcOffsetInStackFrame+1)*sizeof(unsigned int*)))
+        pc=sp[pcOffsetInStackFrame];
 }
 
 //
@@ -230,6 +252,8 @@ bool MPUConfiguration::withinForReading(const void *ptr, size_t size) const
 
 bool MPUConfiguration::withinForWriting(const void *ptr, size_t size) const
 {
+    //Must be callable also with interrupts disabled,
+    //used by FaultData::IRQtryAddProgramCounter()
     size_t dataStart=regValues[2] & (~0x1f);
     size_t dataEnd=dataStart+(1<<(((regValues[3]>>1) & 31)+1));
     size_t base=reinterpret_cast<size_t>(ptr);

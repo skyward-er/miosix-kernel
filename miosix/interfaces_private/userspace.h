@@ -50,6 +50,9 @@ namespace miosix {
 
 #ifdef WITH_PROCESSES
 
+//Forward decl
+class MPUConfiguration;
+
 /**
  * \internal
  * Initializes the context of the userspace side of a userspace thread that is
@@ -143,16 +146,31 @@ public:
     /**
      * Constructor, initializes a FaultData object
      * \param id id of the fault
-     * \param pc program counter at the moment of the fault
      * \param arg eventual additional argument, depending on the fault id
      */
-    FaultData(int id, unsigned int pc, unsigned int arg=0)
-            : id(id), pc(pc), arg(arg) {}
+    explicit FaultData(int id, unsigned int arg=0) : id(id), arg(arg) {}
+
+    /**
+     * Try to reconstruct the value of the program counter at the moment of the
+     * fault and add it to the fault information. Depending on the architecture
+     * and how badly the process crashed, this may not be possible.
+     * \param userCtxsave saved context of the userspace thread that faulted
+     * \param mpu memory protection data for the current process to perform
+     * bound checking if required by the architecture
+     */
+    void IRQtryAddProgramCounter(unsigned int *userCtxsave,
+        const MPUConfiguration& mpu);
 
     /**
      * \return true if a fault happened within a process
      */
     bool faultHappened() const { return id!=0; }
+
+    /**
+     * Can be called inside an interrupt
+     * \return true if a fault happened within a process
+     */
+    bool IRQfaultHappened() const { return id!=0; }
 
     /**
      * Print information about the occurred fault
@@ -161,7 +179,7 @@ public:
 
 private:
     int id; ///< Id of the fault or zero if no faults
-    unsigned int pc; ///< Program counter value at the time of the fault
+    unsigned int pc=0xbadadd; ///< Program counter value at the time of the fault
     unsigned int arg;///< Eventual argument, valid only for some id values
 };
 
