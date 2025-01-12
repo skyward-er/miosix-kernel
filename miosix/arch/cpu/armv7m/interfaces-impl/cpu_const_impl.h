@@ -32,11 +32,14 @@
 #ifndef __FPU_PRESENT
 #define __FPU_PRESENT 0 //__FPU_PRESENT undefined means no FPU
 #endif
+#if (__FPU_PRESENT!=0) && (__FPU_USED!=1)
+#error "__FPU_USED should be 1"
+#endif
 
 namespace miosix {
 
 /**
- * \addtogroup Settings
+ * \addtogroup Interfaces
  * \{
  */
 
@@ -76,6 +79,9 @@ const unsigned int CTXSAVE_ON_STACK=32;
 
 /// \internal Stack alignment required by the CPU
 const unsigned int CTXSAVE_STACK_ALIGNMENT=8;
+
+/// \internal Offset in words to retrieve the thread stack pointer in ctxsave
+const unsigned int STACK_OFFSET_IN_CTXSAVE=0;
 
 /**
  * \}

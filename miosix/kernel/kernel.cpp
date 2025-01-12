@@ -624,7 +624,7 @@ bool Thread::IRQstackOverflowCheck()
     if(const_cast<Thread*>(runningThread)->flags.isInUserspace())
     {
         bool overflow=false;
-        if(runningThread->userCtxsave[stackPtrOffsetInCtxsave] <
+        if(runningThread->userCtxsave[STACK_OFFSET_IN_CTXSAVE] <
             reinterpret_cast<unsigned int>(runningThread->userWatermark+watermarkSize))
             overflow=true;
         if(overflow==false)
@@ -634,7 +634,7 @@ bool Thread::IRQstackOverflowCheck()
         return overflow;
     }
     #endif //WITH_PROCESSES
-    if(runningThread->ctxsave[stackPtrOffsetInCtxsave] <
+    if(runningThread->ctxsave[STACK_OFFSET_IN_CTXSAVE] <
         reinterpret_cast<unsigned int>(runningThread->watermark+watermarkSize))
         errorHandler(STACK_OVERFLOW);
     for(unsigned int i=0;i<watermarkSize;i++)

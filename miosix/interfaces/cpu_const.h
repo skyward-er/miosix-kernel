@@ -47,6 +47,9 @@
  *
  * Stack alignment required by the CPU
  * const unsigned int CTXSAVE_STACK_ALIGNMENT=...;
+ *
+ * Offset in words to retrieve the thread stack pointer in ctxsave
+ * const unsigned int STACK_OFFSET_IN_CTXSAVE=...;
  */
 
 /**

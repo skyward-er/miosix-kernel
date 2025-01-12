@@ -30,7 +30,7 @@
 namespace miosix {
 
 /**
- * \addtogroup Settings
+ * \addtogroup Interfaces
  * \{
  */
 
@@ -46,6 +46,9 @@ const unsigned int CTXSAVE_ON_STACK=0;
 
 /// \internal Stack alignment required by the CPU
 const unsigned int CTXSAVE_STACK_ALIGNMENT=4;
+
+/// \internal Offset in words to retrieve the thread stack pointer in ctxsave
+const unsigned int STACK_OFFSET_IN_CTXSAVE=13;
 
 /**
  * \}

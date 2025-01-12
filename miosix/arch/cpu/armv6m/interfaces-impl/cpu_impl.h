@@ -34,6 +34,19 @@
  * \{
  */
 
+/*
+ * In this architecture, registers are saved in the following order:
+ * *ctxsave+32 --> r11
+ * *ctxsave+28 --> r10
+ * *ctxsave+24 --> r9
+ * *ctxsave+20 --> r8
+ * *ctxsave+16 --> r7
+ * *ctxsave+12 --> r6
+ * *ctxsave+8  --> r5
+ * *ctxsave+4  --> r4
+ * *ctxsave+0  --> psp
+ */
+
 /**
  * \internal
  * \def saveContext()
@@ -95,24 +108,6 @@ inline void doYield()
     //the CPU could execute ahead of the yield. Use dmb to prevent
     asm volatile("dmb":::"memory");
 }
-
-/**
- * \internal
- * Allows to retrieve the saved stack pointer in a portable way as
- * ctxsave[stackPtrOffsetInCtxsave]
- *
- * In this architecture, registers are saved in the following order:
- * *ctxsave+32 --> r11
- * *ctxsave+28 --> r10
- * *ctxsave+24 --> r9
- * *ctxsave+20 --> r8
- * *ctxsave+16 --> r7
- * *ctxsave+12 --> r6
- * *ctxsave+8  --> r5
- * *ctxsave+4  --> r4
- * *ctxsave+0  --> psp
- */
-const int stackPtrOffsetInCtxsave=0;
 
 } //namespace miosix
 

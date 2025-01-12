@@ -32,9 +32,6 @@
 #ifndef __FPU_PRESENT
 #define __FPU_PRESENT 0 //__FPU_PRESENT undefined means no FPU
 #endif
-#if (__FPU_PRESENT!=0) && (__FPU_USED!=1)
-#error "__FPU_USED should be 1"
-#endif
 
 /**
  * \addtogroup Interfaces
@@ -42,6 +39,23 @@
  */
 
 #if __FPU_PRESENT==1
+
+/*
+ * In this architecture, registers are saved in the following order:
+ * *ctxsave+100 --> s31
+ * ...
+ * *ctxsave+40  --> s16
+ * *ctxsave+36  --> lr (contains EXC_RETURN whose bit #4 tells if fpu is used)
+ * *ctxsave+32  --> r11
+ * *ctxsave+28  --> r10
+ * *ctxsave+24  --> r9
+ * *ctxsave+20  --> r8
+ * *ctxsave+16  --> r7
+ * *ctxsave+12  --> r6
+ * *ctxsave+8   --> r5
+ * *ctxsave+4   --> r4
+ * *ctxsave+0   --> psp
+ */
 
 /**
  * \internal
@@ -88,6 +102,19 @@
                  );
 
 #else //__FPU_PRESENT==1
+
+/*
+ * In this architecture, registers are saved in the following order:
+ * *ctxsave+32 --> r11
+ * *ctxsave+28 --> r10
+ * *ctxsave+24 --> r9
+ * *ctxsave+20 --> r8
+ * *ctxsave+16 --> r7
+ * *ctxsave+12 --> r6
+ * *ctxsave+8  --> r5
+ * *ctxsave+4  --> r4
+ * *ctxsave+0  --> psp
+ */
 
 /**
  * \internal
@@ -142,52 +169,6 @@ inline void doYield()
     //the CPU could execute ahead of the yield. Use dmb to prevent
     asm volatile("dmb":::"memory");
 }
-
-#if __FPU_PRESENT==1
-
-/**
- * \internal
- * Allows to retrieve the saved stack pointer in a portable way as
- * ctxsave[stackPtrOffsetInCtxsave]
- *
- * In this architecture, registers are saved in the following order:
- * *ctxsave+100 --> s31
- * ...
- * *ctxsave+40  --> s16
- * *ctxsave+36  --> lr (contains EXC_RETURN whose bit #4 tells if fpu is used)
- * *ctxsave+32  --> r11
- * *ctxsave+28  --> r10
- * *ctxsave+24  --> r9
- * *ctxsave+20  --> r8
- * *ctxsave+16  --> r7
- * *ctxsave+12  --> r6
- * *ctxsave+8   --> r5
- * *ctxsave+4   --> r4
- * *ctxsave+0   --> psp
- */
-const int stackPtrOffsetInCtxsave=0;
-
-#else //__FPU_PRESENT==1
-
-/**
- * \internal
- * Allows to retrieve the saved stack pointer in a portable way as
- * ctxsave[stackPtrOffsetInCtxsave]
- *
- * In this architecture, registers are saved in the following order:
- * *ctxsave+32 --> r11
- * *ctxsave+28 --> r10
- * *ctxsave+24 --> r9
- * *ctxsave+20 --> r8
- * *ctxsave+16 --> r7
- * *ctxsave+12 --> r6
- * *ctxsave+8  --> r5
- * *ctxsave+4  --> r4
- * *ctxsave+0  --> psp
- */
-const int stackPtrOffsetInCtxsave=0;
-
-#endif //__FPU_PRESENT==1
 
 } //namespace miosix
 

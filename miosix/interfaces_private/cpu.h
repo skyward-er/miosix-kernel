@@ -52,11 +52,6 @@
  * //Restore context in an IRQ where saveContext() is used
  * #define restoreContext()
  *
- * namespace miosix {
- * ///Allows to retrieve the saved stack pointer in a portable way as
- * ///ctxsave[stackPtrOffsetInCtxsave]
- * const int stackPtrOffsetInCtxsave=...;
- * }
  * \endcode
  */
 
