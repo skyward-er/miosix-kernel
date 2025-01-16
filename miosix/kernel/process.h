@@ -397,6 +397,9 @@ enum class Syscall
     MOUNT     = 56,
     UMOUNT    = 57,
     MKFS      = 58, //Moving filesystem creation code to kernel
+
+    // Misc syscalls
+    SYSCONF   = 59
 };
 
 } //namespace miosix

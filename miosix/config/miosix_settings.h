@@ -264,7 +264,8 @@ const unsigned int WATERMARK_LEN=16;
 /// \internal Used to fill watermark
 const unsigned int WATERMARK_FILL=0xaaaaaaaa;
 
-/// \internal Used to fill stack (for checking stack usage)
+/// \internal Used to fill stack (for checking stack usage). Must be a single
+/// byte value repeated 4 times to fill a word
 const unsigned int STACK_FILL=0xbbbbbbbb;
 
 // Compiler version checks

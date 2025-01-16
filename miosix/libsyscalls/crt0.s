@@ -779,6 +779,21 @@ getppid:
 
 /* TODO: missing syscalls: getuid, getgid, geteuid, getegid, setuid, setgid */
 
+/**
+ * sysconf
+ * \param query requested value
+ * \return desired value on success, -1 on failure
+ */
+.section .text.sysconf
+.global sysconf
+.type sysconf, %function
+sysconf:
+	movs r3, #59
+	svc  0
+	cmp  r0, #0
+	blt  syscallfailed32
+	bx   lr
+
 /* common jump target for all failing syscalls with 32 bit return value */
 .section .text.__seterrno32
 syscallfailed32:

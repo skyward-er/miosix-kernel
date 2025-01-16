@@ -49,6 +49,7 @@
 #include "interfaces/bsp.h"
 #include "interfaces/poweroff.h"
 #include "interfaces_private/os_timer.h"
+#include "interfaces/cpu_const.h"
 
 using namespace std;
 
@@ -1345,6 +1346,25 @@ int posix_spawn(pid_t *pid, const char *path,
 }
 #endif
 
+
+long int sysconf(int query)
+{
+    switch(query)
+    {
+        case _SC_NPROCESSORS_CONF:
+        case _SC_NPROCESSORS_ONLN:
+            return 1;
+        // Miosix-specific sysconf, used by memoryprofiling.cpp in userspace
+        case 100000:
+            return miosix::WATERMARK_LEN;
+        case 100001:
+            return (miosix::STACK_FILL & 0xff);
+        case 100002:
+            return miosix::CTXSAVE_ON_STACK;
+        default:
+            return -EINVAL;
+    }
+}
 
 
 

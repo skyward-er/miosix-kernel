@@ -29,8 +29,12 @@
 #include <cstdio>
 #include <malloc.h>
 #include <reent.h>
-#include <config/miosix_settings.h>
-#include <interfaces/cpu_const.h>
+#include <unistd.h>
+
+const int miosixCustomSysconfBase = 100000;
+const int watermarkLen   = miosixCustomSysconfBase+0;
+const int stackFill      = miosixCustomSysconfBase+1;
+const int ctxsaveOnStack = miosixCustomSysconfBase+2;
 
 // declared in crt1.cpp
 extern const char *__processHeapEnd;
@@ -42,7 +46,7 @@ namespace miosix {
 //TODO: when processes can spawn threads we need the per-thread stack bottom
 static const unsigned int *getStackBottom()
 {
-    return reinterpret_cast<const unsigned int *>(__processHeapEnd)+WATERMARK_LEN;
+    return reinterpret_cast<const unsigned int *>(__processHeapEnd)+sysconf(watermarkLen);
 }
 
 //
@@ -75,15 +79,18 @@ void MemoryProfiling::print()
 unsigned int MemoryProfiling::getStackSize()
 {
     //TODO: when processes can spawn threads we need the per-thread stack size
-    return __processStackEnd-__processHeapEnd-WATERMARK_LEN;
+    return __processStackEnd-__processHeapEnd-sysconf(watermarkLen);
 }
 
 unsigned int MemoryProfiling::getAbsoluteFreeStack()
 {
+    const unsigned int stackOccupiedByCtxsave=sysconf(ctxsaveOnStack);
+    const unsigned int fillByte=sysconf(stackFill);
+    const unsigned int fillWord=fillByte | fillByte<<8 | fillByte<<16 | fillByte<<24;
     const unsigned int *walk=getStackBottom();
     const unsigned int stackSize=getStackSize();
     unsigned int count=0;
-    while(count<stackSize && *walk==STACK_FILL)
+    while(count<stackSize && *walk==fillWord)
     {
         //Count unused stack
         walk++;
@@ -93,19 +100,20 @@ unsigned int MemoryProfiling::getAbsoluteFreeStack()
     //the absolute free stack (by a maximum of CTXSAVE_ON_STACK) but
     //it will never overestimate it, which is important since this
     //member function can be used to select stack sizes.
-    if(count<=CTXSAVE_ON_STACK) return 0;
-    return count-CTXSAVE_ON_STACK;
+    if(count<=stackOccupiedByCtxsave) return 0;
+    return count-stackOccupiedByCtxsave;
 }
 
 unsigned int MemoryProfiling::getCurrentFreeStack()
 {
+    unsigned int stackOccupiedByCtxsave=sysconf(ctxsaveOnStack);
     register int *stack_ptr asm("sp");
     const unsigned int *walk=getStackBottom();
     unsigned int freeStack=(reinterpret_cast<unsigned int>(stack_ptr)
                           - reinterpret_cast<unsigned int>(walk));
     //This takes into account CTXSAVE_ON_STACK.
-    if(freeStack<=CTXSAVE_ON_STACK) return 0;
-    return freeStack-CTXSAVE_ON_STACK;
+    if(freeStack<=stackOccupiedByCtxsave) return 0;
+    return freeStack-stackOccupiedByCtxsave;
 }
 
 unsigned int MemoryProfiling::getHeapSize()

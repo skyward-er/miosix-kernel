@@ -882,6 +882,12 @@ Process::SvcResult Process::handleSvc(SyscallParameters sp)
                 break;
             }
 
+            case Syscall::SYSCONF:
+            {
+                sp.setParameter(0,sysconf(sp.getParameter(0)));
+                break;
+            }
+
             default:
                 exitCode=SIGSYS; //Bad syscall
                 #ifdef WITH_ERRLOG
