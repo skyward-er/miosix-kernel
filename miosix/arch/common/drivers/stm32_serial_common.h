@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <cstdlib>
 #include "interfaces/arch_registers.h"
 #include "interfaces/gpio.h"
@@ -197,7 +198,7 @@ public:
     }
 
 private:
-    static volatile unsigned long& getENR(STM32Bus::ID bus)
+    static volatile uint32_t& getENR(STM32Bus::ID bus)
     {
         switch(bus)
         {
