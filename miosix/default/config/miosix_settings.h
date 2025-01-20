@@ -29,7 +29,9 @@
 
 // Before you can compile the kernel you have to configure it by editing this
 // file. After that, comment out this line to disable the reminder error.
+#ifndef MIOSIX_SKIP_SETTINGS_EDIT
 #error This error is a reminder that you have not edited miosix_settings.h yet.
+#endif
 
 /**
  * \file miosix_settings.h
