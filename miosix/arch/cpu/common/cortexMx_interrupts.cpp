@@ -76,11 +76,11 @@ const unsigned int numInterrupts=MIOSIX_NUM_PERIPHERAL_IRQ;
 /**
  * \internal
  * To enable interrupt registration at run-time and interrupt arg pointer
- * passing, we use one pf these structs per peripheral interrupt allocated in RAM
+ * passing, we use one of these structs per peripheral interrupt allocated in RAM
  */
 struct IrqForwardingEntry
 {
-    //NOTE: a constexpr constructos can be used to perform static initialization
+    //NOTE: a constexpr constructor can be used to perform static initialization
     //of the table entries, but this uses a lot of Flash memory to store the
     //initialization values. We thus opted to leave the table uninitialized
     //and add the IRQinitIrqTable function that provides space efficient
@@ -244,8 +244,12 @@ void IRQinitIrqTable() noexcept
 
     for(unsigned int i=0;i<numInterrupts;i++)
     {
-        //Initialize all interrupts to a default priority and handler
+        //Initialize all interrupts to a default priority and handler and store
+        //the interrupt number as arg for debugging use in unexpectedInterrupt
         irqForwardingTable[i].handler=&unexpectedInterrupt;
+        #ifdef WITH_ERRLOG
+        irqForwardingTable[i].arg=reinterpret_cast<void*>(i);
+        #endif //WITH_ERRLOG
         NVIC_SetPriority(static_cast<IRQn_Type>(i),defaultIrqPriority);
     }
 }
@@ -266,7 +270,9 @@ void IRQunregisterIrq(unsigned int id, void (*handler)(void*), void *arg) noexce
     || irqForwardingTable[id].arg!=arg)
         errorHandler(INTERRUPT_REGISTRATION_ERROR);
     irqForwardingTable[id].handler=unexpectedInterrupt;
-    irqForwardingTable[id].arg=nullptr;
+    #ifdef WITH_ERRLOG
+    irqForwardingTable[id].arg=reinterpret_cast<void*>(id);
+    #endif //WITH_ERRLOG
     NVIC_DisableIRQ(static_cast<IRQn_Type>(id));
     NVIC_ClearPendingIRQ(static_cast<IRQn_Type>(id));
 }
@@ -669,10 +675,13 @@ void __attribute__((naked)) PendSV_Handler()
     restoreContext();
 }
 
-static void unexpectedInterrupt(void*)
+static void unexpectedInterrupt(void* arg)
 {
     #ifdef WITH_ERRLOG
-    IRQerrorLog("\r\n***Unexpected peripheral interrupt\r\n");
+    auto entryNum=reinterpret_cast<unsigned int>(arg);
+    IRQerrorLog("\r\n***Caught unregistered interrupt number ");
+    printUnsignedInt(entryNum);
+    IRQerrorLog("\r\n");
     #endif //WITH_ERRLOG
     IRQsystemReboot();
 }
