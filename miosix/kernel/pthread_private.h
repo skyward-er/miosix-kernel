@@ -167,4 +167,12 @@ static inline unsigned int IRQdoMutexUnlockAllDepthLevels(pthread_mutex_t *mutex
     return result;
 }
 
+#ifdef WITH_PTHREAD_KEYS
+/**
+ * Called at thread exit to call destructors for pthread keys
+ * \param pthreadKeyValues thread-local pthread_key values
+ */
+void callPthreadKeyDestructors(void *pthreadKeyValues[MAX_PTHREAD_KEYS]);
+#endif //WITH_PTHREAD_KEYS
+
 } //namespace miosix

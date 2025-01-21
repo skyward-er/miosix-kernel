@@ -927,6 +927,29 @@ public:
     
     #endif //WITH_PROCESSES
 
+    #ifdef WITH_PTHREAD_KEYS
+
+    /**
+     * \internal, used to implement pthread_setspecific
+     */
+    int setPthreadKeyValue(pthread_key_t key, void * const value)
+    {
+        if(key>=MAX_PTHREAD_KEYS) return EINVAL;
+        pthreadKeyValues[key]=value;
+        return 0;
+    }
+
+    /**
+     * \internal, used to implement pthread_getspecific
+     */
+    void *getPthreadKeyValue(pthread_key_t key)
+    {
+        if(key>=MAX_PTHREAD_KEYS) return nullptr; //No way to report error
+        return pthreadKeyValues[key];
+    }
+
+    #endif //WITH_PTHREAD_KEYS
+
     //Unwanted methods
     Thread(const Thread& p) = delete;
     Thread& operator = (const Thread& p) = delete;
@@ -1227,6 +1250,10 @@ private:
     #ifdef WITH_CPU_TIME_COUNTER
     CPUTimeCounterPrivateThreadData timeCounterData;
     #endif //WITH_CPU_TIME_COUNTER
+    #ifdef WITH_PTHREAD_KEYS
+    ///Thread local values associated to pthread keys
+    void *pthreadKeyValues[MAX_PTHREAD_KEYS];
+    #endif //WITH_PTHREAD_KEYS
     
     //friend functions
     //Needs access to flags

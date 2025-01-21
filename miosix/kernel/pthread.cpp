@@ -390,5 +390,76 @@ int pthread_once(pthread_once_t *once, void (*func)())
 
 int pthread_setcancelstate(int state, int *oldstate) { return 0; } //Stub
 
+#ifdef WITH_PTHREAD_KEYS
+
+typedef void (*destructor_type)(void *);
+
+static FastMutex pthreadKeyMutex;
+static bool keySlotUsed[MAX_PTHREAD_KEYS]={false};
+static destructor_type keyDestructor[MAX_PTHREAD_KEYS]={nullptr};
+
+int pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
+{
+    Lock<FastMutex> l(pthreadKeyMutex);
+    for(unsigned int i=0;i<MAX_PTHREAD_KEYS;i++)
+    {
+        if(keySlotUsed[i]) continue;
+        keySlotUsed[i]=true;
+        keyDestructor[i]=destructor;
+        *key=i;
+        return 0;
+    }
+    return EAGAIN;
+}
+
+int pthread_key_delete(pthread_key_t key)
+{
+    Lock<FastMutex> l(pthreadKeyMutex);
+    if(keySlotUsed[key]==false) return EINVAL;
+    keySlotUsed[key]=false;
+    keyDestructor[key]=nullptr;
+    return 0;
+}
+
+int pthread_setspecific(pthread_key_t key, const void *value)
+{
+    //This cast because POSIX misunderstood how const works
+    auto v = const_cast<void * const>(value);
+    return Thread::getCurrentThread()->setPthreadKeyValue(key,v);
+}
+
+void *pthread_getspecific(pthread_key_t key)
+{
+    return Thread::getCurrentThread()->getPthreadKeyValue(key);
+}
+
+#endif //WITH_PTHREAD_KEYS
+
 } //extern "C"
 
+#ifdef WITH_PTHREAD_KEYS
+
+namespace miosix {
+
+void callPthreadKeyDestructors(void *pthreadKeyValues[MAX_PTHREAD_KEYS])
+{
+    Lock<FastMutex> l(pthreadKeyMutex);
+    for(unsigned int i=0;i<MAX_PTHREAD_KEYS;i++)
+    {
+        if(pthreadKeyValues[i]==nullptr) continue; //No value, nothing to do
+        //POSIX wants destructor called after key value is set to nullptr
+        auto temp=pthreadKeyValues[i];
+        pthreadKeyValues[i]=nullptr;
+        if(keyDestructor[i]==nullptr) continue; //No destructor, discard temp
+        keyDestructor[i](temp);
+    }
+    //NOTE: the POSIX spec state that calling a destructor may set another key
+    //and we should play whack-a-mole calling again destructors till all values
+    //become nulllptr, which may lead to an infinite loop or we may choose to
+    //stop after PTHREAD_DESTRUCTOR_ITERATIONS. For now we don't do it, and act
+    //as if PTHREAD_DESTRUCTOR_ITERATIONS is 1 on Miosix
+}
+
+} //namespace miosix
+
+#endif //WITH_PTHREAD_KEYS

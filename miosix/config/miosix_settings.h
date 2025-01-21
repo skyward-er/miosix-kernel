@@ -251,6 +251,12 @@ const unsigned char MAIN_PRIORITY=1;
 const unsigned int MAX_TIME_SLICE=1000000;
 #endif //SCHED_TYPE_PRIORITY
 
+/// Enable support for pthread_key_create/pthread_key_delete/pthread_getspecific
+//#define WITH_PTHREAD_KEYS
+
+/// Maximum number of concurrently existing pthread keys
+const unsigned int MAX_PTHREAD_KEYS=2;
+
 
 //
 // Other low level kernel options. There is usually no need to modify these.

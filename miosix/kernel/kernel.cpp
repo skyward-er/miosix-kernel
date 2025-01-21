@@ -39,6 +39,7 @@
 #include "interfaces_private/os_timer.h"
 #include "interfaces_private/sleep.h"
 #include "timeconversion.h"
+#include "pthread_private.h"
 #include <stdexcept>
 #include <algorithm>
 #include <limits>
@@ -763,6 +764,9 @@ Thread::Thread(unsigned int *watermark, unsigned int stacksize,
     proc=kernel;
     userCtxsave=nullptr;
     #endif //WITH_PROCESSES
+    #ifdef WITH_PTHREAD_KEYS
+    memset(pthreadKeyValues,0,sizeof(pthreadKeyValues));
+    #endif //WITH_PTHREAD_KEYS
 }
 
 Thread::~Thread()
@@ -833,24 +837,29 @@ void Thread::threadLauncher(void *(*threadfunc)(void*), void *argv)
         errorLog("***An exception propagated through a thread\n");
     }
     #endif //__NO_EXCEPTIONS
+    Thread* cur=const_cast<Thread*>(runningThread);
+
+    #ifdef WITH_PTHREAD_KEYS
+    callPthreadKeyDestructors(cur->pthreadKeyValues);
+    #endif //WITH_PTHREAD_KEYS
     //Thread returned from its entry point, so delete it
 
     //Since the thread is running, it cannot be in the sleepingList, so no need
     //to remove it from the list
     {
         FastInterruptDisableLock lock;
-        const_cast<Thread*>(runningThread)->flags.IRQsetDeleted();
+        cur->flags.IRQsetDeleted();
 
-        if(const_cast<Thread*>(runningThread)->flags.isDetached()==false)
+        if(cur->flags.isDetached()==false)
         {
             //If thread is joinable, handle join
-            if(runningThread->joinData.waitingForJoin!=nullptr)
+            if(cur->joinData.waitingForJoin!=nullptr)
             {
                 //Wake thread
-                runningThread->joinData.waitingForJoin->flags.IRQsetJoinWait(false);
+                cur->joinData.waitingForJoin->flags.IRQsetJoinWait(false);
             }
             //Set result
-            runningThread->joinData.result=result;
+            cur->joinData.result=result;
         } else {
             //If thread is detached, memory can be deallocated immediately
             existDeleted=true;
