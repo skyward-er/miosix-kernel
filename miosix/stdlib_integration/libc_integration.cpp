@@ -1347,6 +1347,29 @@ int posix_spawn(pid_t *pid, const char *path,
 #endif
 
 
+constexpr int hostnameMax=64; //Actual maximum size is one char less due to \0
+char *hostname=nullptr;
+
+int gethostname(char *name, size_t size)
+{
+    strncpy(name,hostname ? hostname : "",size);
+    return 0;
+}
+
+int sethostname(const char *name, size_t size)
+{
+    if(size>=hostnameMax)
+    {
+        errno=EINVAL;
+        return -1;
+    }
+    char *oldHostname=hostname;
+    hostname=strndup(name,size);
+    free(oldHostname);
+    return 0;
+}
+
+
 long int sysconf(int query)
 {
     switch(query)
@@ -1354,6 +1377,8 @@ long int sysconf(int query)
         case _SC_NPROCESSORS_CONF:
         case _SC_NPROCESSORS_ONLN:
             return 1;
+        case _SC_HOST_NAME_MAX:
+            return hostnameMax;
         // Miosix-specific sysconf, used by memoryprofiling.cpp in userspace
         case 100000:
             return miosix::WATERMARK_LEN;
@@ -1365,7 +1390,6 @@ long int sysconf(int query)
             return -EINVAL;
     }
 }
-
 
 
 //
