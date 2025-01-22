@@ -390,6 +390,15 @@ int pthread_once(pthread_once_t *once, void (*func)())
 
 int pthread_setcancelstate(int state, int *oldstate) { return 0; } //Stub
 
+#ifdef WITH_PTHREAD_EXIT
+
+void pthread_exit(void *returnValue)
+{
+    throw PthreadExitException(returnValue);
+}
+
+#endif //WITH_PTHREAD_EXIT
+
 #ifdef WITH_PTHREAD_KEYS
 
 typedef void (*destructor_type)(void *);

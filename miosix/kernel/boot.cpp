@@ -38,6 +38,7 @@
 #include "filesystem/file_access.h"
 #include "error.h"
 #include "logging.h"
+#include "pthread_private.h"
 // settings for miosix
 #include "config/miosix_settings.h"
 #include "util/util.h"
@@ -150,11 +151,15 @@ void *mainLoader(void *argv)
     #else //__NO_EXCEPTIONS
     try {
         main(0,NULL);
+    #ifdef WITH_PTHREAD_EXIT
+    } catch(PthreadExitException&) {
+        errorLog("***Attempting to pthread_exit from main\n");
+    #endif //WITH_PTHREAD_EXIT
     } catch(std::exception& e) {
-        errorLog("***An exception propagated through a thread\n");
+        errorLog("***An exception propagated through main\n");
         errorLog("what():%s\n",e.what());
     } catch(...) {
-        errorLog("***An exception propagated through a thread\n");
+        errorLog("***An exception propagated through main\n");
     }
     #endif //__NO_EXCEPTIONS
     

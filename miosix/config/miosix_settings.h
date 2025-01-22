@@ -251,6 +251,23 @@ const unsigned char MAIN_PRIORITY=1;
 const unsigned int MAX_TIME_SLICE=1000000;
 #endif //SCHED_TYPE_PRIORITY
 
+/// pthread_exit() is a dangerous function. To understand why, let's first
+/// discuss how Linux implements it. On the surface, it looks like it neatly
+/// works with C++ as it is implemented by throwing a special ForcedUnwind
+/// exception thus calling C++ destructors. However, implementers left a number
+/// of unhandled corner cases all leading to unexpected program termination.
+/// These are: calling pthread_exit() from code that directly or indirectly...
+/// 1) contains a catch(...) that does not rethrow? std::abort() gets called
+/// 2) contains a function declared noexcept? std::abort() gets called
+/// 3) is called from a destructor? you guessed it, std::abort() again!
+/// For this reason pthread_exit() support is by default disabled in Miosix and
+/// attempting to call this function is met with a linking error. If you really
+/// need it, uncomment the line below. Oh, right, how does Miosix implement it?
+/// Throwing a standard C++ exception, so a catch(...) can stop a pthread_exit()
+/// which is imho neither better nor worse than Linux.
+/// Reference: https://udrepper.livejournal.com/21541.html
+//#define WITH_PTHREAD_EXIT
+
 /// Enable support for pthread_key_create/pthread_key_delete/pthread_getspecific
 //#define WITH_PTHREAD_KEYS
 

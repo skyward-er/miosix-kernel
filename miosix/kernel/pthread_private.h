@@ -167,6 +167,35 @@ static inline unsigned int IRQdoMutexUnlockAllDepthLevels(pthread_mutex_t *mutex
     return result;
 }
 
+#ifdef WITH_PTHREAD_EXIT
+
+/**
+ * Exception type thrown when pthread_exit is called.
+ *
+ * NOTE: This type should not derive from std::exception on purpose, as it would
+ * be bad if a \code catch(std::exception& e) \endcode would match this
+ * exception.
+ */
+class PthreadExitException
+{
+public:
+    /**
+     * Constructor
+     * \param returnValue thread return value passed to pthread_exit
+     */
+    PthreadExitException(void *returnValue) : returnValue(returnValue) {}
+
+    /**
+     * \return the thread return value passed to pthread_exit
+     */
+    void *getReturnValue() const { return returnValue; }
+
+private:
+    void *returnValue;
+};
+
+#endif //WITH_PTHREAD_EXIT
+
 #ifdef WITH_PTHREAD_KEYS
 /**
  * Called at thread exit to call destructors for pthread keys

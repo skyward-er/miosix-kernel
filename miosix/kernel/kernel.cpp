@@ -830,6 +830,10 @@ void Thread::threadLauncher(void *(*threadfunc)(void*), void *argv)
     #else //__NO_EXCEPTIONS
     try {
         result=threadfunc(argv);
+    #ifdef WITH_PTHREAD_EXIT
+    } catch(PthreadExitException& e) {
+        result=e.getReturnValue();
+    #endif //WITH_PTHREAD_EXIT
     } catch(std::exception& e) {
         errorLog("***An exception propagated through a thread\n");
         errorLog("what():%s\n",e.what());
