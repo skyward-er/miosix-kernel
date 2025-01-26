@@ -1298,14 +1298,14 @@ int _execve_r(struct _reent *ptr, const char *path, char *const argv[],
         char *const env[])
 {
     #ifdef WITH_PROCESSES
-    ptr->_errno=-EFAULT;
+    ptr->_errno=EFAULT;
     return -1;
     #else //WITH_PROCESSES
     return -1;
     #endif //WITH_PROCESSES
 }
 
-int execve(const char *path, char *const argv[], char *const env[])
+int _execve(const char *path, char *const argv[], char *const env[])
 {
     return _execve_r(miosix::getReent(),path,argv,env);
 }

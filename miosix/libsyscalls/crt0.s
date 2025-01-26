@@ -694,16 +694,16 @@ _exit:
 	svc  0
 
 /**
- * execve, run a different program
+ * _execve, run a different program
  * \param path program to run
  * \param argv program arguments
  * \param envp program environment variables
  * \return -1 on failure. Does not return on success
  */
-.section .text.execve
-.global execve
-.type execve, %function
-execve:
+.section .text._execve
+.global _execve
+.type _execve, %function
+_execve:
 	movs r3, #44
 	svc  0
 	/* if execve returns, then it failed */
