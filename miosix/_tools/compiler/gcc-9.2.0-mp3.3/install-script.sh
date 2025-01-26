@@ -674,8 +674,8 @@ if [[ $DESTDIR ]]; then
 		# permissions to group and other, resulting in an unusable installation
 		./$MAKESELF/makeself.sh --xz --keep-umask \
 			$DESTDIR$PREFIX \
-			MiosixToolchainInstaller9.2.0mp3.2.run \
-			"Miosix toolchain for Linux (GCC 9.2.0-mp3.2)" \
+			MiosixToolchainInstaller9.2.0mp3.3.run \
+			"Miosix toolchain for Linux (GCC 9.2.0-mp3.3)" \
 			"./installer.sh"
 	elif [[ ( $(uname -s) == 'Linux' ) && ( $HOST == *mingw* ) ]]; then
 		# Build an executable installer for Windows
@@ -710,18 +710,18 @@ if [[ $DESTDIR ]]; then
 		        suffix='ARM'
 		fi
 		pkgbuild \
-			--identifier 'org.miosix.toolchain.gcc-9.2.0-mp3.2' \
-			--version '9.2.0.3.2' \
+			--identifier 'org.miosix.toolchain.gcc-9.2.0-mp3.3' \
+			--version '9.2.0.3.3' \
 			--min-os-version ${min_osx_ver} \
 			--install-location / \
 			--scripts installers/macos/Scripts \
 			--root $DESTDIR \
-			'gcc-9.2.0-mp3.2.pkg'
+			'gcc-9.2.0-mp3.3.pkg'
 		productbuild \
 			--distribution ${distr_script} \
 			--resources installers/macos/Resources \
 			--package-path ./ \
-			"./MiosixToolchainInstaller9.2.0mp3.2_${suffix}.pkg"
+			"./MiosixToolchainInstaller9.2.0mp3.3_${suffix}.pkg"
 	fi
 else
 	# Install the uninstaller too
