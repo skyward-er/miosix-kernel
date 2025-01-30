@@ -230,13 +230,13 @@ inline void fastEnableInterrupts() noexcept;
  */
 bool areInterruptsEnabled() noexcept;
 
-void globalInterruptLock() noexcept;
-void globalInterruptUnlock() noexcept;
+inline void globalInterruptLock() noexcept;
+inline void globalInterruptUnlock() noexcept;
 
 #ifndef WITH_SMP
 
-void globalInterruptLock() {}
-void globalInterruptUnlock() {}
+inline void globalInterruptLock() noexcept {}
+inline void globalInterruptUnlock() noexcept {}
 
 #endif
 
