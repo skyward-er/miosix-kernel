@@ -170,8 +170,15 @@ typedef struct {
     io_ro_32 div_csr;
     uint32_t _pad1;
     interp_hw_t interp[2];
+
+    // (Description copied from array index 0 register SIO_SPINLOCK0 applies similarly to other array indexes)
+    _REG_(SIO_SPINLOCK0_OFFSET) // SIO_SPINLOCK0
+    // Spinlock register 0
+    // 0xffffffff [31:0]  SPINLOCK0    (0x00000000) 
+    io_rw_32 spinlock[32];
 } sio_hw_t;
 
 #define sio_hw ((sio_hw_t *)SIO_BASE)
+static_assert(sizeof (sio_hw_t) == 0x0180, "");
 
 #endif
