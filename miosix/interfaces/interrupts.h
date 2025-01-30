@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2023-2024 by Terraneo Federico                          *
+ *   Copyright (C) 2023-2025 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,6 +28,7 @@
 #pragma once
 
 #include "e20/unmember.h"
+#include "config/miosix_settings.h"
 
 /**
  * \addtogroup Interfaces
@@ -229,6 +230,28 @@ inline void fastEnableInterrupts() noexcept;
  */
 bool areInterruptsEnabled() noexcept;
 
+void globalInterruptLock() noexcept;
+void globalInterruptUnlock() noexcept;
+
+#ifndef WITH_SMP
+
+void globalInterruptLock() {}
+void globalInterruptUnlock() {}
+
+#endif
+
+inline void globalInterruptDisableLock() noexcept
+{
+    fastDisableInterrupts();
+    globalInterruptLock();
+}
+
+inline void globalInterruptEnableUnlock() noexcept
+{
+    globalInterruptUnlock();
+    fastEnableInterrupts();
+}
+
 } //namespace miosix
 
 /**
@@ -236,3 +259,7 @@ bool areInterruptsEnabled() noexcept;
  */
 
 #include "interfaces-impl/interrupts_impl.h"
+
+#ifdef WITH_SMP
+#include "interfaces-impl/interrupts_smp_impl.h"
+#endif

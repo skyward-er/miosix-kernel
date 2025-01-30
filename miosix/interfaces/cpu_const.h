@@ -27,6 +27,8 @@
 
 #pragma once
 
+#include "config/miosix_settings.h"
+
 /**
  * \addtogroup Interfaces
  * \{
@@ -52,8 +54,22 @@
  * const unsigned int STACK_OFFSET_IN_CTXSAVE=...;
  */
 
+namespace miosix {
+
+inline unsigned char getCurrentCoreId();
+
+#ifndef WITH_SMP
+inline unsigned char getCurrentCoreId() { return 0; }
+#endif
+
+} // namespace miosix
+
 /**
  * \}
  */
 
 #include "interfaces-impl/cpu_const_impl.h"
+
+#ifdef WITH_SMP
+#include "interfaces-impl/cpu_const_smp_impl.h"
+#endif

@@ -269,6 +269,11 @@ void IRQmemoryAndClockInit()
     //bad hardware design.
     for(unsigned int i=0; i<NUM_BANK0_GPIOS; i++)
         padsbank0_hw->io[i]=toUint(Mode::DISABLED);
+    
+    //QUIRK: You would expect the hardware spinlocks to be reset on a CPU
+    //reset but they are not. To release a spinlock you have to write something
+    //non-zero!
+    for(unsigned int i=0; i<32; i++) sio_hw->spinlock[i]=1;
 
     // Setup clock generation
     clockTreeSetup();

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2008-2023 by Terraneo Federico                          *
+ *   Copyright (C) 2008-2025 by Terraneo Federico                          *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -84,6 +84,9 @@ static bool kernelStarted=false;///<\internal becomes true after startKernel.
 /// This is used by disableInterrupts() and enableInterrupts() to allow nested
 /// calls to these functions.
 static unsigned char interruptDisableNesting=0;
+#ifdef WITH_SMP
+static unsigned char globalIntrNestLockHoldingCore=0xFF;
+#endif
 
 #ifdef WITH_DEEP_SLEEP
 
@@ -144,11 +147,23 @@ void *idleThread(void *argv)
 
 void disableInterrupts()
 {
-    //Before the kernel is started interrupts are disabled,
-    //so disabling them again won't hurt
-    fastDisableInterrupts();
+#ifdef WITH_SMP
+    unsigned char state=globalIntrNestLockHoldingCore;
+    if(state==getCurrentCoreId())
+    {
+        if(interruptDisableNesting==0xff) errorHandler(NESTING_OVERFLOW);
+        interruptDisableNesting++;
+    } else {
+        globalInterruptDisableLock();
+        globalIntrNestLockHoldingCore=getCurrentCoreId();
+        if(interruptDisableNesting!=0) errorHandler(DISABLE_INTERRUPTS_NESTING);
+        interruptDisableNesting=1;
+    }
+#else
+    globalInterruptDisableLock();
     if(interruptDisableNesting==0xff) errorHandler(NESTING_OVERFLOW);
     interruptDisableNesting++;
+#endif
 }
 
 void enableInterrupts()
@@ -159,9 +174,13 @@ void enableInterrupts()
         errorHandler(DISABLE_INTERRUPTS_NESTING);
     }
     interruptDisableNesting--;
-    if(interruptDisableNesting==0 && kernelStarted==true)
+    if(interruptDisableNesting==0)
     {
-        fastEnableInterrupts();
+    #ifdef WITH_SMP
+        globalIntrNestLockHoldingCore=0xFF;
+    #endif
+        if(kernelStarted==true) globalInterruptEnableUnlock();
+        else globalInterruptUnlock();
     }
 }
 

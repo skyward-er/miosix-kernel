@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2024 by Daniele Cattaneo                                *
+ *   Copyright (C) 2025 by Federico Terraneo, Daniele Cattaneo             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,56 +25,26 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#pragma once
-
-#include "interfaces/gpio.h"
-
-/**
- * \internal
- * Versioning for board_settings.h for out of git tree projects
- */
-#define BOARD_SETTINGS_VERSION 300
+#include "interfaces/arch_registers.h"
 
 namespace miosix {
 
-/**
- * \addtogroup Settings
- * \{
- */
+inline void globalInterruptLock() noexcept
+{
+    for(;;)
+    {
+        unsigned long lock=sio_hw->spinlock[0];
+        if(lock) break;
+        __WFE();
+    }
+    __DSB();
+}
 
-/// \def WITH_SMP
-/// Enables multicore support
-#define WITH_SMP
+inline void globalInterruptUnlock() noexcept
+{
+    __DSB();
+    sio_hw->spinlock[0]=0;
+    __SEV();
+}
 
-/// Size of stack for main().
-/// The C standard library is stack-heavy (iprintf requires 1KB) but the
-/// RP2040 has 264KB of RAM so there is room for a big 4K stack.
-const unsigned int MAIN_STACK_SIZE=4*1024;
-
-/// Clock options
-enum class OscillatorType { XOSC }; //Only one supported for now
-constexpr auto oscillatorType=OscillatorType::XOSC;
-constexpr unsigned int oscillatorFrequency=12000000;
-constexpr unsigned int cpuFrequency=133000000; //125000000;
-constexpr unsigned int peripheralFrequency=cpuFrequency;
-
-/// Serial port
-const unsigned int defaultSerial=0;
-const unsigned int defaultSerialSpeed=115200;
-const bool defaultSerialFlowctrl=false;
-// Pin mapping for usart0, uncomment if defaultSerial==0
-using defaultSerialTxPin = Gpio<GPIO0_BASE, 0>;
-using defaultSerialRxPin = Gpio<GPIO0_BASE, 1>;
-using defaultSerialRtsPin = Gpio<GPIO0_BASE, 3>;
-using defaultSerialCtsPin = Gpio<GPIO0_BASE, 2>;
-// Pin mapping for usart1, uncomment if defaultSerial==1
-//using defaultSerialTxPin = Gpio<GPIO0_BASE, 4>;
-//using defaultSerialRxPin = Gpio<GPIO0_BASE, 5>;
-//using defaultSerialRtsPin = Gpio<GPIO0_BASE, 7>;
-//using defaultSerialCtsPin = Gpio<GPIO0_BASE, 6>;
-
-/**
- * \}
- */
-
-} //namespace miosix
+} // namespace miosix
