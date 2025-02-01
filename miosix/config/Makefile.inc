@@ -65,6 +65,7 @@
 #OPT_BOARD := stm32h755zi_nucleo
 #OPT_BOARD := stm32l152re_nucleo
 #OPT_BOARD := stm32l010rb_nucleo
+#OPT_BOARD := stm32h503rb_generic
 
 ##
 ## Optimization flags, choose one.
@@ -850,6 +851,11 @@ endif
 
 # No options
 
+##---------------------------------------------------------------------------
+## stm32h503rb_generic
+##
+
+# No options
 
 ############################################################################
 ## From the options selected above, now fill all the variables needed to  ##
@@ -974,6 +980,8 @@ else ifeq ($(OPT_BOARD),stm32l152re_nucleo)
     ARCH := cortexM3_stm32l1
 else ifeq ($(OPT_BOARD),stm32l010rb_nucleo)
     ARCH := cortexM0plus_stm32l0
+else ifeq ($(OPT_BOARD),stm32h503rb_generic)
+    ARCH := cortexM33_stm32h5
 else
     $(info Error: no board specified in miosix/config/Makefile.inc)
     $(error Error)
@@ -3387,6 +3395,85 @@ else ifeq ($(ARCH),cortexM0plus_rp2040)
     arch/common/drivers/rp2040_serial.cpp                    \
     $(ARCH_INC)/interfaces-impl/delays.cpp                   \
     arch/common/CMSIS/Device/RaspberryPi/RP2040/Source/system_RP2040.c
+
+##-----------------------------------------------------------------------------
+## ARCHITECTURE: cortexM33_stm32h5
+##
+else ifeq ($(ARCH),cortexM33_stm32h5)
+    ## Base directory with else header files for this board
+    ARCH_INC := arch/cortexM33_stm32h5/common
+
+    ifeq ($(OPT_BOARD),stm32h503rb_generic)
+        ## Base directory with header files for this board
+        BOARD_INC := arch/cortexM33_stm32h5/stm32h503rb_generic
+
+        ## Select linker script
+        LINKER_SCRIPT := $(BOARD_INC)/stm32_128k+32k_rom.ld
+
+        ## Select architecture specific files
+        ## These are the files in arch/<arch name>/<board name>
+        ARCH_SRC :=                                  \
+        $(BOARD_INC)/boot.cpp                        \
+        arch/common/drivers/stm32_hardware_rng.cpp   \
+        $(BOARD_INC)/interfaces-impl/bsp.cpp
+
+        ## Add a #define to allow querying board name
+        CFLAGS_BASE   += -D_BOARD_STM32H503RB_GENERIC
+        CXXFLAGS_BASE += -D_BOARD_STM32H503RB_GENERIC
+
+        ## Select clock frequency (HSE_VALUE is the xtal on board, fixed)
+        ## While the chip can run up to 480MHz, the board uses the SMPS feature
+        ## that limits clock speed to 400MHz
+        CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_250MHz=250000000
+
+        ## Select programmer command line
+        ## This is the program that is invoked when the user types
+        ## 'make program'
+        ## The command must provide a way to program the board, or print an
+        ## error message saying that 'make program' is not supported for that
+        ## board.
+        #PROG ?= st-flash --connect-under-reset --reset write \
+        #        $(if $(ROMFS_DIR), image.bin, main.bin) 0x08000000
+        PROG ?= dfu-util -d 0483:df11 -a 0 -s 0x08000000:leave -D \
+                $(if $(ROMFS_DIR), image.bin, main.bin)
+
+    ##-------------------------------------------------------------------------
+    ## End of board list
+    ##
+    endif
+
+    ## Select compiler
+    PREFIX := arm-miosix-eabi-
+    ## This architecture supports processes
+    POSTLD := mx-postlinker
+
+    CPU_INC := arch/cpu/armv7m
+    ## Select appropriate compiler flags for both ASM/C/C++/linker
+    CPU := -mcpu=cortex-m33 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+    AFLAGS_BASE   := $(CPU)
+    CFLAGS_BASE   += -D_ARCH_CORTEXM33_STM32H5 $(CLOCK_FREQ) $(XRAM) \
+                     $(SRAM_BOOT) $(CPU) $(OPT_OPTIMIZATION) -c
+    CXXFLAGS_BASE += -D_ARCH_CORTEXM33_STM32H5 $(CLOCK_FREQ) $(XRAM) \
+                     $(SRAM_BOOT) $(CPU) $(OPT_OPTIMIZATION) $(OPT_EXCEPT) -c
+    LFLAGS_BASE   := $(CPU) -Wl,--gc-sections,-Map,main.map         \
+                     -Wl,-T$(KPATH)/$(LINKER_SCRIPT) $(OPT_EXCEPT)  \
+                     $(OPT_OPTIMIZATION) -nostdlib
+
+    ## Select architecture specific files
+    ## These are the files in arch/<arch name>/common
+    ARCH_SRC +=                                              \
+    arch/cpu/armv7m/interfaces-impl/cpu.cpp                  \
+    arch/cpu/common/cortexMx_interrupts.cpp                  \
+    arch/cpu/common/cortexMx_userspace.cpp                   \
+    arch/common/os_timer/stm32_32bit_os_timer.cpp            \
+    arch/common/sleep/cortexMx_sleep.cpp                     \
+    arch/common/cache/cortexMx_cache.cpp                     \
+    arch/common/drivers/stm32_gpio.cpp                       \
+    arch/common/drivers/stm32f4_serial.cpp                   \
+    arch/common/drivers/stm32_serial_common.cpp              \
+    arch/common/drivers/dcc.cpp                              \
+    $(ARCH_INC)/interfaces-impl/delays.cpp                   \
+    arch/common/CMSIS/Device/ST/STM32H5xx/Source/Templates/system_stm32h5xx.c
 
 ##-----------------------------------------------------------------------------
 ## end of architecture list

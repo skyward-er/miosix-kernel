@@ -31,7 +31,7 @@
 
 namespace miosix {
 
-#if defined(_ARCH_CORTEXM0_STM32F0) || defined(_ARCH_CORTEXM4_STM32F3)
+#if defined(_ARCH_CORTEXM0_STM32F0) || defined(_ARCH_CORTEXM4_STM32F3) || defined(_ARCH_CORTEXM33_STM32H5)
 
 class STM32Timer2HW
 {

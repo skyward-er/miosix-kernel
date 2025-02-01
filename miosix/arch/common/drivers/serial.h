@@ -7,6 +7,8 @@
    || defined(_ARCH_CORTEXM4_STM32L4) || defined(_ARCH_CORTEXM4_STM32F3) \
    || defined(_ARCH_CORTEXM0_STM32F0) || defined(_ARCH_CORTEXM7_STM32H7)
 #include "stm32f7_serial.h"
+#elif defined(_ARCH_CORTEXM33_STM32H5)
+#include "stm32f1_f2_f4_serial.h" // TODO
 #elif defined(_ARCH_CORTEXM3_EFM32GG) || defined(_ARCH_CORTEXM3_EFM32G)
 #include "efm32_serial.h"
 #elif defined(_ARCH_CORTEXM4_ATSAM4L)
