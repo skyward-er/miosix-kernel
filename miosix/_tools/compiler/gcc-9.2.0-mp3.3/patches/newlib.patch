@@ -1,6 +1,6 @@
 diff -ruN newlib-3.1.0-old/newlib/configure.host newlib-3.1.0/newlib/configure.host
 --- newlib-3.1.0-old/newlib/configure.host	2019-01-01 05:40:11.000000000 +0100
-+++ newlib-3.1.0/newlib/configure.host	2025-01-25 11:33:31.138351952 +0100
++++ newlib-3.1.0/newlib/configure.host	2025-01-29 08:51:09.185355614 +0100
 @@ -417,6 +417,10 @@
  	stdio64_dir=stdio64
  	xdr_dir=xdr
@@ -30,8 +30,8 @@ diff -ruN newlib-3.1.0-old/newlib/configure.host newlib-3.1.0/newlib/configure.h
 +# _NO_POSIX_SPAWN: Miosix provides ths function as a syscall
 +# _SMALL_HEXDIG: save 256 byte of RAM in stdlib/gdtoa-gethex.c
 +# SIGNAL_PROVIDED: disable the implementation of signals in newlib
-+# ARG_NUM_MAX=16: save 960 byte of RAM in exec*.c
-+	newlib_cflags="${newlib_cflags} -DREENTRANT_SYSCALLS_PROVIDED -DGETREENT_PROVIDED -DHAVE_BLKSIZE -DHAVE_FCNTL -DHAVE_NANOSLEEP -D_NO_POPEN -D_NO_WORDEXP -D_NO_POSIX_SPAWN -D_SMALL_HEXDIG -DSIGNAL_PROVIDED -DARG_NUM_MAX=16"
++# _EXECL_USE_MALLOC avoid unbounded stack allocation in exec*.c
++	newlib_cflags="${newlib_cflags} -DREENTRANT_SYSCALLS_PROVIDED -DGETREENT_PROVIDED -DHAVE_BLKSIZE -DHAVE_FCNTL -DHAVE_NANOSLEEP -D_NO_POPEN -D_NO_WORDEXP -D_NO_POSIX_SPAWN -D_SMALL_HEXDIG -DSIGNAL_PROVIDED -D_EXECL_USE_MALLOC"
 +	newlib_cflags="${newlib_cflags} -Wall"
 +	;;
  # RTEMS supplies its own versions of some routines:
@@ -406,138 +406,159 @@ diff -ruN newlib-3.1.0-old/newlib/libc/posix/closedir.c newlib-3.1.0/newlib/libc
  	__lock_release_recursive(dirp->dd_lock);
 diff -ruN newlib-3.1.0-old/newlib/libc/posix/execl.c newlib-3.1.0/newlib/libc/posix/execl.c
 --- newlib-3.1.0-old/newlib/libc/posix/execl.c	2019-01-01 05:40:11.000000000 +0100
-+++ newlib-3.1.0/newlib/libc/posix/execl.c	2025-01-25 11:39:25.870896727 +0100
-@@ -7,6 +7,7 @@
++++ newlib-3.1.0/newlib/libc/posix/execl.c	2025-01-28 23:42:31.061928012 +0100
+@@ -7,6 +7,9 @@
  
  #include <_ansi.h>
  #include <unistd.h>
 +#include <errno.h>
++#include <stdlib.h>
++#include <alloca.h>
  
  /* Only deal with a pointer to environ, to work around subtle bugs with shared
     libraries and/or small data systems where the user declares his own
-@@ -16,6 +17,10 @@
- 
- #include <stdarg.h>
- 
-+#ifndef ARG_NUM_MAX
-+#define ARG_NUM_MAX 256
-+#endif
-+
- int
- execl (const char *path,
-       const char *arg0, ...)
-@@ -24,14 +29,20 @@
+@@ -24,7 +27,24 @@
  {
    int i;
    va_list args;
 -  const char *argv[256];
-+  const char *argv[ARG_NUM_MAX];
++  const char **argv;
++
++  i = 1;
++  va_start (args, arg0);
++  do
++    i++;
++  while (va_arg (args, const char *) != NULL);
++  va_end (args);
++#ifndef _EXECL_USE_MALLOC
++  argv = alloca (i * sizeof(const char *));
++#else
++  argv = malloc (i * sizeof(const char *));
++  if (argv == NULL)
++  {
++    errno = ENOMEM;
++    return -1;
++  }
++#endif
  
    va_start (args, arg0);
    argv[0] = arg0;
-   i = 1;
--  do
--      argv[i] = va_arg (args, const char *);
--  while (argv[i++] != NULL);
-+  do {
-+    if(i>=ARG_NUM_MAX)
-+    {
-+      va_end (args);
-+      errno=E2BIG;
-+      return -1;
-+    }
-+    argv[i] = va_arg (args, const char *);
-+  } while (argv[i++] != NULL);
+@@ -34,6 +54,10 @@
+   while (argv[i++] != NULL);
    va_end (args);
  
-   return _execve (path, (char * const  *) argv, *p_environ);
+-  return _execve (path, (char * const  *) argv, *p_environ);
++  i = _execve (path, (char * const  *) argv, *p_environ);
++#ifdef _EXECL_USE_MALLOC
++  free (argv);
++#endif
++  return i;
+ }
+ #endif /* !_NO_EXECVE  */
 diff -ruN newlib-3.1.0-old/newlib/libc/posix/execle.c newlib-3.1.0/newlib/libc/posix/execle.c
 --- newlib-3.1.0-old/newlib/libc/posix/execle.c	2019-01-01 05:40:11.000000000 +0100
-+++ newlib-3.1.0/newlib/libc/posix/execle.c	2025-01-25 11:39:32.402973850 +0100
-@@ -7,10 +7,15 @@
++++ newlib-3.1.0/newlib/libc/posix/execle.c	2025-01-28 23:42:33.421948503 +0100
+@@ -7,6 +7,9 @@
  
  #include <_ansi.h>
  #include <unistd.h>
 +#include <errno.h>
++#include <stdlib.h>
++#include <alloca.h>
  
  
  #include <stdarg.h>
- 
-+#ifndef ARG_NUM_MAX
-+#define ARG_NUM_MAX 256
-+#endif
-+
- int
- execle (const char *path,
-       const char *arg0, ...)
-@@ -20,14 +25,20 @@
+@@ -20,7 +23,24 @@
    int i;
    va_list args;
    const char * const *envp;
 -  const char *argv[256];
-+  const char *argv[ARG_NUM_MAX];
++  const char **argv;
++
++  i = 1;
++  va_start (args, arg0);
++  do
++    i++;
++  while (va_arg (args, const char *) != NULL);
++  va_end (args);
++#ifndef _EXECL_USE_MALLOC
++  argv = alloca (i * sizeof(const char *));
++#else
++  argv = malloc (i * sizeof(const char *));
++  if (argv == NULL)
++  {
++    errno = ENOMEM;
++    return -1;
++  }
++#endif
  
    va_start (args, arg0);
    argv[0] = arg0;
-   i = 1;
--  do
-+  do {
-+    if(i>=ARG_NUM_MAX)
-+    {
-+      va_end (args);
-+      errno=E2BIG;
-+      return -1;
-+    }
-     argv[i] = va_arg (args, const char *);
--  while (argv[i++] != NULL);
-+  } while (argv[i++] != NULL);
+@@ -31,7 +51,11 @@
    envp = va_arg (args, const char * const *);
    va_end (args);
  
+-  return _execve (path, (char * const *) argv, (char * const *) envp);
++  i = _execve (path, (char * const *) argv, (char * const *) envp);
++#ifdef _EXECL_USE_MALLOC
++  free (argv);
++#endif
++  return i;
+ }
+ 
+ #endif /* !_NO_EXECVE  */
 diff -ruN newlib-3.1.0-old/newlib/libc/posix/execlp.c newlib-3.1.0/newlib/libc/posix/execlp.c
 --- newlib-3.1.0-old/newlib/libc/posix/execlp.c	2019-01-01 05:40:11.000000000 +0100
-+++ newlib-3.1.0/newlib/libc/posix/execlp.c	2025-01-25 11:39:38.487045516 +0100
-@@ -7,10 +7,15 @@
++++ newlib-3.1.0/newlib/libc/posix/execlp.c	2025-01-28 23:42:35.065962787 +0100
+@@ -7,6 +7,9 @@
  
  #include <_ansi.h>
  #include <unistd.h>
 +#include <errno.h>
++#include <stdlib.h>
++#include <alloca.h>
  
  
  #include <stdarg.h>
- 
-+#ifndef ARG_NUM_MAX
-+#define ARG_NUM_MAX 256
-+#endif
-+
- int
- execlp (const char *path,
-       const char *arg0, ...)
-@@ -19,14 +24,20 @@
+@@ -19,7 +22,24 @@
  {
    int i;
    va_list args;
 -  const char *argv[256];
-+  const char *argv[ARG_NUM_MAX];
++  const char **argv;
++
++  i = 1;
++  va_start (args, arg0);
++  do
++    i++;
++  while (va_arg (args, const char *) != NULL);
++  va_end (args);
++#ifndef _EXECL_USE_MALLOC
++  argv = alloca (i * sizeof(const char *));
++#else
++  argv = malloc (i * sizeof(const char *));
++  if (argv == NULL)
++  {
++    errno = ENOMEM;
++    return -1;
++  }
++#endif
  
    va_start (args, arg0);
    argv[0] = arg0;
-   i = 1;
--  do
--      argv[i] = va_arg (args, const char *);
--  while (argv[i++] != NULL);
-+  do {
-+    if(i>=ARG_NUM_MAX)
-+    {
-+      va_end (args);
-+      errno=E2BIG;
-+      return -1;
-+    }
-+    argv[i] = va_arg (args, const char *);
-+  } while (argv[i++] != NULL);
+@@ -29,7 +49,11 @@
+   while (argv[i++] != NULL);
    va_end (args);
  
-   return execvp (path, (char * const *) argv);
+-  return execvp (path, (char * const *) argv);
++  i = execvp (path, (char * const *) argv);
++#ifdef _EXECL_USE_MALLOC
++  free (argv);
++#endif
++  return i;
+ }
+ 
+ #endif /* !_NO_EXECVE  */
 diff -ruN newlib-3.1.0-old/newlib/libc/posix/_isatty.c newlib-3.1.0/newlib/libc/posix/_isatty.c
 --- newlib-3.1.0-old/newlib/libc/posix/_isatty.c	2019-01-01 05:40:11.000000000 +0100
 +++ newlib-3.1.0/newlib/libc/posix/_isatty.c	2024-07-26 22:02:58.645581943 +0200

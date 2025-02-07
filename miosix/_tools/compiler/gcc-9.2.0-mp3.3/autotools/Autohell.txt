@@ -37,25 +37,29 @@ So, you've got to download the exact version of autoconf and automake,
 make an autotools directory, copy the autoconf and automake of the exact
 version taken from the GNU website, and then
 
-$ wget https://ftpmirror.gnu.org/autoconf/autoconf-2.68.tar.bz2
-$ wget https://ftpmirror.gnu.org/automake/automake-1.11.6.tar.gz
-$ mkdir autobins && cd autobins
-$ PFX=`pwd`
-$ cd ..
-$ tar xjvf autoconf-2.68.tar.bz2 
-$ cd autoconf-2.68
-$ ./configure --prefix=$PFX
-$ make
-$ make install
-$ cd ..
-$ tar xzvf automake-1.11.6.tar.gz
-$ cd automake-1.11.6
-$ ./configure --prefix=$PFX
-$ make
-$ make install
-$ cd ../autobins/share
-$ ln -s `pwd`/aclocal-1.11 aclocal
+wget https://ftpmirror.gnu.org/autoconf/autoconf-2.69.tar.gz
+wget https://ftpmirror.gnu.org/automake/automake-1.15.1.tar.gz
+mkdir autobins
+PFX=`pwd`/autobins
+tar xvf autoconf-2.69.tar.gz
+cd autoconf-2.69
+./configure --prefix=$PFX
+make
+make install
+cd ..
+tar xvf automake-1.15.1.tar.gz
+cd automake-1.15.1
+./configure --prefix=$PFX
+make
+make install
+cd ..
+export PATH=`pwd`/autobins/bin:$PATH
 
+
+cd ../autobins/share
+rm -rf aclocal
+ln -s `pwd`/aclocal-1.15 aclocal
+cd -
 Note that the last command is necessary because during installation an
 aclocal-1.11 directory is created, but the scripts expect an aclocal directory.
 Essentially, the make install of automake is broken, go figure...
