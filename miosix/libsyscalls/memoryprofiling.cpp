@@ -107,7 +107,15 @@ unsigned int MemoryProfiling::getAbsoluteFreeStack()
 unsigned int MemoryProfiling::getCurrentFreeStack()
 {
     unsigned int stackOccupiedByCtxsave=sysconf(ctxsaveOnStack);
-    int *stack_ptr asm("sp");
+    #ifdef __ARM_EABI__
+    void *stack_ptr;
+    asm volatile("mov %0, sp" : "=r"(stack_ptr));
+    #else //__ARM_EABI__
+    //NOTE: __builtin_frame_address doesn't add the size of the current function
+    //frame, likely __builtin_stack_address would be better but GCC 9.2.0 does
+    //not have it
+    void *stack_ptr=__builtin_frame_address(0);
+    #endif //__ARM_EABI__
     const unsigned int *walk=getStackBottom();
     unsigned int freeStack=(reinterpret_cast<unsigned int>(stack_ptr)
                           - reinterpret_cast<unsigned int>(walk));
