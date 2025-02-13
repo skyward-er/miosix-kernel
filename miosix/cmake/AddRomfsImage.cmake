@@ -62,6 +62,15 @@ function(miosix_add_romfs_image)
         PROCESSES ${ROMFS_PROCESSES}
     )
 
+    # Create the image of the kernel
+    add_custom_command(
+        OUTPUT ${ROMFS_KERNEL}.bin
+        DEPENDS ${ROMFS_KERNEL}
+        COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${ROMFS_KERNEL}> ${ROMFS_KERNEL}.bin
+        COMMENT "Creating ${ROMFS_KERNEL}.bin"
+        VERBATIM
+    )
+
     # Create the romfs image with the given processes
     add_custom_command(
         OUTPUT ${ROMFS_IMAGE_NAME}-romfs.bin
@@ -80,7 +89,4 @@ function(miosix_add_romfs_image)
 
     # Create the custom romfs target
     add_custom_target(${ROMFS_IMAGE_NAME} ALL DEPENDS ${PROJECT_BINARY_DIR}/${ROMFS_IMAGE_NAME}.bin)
-
-    # And a target to flash the image
-    miosix_add_program_target(${ROMFS_IMAGE_NAME} DEPENDS ${ROMFS_IMAGE_NAME})
 endfunction()

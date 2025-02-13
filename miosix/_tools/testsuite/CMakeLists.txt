@@ -43,6 +43,7 @@ include(AddRomfsImage)
 # Kernel level program
 add_executable(testsuite testsuite.cpp)
 miosix_link_target(testsuite)
+miosix_add_program_target(testsuite)
 
 # Processes
 # miosix_add_process(test_process test_process/main.cpp)
@@ -56,3 +57,4 @@ miosix_link_target(testsuite)
 #     KERNEL testsuite
 #     PROCESSES test_process # test_execve test_global_dtor_ctor
 # )
+# miosix_add_program_target(image DEPENDS image)

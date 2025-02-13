@@ -55,3 +55,4 @@ miosix_add_romfs_image(
     KERNEL main
     PROCESSES process1 process2
 )
+miosix_add_program_target(image DEPENDS image)

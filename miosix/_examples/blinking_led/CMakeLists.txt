@@ -37,3 +37,4 @@ include(LinkTarget)
 
 add_executable(blinking_led simple.cpp)
 miosix_link_target(blinking_led)
+miosix_add_program_target(blinking_led)

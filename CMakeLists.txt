@@ -36,6 +36,7 @@ include(LinkTarget)
 # List here your source files (.s, .c and .cpp)
 add_executable(main main.cpp)
 miosix_link_target(main)
+miosix_add_program_target(main)
 
 # List here additional include directories
 # target_include_directories(main PRIVATE here_your_includes)

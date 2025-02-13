@@ -31,7 +31,15 @@ function(miosix_add_program_target TARGET)
     cmake_parse_arguments(PROGRAM "" "" "DEPENDS" ${ARGN})
 
     if(NOT PROGRAM_DEPENDS)
-        set(PROGRAM_DEPENDS ${TARGET}_bin ${TARGET}_hex)
+        add_custom_command(
+            OUTPUT ${TARGET}.bin
+            COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${TARGET}> ${TARGET}.bin
+            DEPENDS ${TARGET}
+            COMMENT "Creating ${TARGET}.bin"
+            VERBATIM
+        )
+        add_custom_target(${TARGET}_bin ALL DEPENDS ${TARGET}.bin)
+        set(PROGRAM_DEPENDS ${TARGET}_bin)
     endif()
 
     get_target_property(PROGRAM_CMDLINE miosix PROGRAM_CMDLINE)
