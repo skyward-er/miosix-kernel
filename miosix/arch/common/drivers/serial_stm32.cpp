@@ -193,9 +193,9 @@ void __attribute__((naked)) DMA2_Stream7_IRQHandler()
 }
 
 /**
- * \internal DMA2 stream 5 IRQ (configured as USART1 RX)
+ * \internal DMA2 stream 2 IRQ (configured as USART1 RX)
  */
-void __attribute__((naked)) DMA2_Stream5_IRQHandler()
+void __attribute__((naked)) DMA2_Stream2_IRQHandler()
 {
     saveContext();
     asm volatile("bl _Z15usart1rxDmaImplv");
@@ -540,9 +540,9 @@ void STM32Serial::commonInit(int id, int baudrate, GpioPin tx, GpioPin rx,
             dmaTx=DMA2_Stream7;
             //Higher priority to ensure IRQhandleDMArx() is called before
             //IRQhandleInterrupt(), so that idle is set correctly
-            NVIC_SetPriority(DMA2_Stream5_IRQn,14);
-            NVIC_EnableIRQ(DMA2_Stream5_IRQn);
-            dmaRx=DMA2_Stream5;
+            NVIC_SetPriority(DMA2_Stream2_IRQn,14);
+            NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+            dmaRx=DMA2_Stream2;
             #endif
             port->CR3=USART_CR3_DMAT | USART_CR3_DMAR;
             #endif //SERIAL_1_DMA
@@ -997,8 +997,8 @@ STM32Serial::~STM32Serial()
                 #else //stm32f2, stm32f4
                 NVIC_DisableIRQ(DMA2_Stream7_IRQn);
                 NVIC_ClearPendingIRQ(DMA2_Stream7_IRQn);
-                NVIC_DisableIRQ(DMA2_Stream5_IRQn);
-                NVIC_ClearPendingIRQ(DMA2_Stream5_IRQn);
+                NVIC_DisableIRQ(DMA2_Stream2_IRQn);
+                NVIC_ClearPendingIRQ(DMA2_Stream2_IRQn);
                 #endif
                 #endif //SERIAL_1_DMA
                 NVIC_DisableIRQ(USART1_IRQn);
