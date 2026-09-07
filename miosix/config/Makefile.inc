@@ -47,12 +47,14 @@
 #OPT_BOARD := stm32f415vg_st25dvdiscovery
 #OPT_BOARD := stm32f429zi_oledboard2
 #OPT_BOARD := stm32f429zi_skyward_anakin
+#OPT_BOARD := stm32f429zi_skyward_cu_v1
 #OPT_BOARD := stm32f429zi_skyward_homeone
 #OPT_BOARD := stm32f429zi_stm32f4discovery
 #OPT_BOARD := stm32f469ni_stm32f469i-disco
 #OPT_BOARD := stm32f746zg_nucleo
 #OPT_BOARD := stm32f765ii_marco_ram_board
 #OPT_BOARD := stm32f767zi_nucleo
+OPT_BOARD := stm32f767zi_skyward_compute_unit
 #OPT_BOARD := stm32f769ni_discovery
 #OPT_BOARD := stm32h503rb_generic
 #OPT_BOARD := stm32h723zg_nucleo

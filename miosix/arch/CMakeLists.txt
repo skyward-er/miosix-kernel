@@ -67,11 +67,21 @@ set(MIOSIX_BOARDS
     stm32f429zi_oledboard2
     stm32f429zi_skyward_anakin
     stm32f429zi_skyward_homeone
+    stm32f429zi_nokia
     stm32f429zi_stm32f4discovery
     stm32f469ni_stm32f469i-disco
     stm32f746zg_nucleo
     stm32f765ii_marco_ram_board
+    stm32f767zi_compute_unit_v2
+    stm32f767zi_hydra_biscotto
+    stm32f767zi_hydra_engine
     stm32f767zi_nucleo
+    stm32f767zi_pitot
+    stm32f767zi_conrig_v2
+    stm32f767zi_rig_v2
+    stm32f767zi_rig_v3
+    stm32f767zi_lyra_gs
+    stm32f767zi_skyward_compute_unit
     stm32f769ni_discovery
     stm32h503rb_generic
     stm32h723zg_nucleo

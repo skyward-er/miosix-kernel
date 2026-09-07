@@ -28,8 +28,8 @@
 #pragma once
 
 #ifndef COMPILING_MIOSIX
-#error "This is header is private, it can't be used outside Miosix itself."
-#error "If your code depends on a private header, it IS broken."
+#error "This is header is private, it can't be used outside Miosix itself." 
+#error "If your code depends on a private header, it IS broken." 
 #endif //COMPILING_MIOSIX
 
 #include "interfaces/arch_registers.h" //For __CORTEX_M
