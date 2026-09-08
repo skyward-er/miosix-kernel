@@ -64,6 +64,7 @@ set(MIOSIX_BOARDS
     stm32f411ce_blackpill
     stm32f411re_nucleo
     stm32f415vg_st25dvdiscovery
+    stm32f429zi_con_rig
     stm32f429zi_oledboard2
     stm32f429zi_skyward_anakin
     stm32f429zi_skyward_homeone
@@ -72,6 +73,8 @@ set(MIOSIX_BOARDS
     stm32f469ni_stm32f469i-disco
     stm32f746zg_nucleo
     stm32f765ii_marco_ram_board
+    stm32f767zi_gemini_gs
+    stm32f767zi_orion_biscotto
     stm32f767zi_compute_unit_v2
     stm32f767zi_hydra_biscotto
     stm32f767zi_hydra_engine
