@@ -54,6 +54,15 @@ SGM::SGM()
     enableWrite();
 
     /* Enable Backup regulator */
+#ifdef _CHIP_STM32F7
+    PWR->CSR1 |= PWR_CSR1_BRE;
+
+    /* Enable the Backup SRAM low power Regulator */
+    PWR->CSR1 |= PWR_CSR1_BRE;
+
+    /* Wait for backup regulator */
+    while (!(PWR->CSR1 & (PWR_CSR1_BRR)));
+#else
     PWR->CSR |= PWR_CSR_BRE;  
 
     /* Enable the Backup SRAM low power Regulator */
@@ -61,6 +70,7 @@ SGM::SGM()
 
     /* Wait for backup regulator */
     while (!(PWR->CSR & (PWR_CSR_BRR)));
+#endif
 
     /* Retrive last reset reason and clear the pending flag */
     readResetRegister();
@@ -78,13 +88,21 @@ SGM::SGM()
 void SGM::disableWrite()
 {
     /* Enable Backup Domain write protection */
+#ifdef _CHIP_STM32F7
+    PWR->CR1 &= ~PWR_CR1_DBP;
+#else
     PWR->CR &= ~PWR_CR_DBP;
+#endif
 }
 
 void SGM::enableWrite()
 {
     /* Disable Backup Domain write protection */
-     PWR->CR |= PWR_CR_DBP; 
+#ifdef _CHIP_STM32F7
+    PWR->CR1 |= PWR_CR1_DBP;
+#else
+    PWR->CR |= PWR_CR_DBP;
+#endif
 }
 
 void SGM::clearResetFlag()
@@ -104,10 +122,17 @@ void SGM::readResetRegister()
     {
         lastReset = RST_WINDOW_WDG;
     }
+#ifdef _CHIP_STM32F7
+    else if( resetReg & RCC_CSR_IWDGRSTF)
+    {
+        lastReset = RST_INDEPENDENT_WDG;
+    }
+#else
     else if( resetReg & RCC_CSR_WDGRSTF)
     {
         lastReset = RST_INDEPENDENT_WDG;
     }
+#endif
     else if( resetReg & RCC_CSR_SFTRSTF)
     {
         lastReset = RST_SW;
@@ -116,10 +141,17 @@ void SGM::readResetRegister()
     {
         lastReset = RST_POWER_ON;
     }
+#ifdef _CHIP_STM32F7
+    else if( resetReg & RCC_CSR_PINRSTF)
+    {
+        lastReset = RST_PIN;
+    }
+#else
     else if( resetReg & RCC_CSR_PADRSTF)
     {
         lastReset = RST_PIN;
     }
+#endif
     else
     {
         lastReset = RST_UNKNOWN;
