@@ -25,6 +25,7 @@ set(MIOSIX_DEFAULT_LINKER_SCRIPT unikernel-xram-sgm.ld)
 
 # Select architecture specific files
 set(MIOSIX_BOARD_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/arch/drivers/stm32_sgm.cpp
     ${MIOSIX_BOARD_INC}/boot.cpp
     ${MIOSIX_BOARD_INC}/interfaces-impl/bsp.cpp
 )

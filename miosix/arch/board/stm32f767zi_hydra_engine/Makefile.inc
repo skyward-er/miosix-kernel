@@ -12,6 +12,7 @@ CPU_FLAGS := -mcpu=cortex-m7 -mthumb -mfloat-abi=hard -mfpu=fpv5-d16
 ## Select architecture specific files
 ## These are the files in arch/<arch name>/<board name>
 BOARD_SRC :=                         \
+arch/drivers/stm32_sgm.cpp           \
 $(BOARD_INC)/boot.cpp                \
 $(BOARD_INC)/interfaces-impl/bsp.cpp
 
@@ -27,4 +28,3 @@ BOARD_CXXFLAGS := -D_BOARD_STM32F767ZI_HYDRA_ENGINE
 ## board.
 PROG ?= st-flash --connect-under-reset --reset write \
         $(if $(ROMFS_DIR), image.bin, main.bin) 0x08000000
-
