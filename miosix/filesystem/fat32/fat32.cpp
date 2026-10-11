@@ -36,6 +36,9 @@
 #include <string>
 #include <cstdio>
 #include <memory>
+#ifdef SD_DRIVER_CAPTURE_ERRORS
+#include <drivers/sdmmc/stm32f2_f4_f7_sd.h>
+#endif
 #include "filesystem/stringpart.h"
 #include "filesystem/ioctl.h"
 #include "util/unicode.h"
@@ -299,9 +302,17 @@ ssize_t Fat32File::write(const void *data, size_t len)
             seekPastEnd-=bytesWritten;
         }
     }
-    if(int res=translateError(f_write(&file,data,len,&bytesWritten))) return res;
+    const auto writeResult=f_write(&file,data,len,&bytesWritten);
+#ifdef SD_DRIVER_CAPTURE_ERRORS
+    sdCaptureFilesystemError(20,writeResult);
+#endif
+    if(int res=translateError(writeResult)) return res;
     #ifdef SYNC_AFTER_WRITE
-    if(f_sync(&file)!=FR_OK) return -EIO;
+    const auto syncResult=f_sync(&file);
+#ifdef SD_DRIVER_CAPTURE_ERRORS
+    sdCaptureFilesystemError(21,syncResult);
+#endif
+    if(syncResult!=FR_OK) return -EIO;
     #endif //SYNC_AFTER_WRITE    
     return static_cast<int>(bytesWritten);
 }

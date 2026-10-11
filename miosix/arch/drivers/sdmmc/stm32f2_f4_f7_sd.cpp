@@ -43,8 +43,11 @@
 //#define DBG iprintf
 #define DBG(x,...) do {} while(0)
 ///\internal Debug macro, for errors only
-//#define DBGERR iprintf
+#ifdef SD_DRIVER_DEBUG_ERRORS
+#define DBGERR iprintf
+#else
 #define DBGERR(x,...) do {} while(0)
+#endif
 
 /*
  * The SDMMC1 peripheral in the STM32F7 is basically the old SDIO with the
@@ -122,6 +125,60 @@ static volatile bool sdioTransferError; ///< \internal SDIO transfer error
 static Thread *waiting;                 ///< \internal Thread waiting for transfer
 static unsigned int dmaFlags;           ///< \internal DMA status flags
 static unsigned int sdioFlags;          ///< \internal SDIO status flags
+
+#ifdef SD_DRIVER_CAPTURE_ERRORS
+struct SdErrorCapture
+{
+    long long time;
+    unsigned kind, command, sta, response, clock, dma, sd, dctrl, ndtr;
+    bool driverError, dmaError, sdError;
+};
+static SdErrorCapture capturedErrors[8];
+static unsigned capturedCount=0;
+static bool captureEnabled=false;
+#endif
+
+void sdBeginErrorCapture()
+{
+#ifdef SD_DRIVER_CAPTURE_ERRORS
+    capturedCount=0;
+    captureEnabled=true;
+#endif
+}
+
+static void captureSdError(unsigned kind, unsigned command)
+{
+#ifdef SD_DRIVER_CAPTURE_ERRORS
+    if(!captureEnabled || capturedCount>=8) return;
+    capturedErrors[capturedCount++]={getTime(),kind,command,
+        static_cast<unsigned>(SDIO->STA),static_cast<unsigned>(SDIO->RESP1),
+        static_cast<unsigned>(SDIO->CLKCR),dmaFlags,sdioFlags,
+        static_cast<unsigned>(SDIO->DCTRL),static_cast<unsigned>(DMA_Stream->NDTR),
+        driverError,dmaTransferError,sdioTransferError};
+#endif
+}
+
+void sdPrintErrorCapture()
+{
+#ifdef SD_DRIVER_CAPTURE_ERRORS
+    const auto count=capturedCount;
+    printf("[sd-history] errors captured=%u (first 8)\n",count);
+    for(unsigned i=0;i<count;i++)
+    {
+        const auto e=capturedErrors[i];
+        printf("[sd-history] ms=%lld kind=%u cmd=%u STA=%08x RESP=%08x "
+               "CLK=%08x DMA=%08x SD=%08x DCTRL=%08x NDTR=%u "
+               "driver=%d dma=%d sd=%d\n",e.time/1000000,e.kind,e.command,
+               e.sta,e.response,e.clock,e.dma,e.sd,e.dctrl,e.ndtr,
+               e.driverError,e.dmaError,e.sdError);
+    }
+#endif
+}
+
+void sdCaptureFilesystemError(unsigned operation, unsigned result)
+{
+    if(result) captureSdError(operation,result);
+}
 
 /**
  * \internal
@@ -649,6 +706,9 @@ CmdResult Command::send(CommandType cmd, unsigned int arg)
     if(cc!=CMD0) command |= SDIO_CMD_WAITRESP_0; //CMD0 has no response
     if(cc==CMD2) command |= SDIO_CMD_WAITRESP_1; //CMD2 has long response
     if(cc==CMD9) command |= SDIO_CMD_WAITRESP_1; //CMD9 has long response
+#ifdef SD_DRIVER_DEBUG_ERRORS
+    const auto commandStart=getTime();
+#endif
     SDIO->ARG=arg;
     SDIO->CMD=command;
 
@@ -680,12 +740,22 @@ CmdResult Command::send(CommandType cmd, unsigned int arg)
         }
         if(status & SDIO_STA_CCRCFAIL)
         {
+            captureSdError(2,cc);
             SDIO->ICR=SDIO_ICR_CCRCFAILC;
             return CmdResult(cc,CmdResult::CRCFail);
         }
         if(status & SDIO_STA_CTIMEOUT) break;
         delayUs(1);
     }
+#ifdef SD_DRIVER_DEBUG_ERRORS
+    if(cc!=CMD7 || arg!=0)
+        DBGERR("CMD%u timeout detail: STA=%08x CMD=%08x RESP=%08x "
+               "CLKCR=%08x elapsed_us=%lld\n",cc,
+               static_cast<unsigned>(SDIO->STA),static_cast<unsigned>(SDIO->CMD),
+               static_cast<unsigned>(SDIO->RESP1),static_cast<unsigned>(SDIO->CLKCR),
+               (getTime()-commandStart)/1000);
+#endif
+    if(cc!=CMD7 || arg!=0) captureSdError(1,cc);
     SDIO->ICR=SDIO_ICR_CTIMEOUTC;
     return CmdResult(cc,CmdResult::Timeout);
 }
@@ -891,11 +961,16 @@ static bool waitForCardReady()
     do {
         CmdResult cr=Command::send(Command::CMD13,Command::getRca()<<16);
         if(cr.validateR1Response()==false) return false;
-        //Bit 8 in R1 response means ready for data.
-        if(cr.getResponse() & (1<<8)) return true;
+        // Some cards report READY_FOR_DATA while still in Programming state.
+        // Wait for an idle state: Tran (4) when selected, or Stby (3) when
+        // deselected (ioctl(IOCTL_SYNC) also calls this function).
+        // Checking only bit 8 can therefore cause command timeouts under load.
+        const auto state=cr.getState();
+        if((cr.getResponse() & (1<<8)) && (state==3 || state==4)) return true;
         Thread::nanoSleep(sleepTime);
     } while(getTime()<timeout);
     DBGERR("Timeout waiting card ready\n");
+    captureSdError(4,13);
     return false;
 }
 
@@ -905,6 +980,7 @@ static bool waitForCardReady()
  */
 static void displayBlockTransferError()
 {
+    captureSdError(3,static_cast<unsigned>(SDIO->CMD)&0x3f);
     DBGERR("Block transfer error\n");
     if(dmaFlags & DMA_LISR_TEIF3)     DBGERR("* DMA Transfer error\n");
     if(dmaFlags & DMA_LISR_DMEIF3)    DBGERR("* DMA Direct mode error\n");
@@ -1019,6 +1095,7 @@ static bool multipleBlockRead(unsigned char *buffer, unsigned int nblk,
     SDIO->DLEN=nblk*512;
     if(waiting==0)
     {
+        captureSdError(5,static_cast<unsigned>(SDIO->CMD)&0x3f);
         DBGERR("Premature wakeup\n");
         driverError=true;
     }
@@ -1133,6 +1210,7 @@ static bool multipleBlockWrite(const unsigned char *buffer, unsigned int nblk,
     SDIO->DLEN=nblk*512;
     if(waiting==0)
     {
+        captureSdError(5,static_cast<unsigned>(SDIO->CMD)&0x3f);
         DBGERR("Premature wakeup\n");
         driverError=true;
     }
@@ -1191,7 +1269,9 @@ public:
      */
     explicit CardSelector()
     {
-        success=Command::send(
+        // A previous write may still be programming when the next block
+        // operation starts. CMD7 must not precede the readiness check.
+        success=waitForCardReady() && Command::send(
                 Command::CMD7,Command::getRca()<<16).validateR1Response();
     }
 
@@ -1207,6 +1287,9 @@ public:
      */
     ~CardSelector()
     {
+        // DATAEND ends the host transfer, not the card's programming phase.
+        // Finish that phase before changing the card's selection state.
+        waitForCardReady();
         Command::send(Command::CMD7,0); //Deselect card. This will timeout
     }
 

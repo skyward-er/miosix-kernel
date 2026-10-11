@@ -33,6 +33,11 @@
 
 namespace miosix {
 
+// Optional diagnostic journal; no SD operations or printing while recording.
+void sdBeginErrorCapture();
+void sdPrintErrorCapture();
+void sdCaptureFilesystemError(unsigned operation, unsigned result);
+
 /**
  * Driver for the SDIO peripheral in STM32F2 and F4 microcontrollers
  */
